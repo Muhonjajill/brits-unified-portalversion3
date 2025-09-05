@@ -1,15 +1,16 @@
+.activity-log-container {
+    overflow-x: auto;
+    padding: 10px; 
+}
+
 .ticket-title {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
     text-align: center;
-    font-size: 1.5em;  /* Larger font on desktop */
-}
-
-.activity-log-container {
-    overflow-x: auto;
-    padding: 10px;  /* Padding for better spacing */
+    font-size: 1.5em; 
+    font-weight: bold;
 }
 
 .activity-log-table {
@@ -53,9 +54,9 @@
     cursor: pointer;
     font-weight: bold;
     transition: background-color 0.2s ease;
-    text-align: center; /* Center button text */
-    margin-bottom: 20px; /* Add space below the button */
-    width: auto;  /* Make it auto width on large screens */
+    text-align: center; 
+    width: auto;  
+    margin-top: 50px;
 }
 
 .clear-logs-btn:hover {

@@ -27,7 +27,7 @@ $(document).ready(function() {
     function updateCharts(data) {
         const ctxDay = document.getElementById('ticketsPerDayChart').getContext('2d');
         const ctxWeekday = document.getElementById('ticketsPerWeekdayChart').getContext('2d');
-        const ctxHour = document.getElementById('ticketsPerHourChart').getContext('2d');
+        //const ctxHour = document.getElementById('ticketsPerHourChart').getContext('2d');
         const ctxMonth = document.getElementById('ticketsPerMonthChart').getContext('2d');
         const ctxYear = document.getElementById('ticketsPerYearChart').getContext('2d');
         const ctxStatus = document.getElementById('ticketStatusChart').getContext('2d');
@@ -50,7 +50,7 @@ $(document).ready(function() {
         // Destroy the previous charts if they exist
         destroyChart(dayChart);
         destroyChart(weekdayChart);
-        destroyChart(hourChart);
+        //destroyChart(hourChart);
         destroyChart(monthChart);
         destroyChart(yearChart);
         destroyChart(statusChart);
@@ -125,7 +125,7 @@ $(document).ready(function() {
         });
 
         // Per hour chart with gradient animation
-        hourChart = new Chart(ctxHour, {
+        /*hourChart = new Chart(ctxHour, {
             type: 'bar',
             data: {
                 labels: data.hours,
@@ -155,7 +155,7 @@ $(document).ready(function() {
                     chart.update();
                 }
             }
-        });
+        });*/
 
         // Per month chart with gradient animation
         monthChart = new Chart(ctxMonth, {

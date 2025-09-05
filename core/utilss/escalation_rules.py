@@ -93,10 +93,28 @@ def send_unassigned_ticket_notification(ticket):
         )
 
 
+"""
+def send_ticket_assignment_notification(ticket):
+    message = f"Ticket #{ticket.id} is not assigned yet. Please assign it within 2 hours."
+    send_mail("Unassigned Ticket Reminder", message, None, [settings.EMAIL_HOST_USER])
+
+    # WebSocket notification
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        "ticket_notifications",
+        {"type": "ticket_assignment_notification", "message": message}
+    )"""
+
 def send_ticket_assignment_notification(ticket):
     """Send notification to admins or assigned staff to assign the ticket."""
     message = f"Ticket #{ticket.id} is not assigned yet. Please assign it within 2 hours."
-    send_mail("Unassigned Ticket Reminder", message, None, [settings.ADMIN_EMAIL])
+    subject = "Unassigned Ticket Reminder"
+
+    try:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [settings.EMAIL_HOST_USER])
+        logger.info(f"Email sent successfully for Ticket #{ticket.id}")
+    except Exception as e:
+        logger.error(f"Failed to send email for Ticket #{ticket.id}: {str(e)}")
 
     # WebSocket notification
     channel_layer = get_channel_layer()
@@ -104,6 +122,79 @@ def send_ticket_assignment_notification(ticket):
         "ticket_notifications",
         {"type": "ticket_assignment_notification", "message": message}
     )
+
+
+"""
+def escalate_ticket(ticket):
+    now = timezone.now()
+    escalation_level = ticket.current_escalation_level or 'Tier 1'
+
+    if not ticket.zone:
+        logger.warning(f"Ticket {ticket.id} has no zone defined. Assigning default zone 'A'.")
+        try:
+            ticket.zone = Zone.objects.get(name='Zone A')
+        except Zone.DoesNotExist:
+            ticket.zone = Zone.objects.create(name='Zone A')
+
+    if ticket.zone.name == 'Zone A':
+        zone_threshold = timedelta(minutes=5)
+    elif ticket.zone.name == 'Zone B':
+        zone_threshold = timedelta(minutes=10)
+    elif ticket.zone.name == 'Zone C':
+        zone_threshold = timedelta(minutes=15)
+    else:
+        zone_threshold = timedelta(minutes=5)
+
+    threshold_hours = ESCALATION_TIME_LIMITS.get(ticket.priority.lower(), 1)
+    priority_threshold = timedelta(hours=threshold_hours)
+
+    escalation_time = min(priority_threshold, zone_threshold)
+
+    last_escalation_time = ticket.escalated_at or ticket.created_at
+
+    if now >= last_escalation_time + escalation_time:
+        logger.info(f"Ticket {ticket.id} exceeds escalation time. Proceeding with escalation.")
+
+        if ticket.priority.lower() == 'critical':
+            if escalation_level != 'Tier 4':
+                next_level = ESCALATION_FLOW.get(escalation_level)
+            else:
+                next_level = None
+        else:
+            next_level = ESCALATION_FLOW.get(escalation_level)
+
+        if next_level:
+            logger.info(f"Ticket {ticket.id} escalated from {escalation_level} → {next_level}")
+
+            ticket.current_escalation_level = next_level
+            ticket.is_escalated = True
+            ticket.escalated_at = now  
+            ticket.save()
+
+            send_escalation_email(ticket, next_level)
+
+            EscalationHistory.objects.create(
+                ticket=ticket,
+                from_level=escalation_level,
+                to_level=next_level,
+                note=f"Auto-escalated based on zone {ticket.zone.name} "
+                     f"and priority {ticket.priority}."
+            )
+        else:
+            logger.info(f"Ticket {ticket.id} cannot be escalated further (already at Tier 4).")
+    else:
+        logger.info(f"Ticket {ticket.id} has not yet exceeded escalation time. No escalation.")
+"""
+
+def is_within_working_hours():
+    now = timezone.now()
+    weekday = now.weekday()  
+    hour = now.hour
+
+    
+    if weekday < 5 and 9 <= hour < 17:
+        return True
+    return False
 
 
 def escalate_ticket(ticket):
@@ -116,6 +207,11 @@ def escalate_ticket(ticket):
             ticket.zone = Zone.objects.get(name='Zone A')
         except Zone.DoesNotExist:
             ticket.zone = Zone.objects.create(name='Zone A')
+
+    # Check if the current time is within working hours
+    if not is_within_working_hours():
+        logger.info(f"Ticket {ticket.id} escalation skipped because it's outside of working hours.")
+        return
 
     if ticket.zone.name == 'Zone A':
         zone_threshold = timedelta(minutes=5)

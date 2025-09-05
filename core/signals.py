@@ -164,28 +164,39 @@ def log_ticket_update(sender, instance, created, **kwargs):
     old_ticket = getattr(instance, '_old_ticket', None)
     changes = []
 
+    # Track changes in fields
     if old_ticket:
-        # Status change
+        # Check status change
         if old_ticket.status != instance.status:
             changes.append(f"Status: {old_ticket.status} → {instance.status}")
 
-        # Assigned to change
+        # Check assigned_to change
         if old_ticket.assigned_to != instance.assigned_to:
             old_assignee = old_ticket.assigned_to.username if old_ticket.assigned_to else "None"
             new_assignee = instance.assigned_to.username if instance.assigned_to else "None"
             changes.append(f"Assigned to: {old_assignee} → {new_assignee}")
 
+        # Include other fields that might have changed
+        watch_fields = [
+            'brts_unit', 'problem_category', 'title', 'terminal', 'description',
+            'customer', 'region', 'responsible', 'status', 'priority', 'is_escalated', 'current_escalation_level'
+        ]
+        for field in watch_fields:
+            old_value = getattr(old_ticket, field)
+            new_value = getattr(instance, field)
+            if old_value != new_value:
+                changes.append(f"{field.replace('_', ' ').title()}: {old_value} → {new_value}")
+
+    # Create a summary of the ticket's action
+    action = f"Ticket updated: {instance.title}\n" + "\n".join(f"• {c}" for c in changes)
+
+    # Log the action only if there are changes
     if changes:
-        action = f"Ticket updated: {instance.title}\n" + "\n".join(f"• {c}" for c in changes)
-    else:
-        action = f"Ticket updated: {instance.title}"
-
-
-    ActivityLog.objects.create(
-        ticket=instance,
-        action=action,
-        user=instance.updated_by
-    )
+        ActivityLog.objects.create(
+            ticket=instance,
+            action=action,
+            user=instance.updated_by
+        )
 
 
 

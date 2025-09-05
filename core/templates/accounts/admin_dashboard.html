@@ -14,7 +14,7 @@
     <nav>
       <form id="logout-form" method="post" action="{% url 'logout' %}">
         {% csrf_token %}
-        <button type="submit"><i class="fas fa-sign-out-alt"></i> 🚪 Logout</button>
+        <button type="submit"><i class="fas fa-sign-out-alt"></i>  Logout</button>
       </form>
     </nav>
   </header>
@@ -71,24 +71,24 @@
 
       <div class="card chart-card">
         <h3>User Roles Overview</h3>
-        <div class="chart-placeholder">📊 Chart.js placeholder</div>
+        <div class="chart-placeholder"><i class="fas fa-chart-bar"></i> Chart.js placeholder</div>
       </div>
 
       <div class="card chart-card">
         <h3>File Upload Activity</h3>
-        <div class="chart-placeholder">📈 Chart placeholder</div>
+        <div class="chart-placeholder"><i class="fas fa-chart-bar"></i> Chart placeholder</div>
       </div>
     </section>
 
     <section class="quick-actions">
       <a href="{% url 'manage_file_categories' %}" class="btn-nav">
-        📂 Manage File Categories
+        <i class="fas fa-file"></i> Manage File Categories
       </a>
     </section>
 
     <!-- Manage User Roles -->
     <div class="container">
-      <h2>👤 Manage User Roles</h2>
+      <h2><i class="fas fa-users-cog"></i> Manage User Roles</h2>
       <table class="user-table">
         <thead>
           <tr>
@@ -230,7 +230,7 @@
 
         <!-- Manage Customer Roles -->
     <section class="container">
-      <h2>👤 Manage Customers, Overseers & Custodians</h2>
+      <h2><i class="fas fa-users-cog"></i> Manage Customers, Overseers & Custodians</h2>
 
       {% for customer in customers %}
         <div class="card mb-4 p-3 shadow-sm">
@@ -339,7 +339,7 @@
 
     <!-- User Lists -->
     <div class="container">
-      <h2>👥 All Overseers</h2>
+      <h2><i class="fas fa-user-shield"></i> All Overseers</h2>
       <ol>
         {% for user in overseers %}
           <li>{{ user.get_full_name }} ({{ user.username }})</li>
@@ -348,7 +348,7 @@
         {% endfor %}
       </ol>
 
-      <h2>🗄️ All Custodians</h2>
+      <h2><i class="fas fa-user-tie"></i> All Custodians</h2>
       <ol>
         {% for user in custodians %}
           <li>{{ user.get_full_name }} ({{ user.username }})</li>
@@ -357,7 +357,7 @@
         {% endfor %}
       </ol>
 
-      <h2>❓ Users Without Customer Roles</h2>
+      <h2><i class="fas fa-exclamation-circle"></i> Users Without Customer Roles</h2>
       <ol>
         {% for user in users_without_roles %}
           <li>{{ user.get_full_name }} ({{ user.username }})</li>

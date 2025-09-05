@@ -1,39 +1,4 @@
 window.addEventListener('DOMContentLoaded', () => {
-
-  function toggleSidebar() {
-    const sidebar = document.getElementById("sidebar");
-    const overlay = document.querySelector(".sidebar-overlay");
-    sidebar.classList.toggle("active");
-    overlay.classList.toggle("active");
-  }
-
-  const hamburger = document.getElementById("hamburger");
-  if (hamburger) {
-    hamburger.addEventListener("click", toggleSidebar);
-  }
-
-  document.querySelectorAll(".has-submenu > a").forEach(link => {
-    link.addEventListener("click", function (e) {
-      e.preventDefault();
-      this.parentElement.classList.toggle("expanded");
-    });
-  });
-
-  // === User Profile Dropdown Toggle ===
- /* const userProfile = document.getElementById('userProfile');
-  if (userProfile) {
-    userProfile.addEventListener('click', function (event) {
-      this.classList.toggle('active');
-      event.stopPropagation();
-    });
-    window.addEventListener('click', function (event) {
-      if (!userProfile.contains(event.target)) {
-        userProfile.classList.remove('active');
-      }
-    });
-  }*/
-
-    
   const userProfile = document.getElementById("userProfile");
   if (userProfile) {
     const profileTrigger = userProfile.querySelector(".profile-trigger");
@@ -46,22 +11,6 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  // === Sidebar Submenu Toggles ===
-  const masterDataToggle = document.getElementById('masterDataToggle');
-  if (masterDataToggle) {
-    masterDataToggle.addEventListener('click', function (event) {
-      event.preventDefault();
-      this.classList.toggle('expanded');
-    });
-  }
-
-  const reportsToggle = document.getElementById('reportsToggle');
-  if (reportsToggle) {
-    reportsToggle.addEventListener('click', function (event) {
-      event.preventDefault();
-      this.classList.toggle('expanded');
-    });
-  }
 
   // === Hamburger menu toggle ===
   const dashboardHamburger = document.getElementById('hamburger');

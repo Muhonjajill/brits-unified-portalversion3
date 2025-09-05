@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="category-container">
-  <h2>📂 Manage File Categories</h2>
+  <h2><i class="fas fa-file"></i> Manage File Categories</h2>
 
   {% if messages %}
     <ul class="messages">
@@ -80,7 +80,7 @@
               </select>
             {% endif %}
 
-            <button type="submit" class="btn btn-update">✏️</button>
+            <button type="submit" class="btn btn-update"><i class="fas fa-pencil-alt"></i></button>
           </form>
         </td>
         <td>
@@ -93,7 +93,7 @@
             {% csrf_token %}
             <input type="hidden" name="action" value="delete">
             <input type="hidden" name="category_id" value="{{ cat.id }}">
-            <button type="submit" class="btn btn-delete" onclick="return confirm('Delete this category?')">🗑️</button>
+            <button type="submit" class="btn btn-delete" onclick="return confirm('Delete this category?')"><i class="fas fa-trash"></i></button>
           </form>
         </td>
       </tr>

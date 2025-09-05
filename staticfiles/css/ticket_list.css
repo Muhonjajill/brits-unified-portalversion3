@@ -15,6 +15,7 @@ h1 {
     color: #2d3a4f;
     text-align: center;
     margin: 40px 0 20px 0;
+    margin-top: 100px;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -134,20 +135,123 @@ h1 {
     padding: 20px;
 }
 
+/* Pagination */
+.pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    padding: 8px 14px;
+    background-color: #123692;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: background 0.3s ease;
+}
+
+.page-btn:hover {
+    background-color: #0d285f;
+}
+
+.page-info {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+}
+
 /* Responsive Design */
+@media (max-width: 992px) {
+  .ticket-list-container {
+    padding: 15px;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+    margin: 20px 0;
+  }
+}
+
 @media (max-width: 768px) {
-    .ticket-table th,
-    .ticket-table td {
-        padding: 10px;
-        font-size: 0.9rem;
-    }
+  .search-form {
+    flex-direction: column;
+    gap: 10px;
+    max-width: 100%;
+  }
 
-    h1 {
-        font-size: 1.8rem;
-        margin: 20px 0;
-    }
+  .search-bar {
+    margin-right: 0;
+    width: 100%;
+  }
 
-    .ticket-list-container {
-        padding: 15px;
-    }
+  .search-button {
+    width: 100%;
+  }
+
+  .ticket-table th,
+  .ticket-table td {
+    font-size: 0.85rem;
+    padding: 8px 10px;
+    white-space: nowrap;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .page-btn,
+  .page-info {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .ticket-table,
+  .ticket-table thead,
+  .ticket-table tbody,
+  .ticket-table th,
+  .ticket-table td,
+  .ticket-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .ticket-table thead {
+    display: none; 
+  }
+
+  .ticket-table tr {
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    padding: 10px;
+    background: #fff;
+  }
+
+  .ticket-table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 0.9rem;
+  }
+
+  .ticket-table td:last-child {
+    border-bottom: none;
+  }
+
+  .ticket-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #123692;
+    margin-right: 8px;
+  }
 }

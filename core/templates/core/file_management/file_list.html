@@ -81,13 +81,29 @@
                 
                 <!-- Conditional section for file owner actions -->
                 {% if file.uploaded_by == request.user %}
-                <div class="form-group">
-                  <label>Allowed Actions:</label><br>
-                  <label><input type="checkbox" id="allow_preview_{{ file.id }}" {% if file.allow_preview %}checked{% endif %}> Preview</label>
-                  <label><input type="checkbox" id="allow_download_{{ file.id }}" {% if file.allow_download %}checked{% endif %}> Download</label>
-                </div>
-                <button type="button" onclick="updatePasscode({{ file.id }})">Set / Reset Passcode</button>
+                  <div class="form-group">
+                    <label for="allowed-actions" class="form-label">Allowed Actions:</label>
+                    <div class="form-check">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="allow_preview_{{ file.id }}" {% if file.allow_preview %}checked{% endif %} class="form-check-input">
+                        Preview
+                      </label>
+                    </div>
+                    <div class="form-check">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="allow_download_{{ file.id }}" {% if file.allow_download %}checked{% endif %} class="form-check-input">
+                        Download
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="action-buttons">
+                    <button type="button" onclick="updatePasscode({{ file.id }})" class="btn btn-reset-passcode">
+                      Set / Reset Passcode
+                    </button>
+                  </div>
                 {% endif %}
+
                 
                 <!-- Submit button for the passcode -->
                 <button type="button" onclick="checkPasscode({{ file.id }})">Submit</button>

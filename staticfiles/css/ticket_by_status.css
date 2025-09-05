@@ -101,7 +101,7 @@ h2 {
 
 /* Different status colors */
 .status-open {
-  background-color: #007bff;  
+  background-color: #123692;  
 }
 .status-in_progress {
   background-color: #c0392b;  
@@ -122,7 +122,7 @@ h2 {
   }
 
   .table thead {
-    display: none; /* hide table headers on small devices */
+    display: none; 
   }
 
   .table tbody tr {

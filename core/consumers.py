@@ -17,7 +17,7 @@ class EscalationConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
-    async def send_latest(self):
+    """async def send_latest(self):
         tickets = await self._get_latest_tickets()
         payload = [serialize_ticket(t) for t in tickets]
         total = await self._get_total_count()
@@ -25,8 +25,21 @@ class EscalationConsumer(AsyncWebsocketConsumer):
             "type": "notifications_list",
             "tickets": payload,   
             "count": total,       
+        }))"""
+
+    async def send_latest(self):
+        tickets = await self._get_latest_tickets()
+        payload = [serialize_ticket(t['ticket']) for t in tickets] 
+        total = await self._get_total_count()
+        await self.send(text_data=json.dumps({
+            "type": "notifications_list",
+            "tickets": payload,   
+            "count": total,       
         }))
 
+
+
+    """
     @database_sync_to_async
     def _get_latest_tickets(self):
         user = self.scope["user"]
@@ -50,7 +63,41 @@ class EscalationConsumer(AsyncWebsocketConsumer):
             if profile.terminal.custodian == user:
                 qs = Ticket.objects.filter(terminal=profile.terminal)
 
-        return list(qs.order_by("-created_at")[:5])
+        return list(qs.order_by("-created_at")[:5])"""
+
+    
+    
+    @database_sync_to_async
+    def _get_latest_tickets(self):
+        user = self.scope["user"]
+        profile = getattr(user, "profile", None)
+
+        qs = Ticket.objects.none()
+
+        # Internal staff see all tickets
+        if user.is_superuser or user.groups.filter(
+            name__in=['Admin', 'Director', 'Manager', 'Staff']
+        ).exists():
+            qs = Ticket.objects.all()
+
+        # Overseer: tickets for their customers
+        elif Customer.objects.filter(overseer=user).exists():
+            overseer_customers = Customer.objects.filter(overseer=user)
+            qs = Ticket.objects.filter(customer__in=overseer_customers)
+
+        # Custodian: tickets for their terminal
+        elif profile and profile.terminal:
+            if profile.terminal.custodian == user:
+                qs = Ticket.objects.filter(terminal=profile.terminal)
+
+        tickets = qs.order_by("-created_at")[:5]
+
+        # Attach read/unread state using the correct reverse relation 'notifications'
+        return [{
+            "ticket": t,
+            "is_read": t.notifications.filter(user=user, is_read=True).exists()  # Corrected to 'notifications'
+        } for t in tickets]
+
 
 
     @database_sync_to_async

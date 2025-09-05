@@ -11,7 +11,7 @@ from asgiref.sync import async_to_sync
 
 from core.models import Ticket, EscalationHistory
 from core.utilss.escalation_constants import ESCALATION_TIME_LIMITS, ESCALATION_FLOW
-from core.utilss.escalation_rules import escalate_ticket, send_escalation_email, send_unassigned_ticket_notification
+from core.utilss.escalation_rules import escalate_ticket, send_escalation_email, send_unassigned_ticket_notification, is_within_working_hours
 
 
 logger = logging.getLogger(__name__)
@@ -34,9 +34,9 @@ def send_escalation_notification(ticket):
     )
 
 
+"""
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def run_auto_escalation(self):
-    """Periodic task that checks unassigned tickets and escalates based on zones and priority."""
     now = timezone.now()
     logger.info(f"Auto-escalation kicked off at {now}")
 
@@ -55,4 +55,32 @@ def run_auto_escalation(self):
             escalate_ticket(ticket)
         else:
             send_unassigned_ticket_notification(ticket)
+"""
 
+@shared_task(bind=True, max_retries=3, default_retry_delay=60)
+def run_auto_escalation(self):
+    """Periodic task that checks unassigned tickets and escalates based on zones and priority."""
+    now = timezone.now()
+    
+    # Only proceed with auto-escalation if it's within working hours
+    if not is_within_working_hours():
+        logger.info("Auto-escalation skipped because it's outside of working hours.")
+        return
+
+    logger.info(f"Auto-escalation kicked off at {now}")
+
+    tickets = Ticket.objects.filter(status__in=['open', 'in_progress'])
+
+    for ticket in tickets:
+        ticket = Ticket.objects.get(id=ticket.id)
+
+        logger.debug(
+            f"Checking ticket {ticket.id}: "
+            f"Escalation={ticket.current_escalation_level}, "
+            f"Assigned={ticket.assigned_to}, Priority={ticket.priority}"
+        )
+
+        if ticket.assigned_to:
+            escalate_ticket(ticket)
+        else:
+            send_unassigned_ticket_notification(ticket)

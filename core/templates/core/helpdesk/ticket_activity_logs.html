@@ -6,14 +6,16 @@
 {% endblock %}
 
 {% block content %}
-<h2 class="ticket-title">Activity Log for Ticket: {{ ticket.title }}</h2>
 
-<form method="post" action="{% url 'clear_activity_logs' ticket.id %}" style="margin-bottom: 20px;" onsubmit="return confirmClearLogs()">
-    {% csrf_token %}
-    <button type="submit" class="clear-logs-btn">Clear All Logs</button>
-</form>
 
 <div class="activity-log-container">
+    <form method="post" action="{% url 'clear_activity_logs' ticket.id %}" style="margin-bottom: 20px;" onsubmit="return confirmClearLogs()">
+        {% csrf_token %}
+        <button type="submit" class="clear-logs-btn">Clear All Logs</button>
+    </form>
+
+    <h2 class="ticket-title">Activity Log for Ticket: {{ ticket.title }}</h2>
+
     {% if activity_logs %}
     <table class="activity-log-table">
         <thead>

@@ -149,7 +149,6 @@ function createNotificationItem(ticket) {
   const div = document.createElement("div");
   div.classList.add("notification-item");
 
-  // Add the badge (Escalated, Unassigned, New)
   const isEsc = ticket.notification_type === "escalated" || ticket.is_escalated === true || (ticket.escalated_at && ticket.escalated_at !== null);
   const isUnassigned = ticket.notification_type === "unassigned";
   let typeLabel = "";
@@ -164,7 +163,7 @@ function createNotificationItem(ticket) {
   const priorityText = typeof ticket.priority === "string" ? ticket.priority : JSON.stringify(ticket.priority);
 
   div.innerHTML = `
-    <a class="dropdown-item" href="/tickets/${ticket.id}/" data-ticket-id="${ticket.id}">
+    <a class="dropdown-item" href="/tickets/${ticket.id}/" data-ticket-id="${ticket.id}" style="${ticket.is_read ? 'opacity: 0.5;' : ''}">
       ${typeLabel} #${ticket.id} - ${ticket.title}<br>
       <small>${priorityText} | ${ticket.escalated_at ? ticket.escalated_at : ticket.created_at}</small>
     </a>
@@ -178,6 +177,9 @@ function createNotificationItem(ticket) {
   return div;
 }
 
+
+
+/*
 // Function to mark notification as read on the server
 function markNotificationRead(ticketId) {
   fetch(`/mark_notification_read/${ticketId}/`, {
@@ -201,7 +203,31 @@ function markNotificationRead(ticketId) {
       console.error("Failed to mark notification as read.");
     }
   });
+}*/
+
+function markNotificationRead(ticketId) {
+  fetch(`/mark_notification_read/${ticketId}/`, {
+    method: 'POST',
+    body: JSON.stringify({ type: 'read' }),
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken, // Include CSRF token if necessary
+    },
+  })
+  .then((response) => response.json())
+  .then((data) => {
+    if (data.success) {
+      const notificationItem = document.querySelector(`[data-ticket-id="${ticketId}"]`);
+      if (notificationItem) {
+        notificationItem.parentElement.removeChild(notificationItem); 
+      }
+      updateNotificationCount();
+    } else {
+      console.error("Failed to mark notification as read.");
+    }
+  });
 }
+
 
 // Update notification count after marking as read
 function updateNotificationCount() {

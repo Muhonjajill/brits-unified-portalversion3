@@ -161,15 +161,12 @@ def admin_dashboard(request):
                 elif is_customer and new_role == 'Superuser':
                     messages.error(request, f"{user.username} is a Customer and cannot be made superuser.")
                 else:
-                    # Remove all in-house roles first
                     inhouse_roles = ['Director', 'Manager', 'Staff']
                     user.groups.remove(*Group.objects.filter(name__in=inhouse_roles))
 
-                    # Assign new role group
                     group = Group.objects.get(name=new_role)
                     user.groups.add(group)
 
-                    # Reassign permissions (manually trigger if needed)
                     if new_role == 'Director':
                         assign_director_permissions(user)
                     elif new_role == 'Manager':
@@ -183,10 +180,10 @@ def admin_dashboard(request):
                 messages.error(request, "User ID or role missing in role update.")
 
         elif action == 'remove_assignment':
-            target_type = request.POST.get('target_type')  # 'overseer', 'custodian', or 'role'
+            target_type = request.POST.get('target_type')  
             customer_id = request.POST.get('customer_id')
             terminal_id = request.POST.get('terminal_id', None)
-            user_id = request.POST.get('user_id')  # for role removal from user
+            user_id = request.POST.get('user_id') 
 
             if target_type == 'overseer':
                 if not customer_id or not customer_id.isdigit():
@@ -333,8 +330,11 @@ def manage_file_categories(request):
             messages.success(request, f'Category "{category.name}" deleted.')
             return redirect('manage_file_categories')
 
+    can_view_logs = request.user.has_perm('core.view_fileaccesslog')
+
     return render(request, 'accounts/manage_file_categories.html', {
-        'categories': categories
+        'categories': categories,
+        'can_view_logs': can_view_logs
     })
 
 
@@ -2319,7 +2319,6 @@ def mark_notification_read(request, ticket_id):
         notif.is_read = True
         notif.save()
 
-        # Return a success response
         return JsonResponse({"success": True, "type": notif_type})
 
     return JsonResponse({
@@ -2327,6 +2326,7 @@ def mark_notification_read(request, ticket_id):
         "info": "No UserNotification found, handled client-side",
         "type": notif_type,
     })
+
 
 
 @login_required
@@ -2338,9 +2338,29 @@ def escalated_tickets_page(request):
 def ticket_activity_log(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     activity_logs = ActivityLog.objects.filter(ticket=ticket).order_by('-timestamp')
+
+    user_group = None
+    if Customer.objects.filter(custodian=request.user).exists():
+        user_group = "Custodian"
+    elif Customer.objects.filter(overseer=request.user).exists():
+        user_group = "Overseer"
+    else:
+        if request.user.groups.filter(name="Director").exists():
+            user_group = "Director"
+        elif request.user.groups.filter(name="Manager").exists():
+            user_group = "Manager"
+        elif request.user.groups.filter(name="Staff").exists():
+            user_group = "Staff"
+        else:
+            user_group = "Customer"
+
+    allowed_roles = ["Director", "Manager", "Staff", "Superuser"]
+
     return render(request, 'core/helpdesk/ticket_activity_logs.html', {
         'ticket': ticket,
         'activity_logs': activity_logs,
+        'user_group': user_group,
+        'allowed_roles': allowed_roles
     })
 
 @login_required
@@ -2353,6 +2373,7 @@ def clear_activity_logs(request, ticket_id):
     
     return redirect('ticket_activity_log', ticket_id=ticket.id)
 
+"""
 @login_required
 def ticket_detail(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
@@ -2380,7 +2401,7 @@ def ticket_detail(request, ticket_id):
             if form.is_valid():
                 old_ticket = Ticket.objects.get(id=ticket.id)
                 ticket = form.save(commit=False)
-                ticket.updated_by = request.user  # Track who updated the ticket
+                ticket.updated_by = request.user  
 
                 #comment_summary,, 'resolution'
 
@@ -2523,6 +2544,324 @@ def ticket_detail(request, ticket_id):
         'activity_logs': activity_logs,
         'user_group': user_group,
         'allowed_roles': allowed_roles
+    }
+
+    return render(request, 'core/helpdesk/ticket_detail.html', context)"""
+
+"""
+@login_required
+def ticket_detail(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    comments = ticket.comments.order_by('-created_at')
+    form = TicketEditForm(instance=ticket)
+    comment_form = TicketCommentForm()
+
+    # Check if the user is a manager or has a higher role (Staff, Manager, Director)
+    is_manager_or_above = request.user.groups.filter(name__in=['Manager', 'Director']).exists()
+
+    # Fetch all users from Staff, Manager, and Director for the dropdown (only for managers or higher)
+    assignable_users = User.objects.filter(groups__name__in=['Staff', 'Manager', 'Director'])
+
+    if request.method == 'POST':
+        if 'add_comment' in request.POST:
+            comment_form = TicketCommentForm(request.POST)
+            if comment_form.is_valid():
+                comment = comment_form.save(commit=False)
+                comment.ticket = ticket
+                comment.created_by = request.user
+                comment.save()
+                return redirect('ticket_detail', ticket_id=ticket.id)
+
+        elif 'edit_ticket' in request.POST:
+            form = TicketEditForm(request.POST, instance=ticket)
+            if form.is_valid():
+                old_ticket = Ticket.objects.get(id=ticket.id)
+                ticket = form.save(commit=False)
+                ticket.updated_by = request.user
+
+                changes = []
+                watch_fields = [
+                    'brts_unit', 'problem_category', 'title', 'terminal', 'description',
+                    'customer', 'region', 'assigned_to', 'responsible', 'status',
+                    'priority', 'is_escalated', 'current_escalation_level'
+                ]
+
+                for field in watch_fields:
+                    old_value = getattr(old_ticket, field)
+                    new_value = getattr(ticket, field)
+                    if old_value != new_value:
+                        changes.append((field, old_value, new_value))
+
+                ticket.save()
+
+                if changes:
+                    change_summary = "\n".join([
+                        f"• {field.replace('_', ' ').title()}: {old} → {new}"
+                        for field, old, new in changes
+                    ])
+
+                    action = f"Ticket updated:\n{change_summary}"
+                    ActivityLog.objects.create(
+                        ticket=ticket,
+                        action=action,
+                        user=request.user
+                    )
+
+                return redirect('ticket_detail', ticket_id=ticket.id)
+
+        elif 'assign_ticket' in request.POST and is_manager_or_above:
+            staff_id = request.POST.get('assigned_to')
+            if staff_id:
+                # Allow assignment to Staff, Manager, or Director
+                staff_member = get_object_or_404(
+                    User.objects.distinct(),
+                    id=staff_id,
+                    groups__name__in=['Staff', 'Manager', 'Director']
+                )
+
+                old_assigned_to = ticket.assigned_to
+                ticket.assigned_to = staff_member
+                ticket.updated_by = request.user
+                ticket.save()
+
+                if old_assigned_to != staff_member:
+                    ActivityLog.objects.create(
+                        ticket=ticket,
+                        action=f"Ticket assigned: {old_assigned_to} → {staff_member}",
+                        user=request.user
+                    )
+
+                subject = f"🎫 Ticket #{ticket.id} Assigned to You"
+                text_content = f"Hello {staff_member.get_full_name() or staff_member.username},\n\nYou have been assigned ticket #{ticket.id} - {ticket.title}.\nPlease log in to the system to view and resolve it:\n{request.build_absolute_uri(reverse('ticket_detail', args=[ticket.id]))}\n\nThank you."
+                html_content = render_to_string('email/ticket_detail_email.html', {'ticket': ticket, 'comments': comments, 'ticket_url': request.build_absolute_uri(reverse('ticket_detail', args=[ticket.id]))})
+
+                msg = EmailMultiAlternatives(
+                    subject,
+                    text_content,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [staff_member.email]
+                )
+                msg.attach_alternative(html_content, "text/html")
+
+                logo_path = os.path.join(settings.BASE_DIR, 'static', 'icons', 'logo.png')
+                if os.path.exists(logo_path):
+                    with open(logo_path, 'rb') as f:
+                        logo = MIMEImage(f.read())
+                        logo.add_header('Content-ID', '<logo>')
+                        logo.add_header('Content-Disposition', 'inline; filename="logo.png"')
+                        msg.attach(logo)
+
+                msg.send()
+
+                return redirect('ticket_detail', ticket_id=ticket.id)
+
+    activity_logs = ActivityLog.objects.filter(ticket=ticket).order_by('-timestamp')
+
+    # Determine the user's group for displaying relevant permissions
+    user_group = None
+    if Customer.objects.filter(custodian=request.user).exists():
+        user_group = "Custodian"
+    elif Customer.objects.filter(overseer=request.user).exists():
+        user_group = "Overseer"
+    else:
+        if request.user.groups.filter(name="Director").exists():
+            user_group = "Director"
+        elif request.user.groups.filter(name="Manager").exists():
+            user_group = "Manager"
+        elif request.user.groups.filter(name="Staff").exists():
+            user_group = "Staff"
+        else:
+            user_group = "Customer"  
+
+    context = {
+        'ticket': ticket,
+        'form': form,
+        'comments': comments,
+        'comment_form': comment_form,
+        'is_manager': is_manager_or_above,
+        'staff_users': assignable_users if is_manager_or_above else None,
+        'activity_logs': activity_logs,
+        'user_group': user_group,
+        'allowed_roles': ['Director', 'Manager', 'Staff', 'Superuser'],
+    }
+
+    return render(request, 'core/helpdesk/ticket_detail.html', context)
+"""
+
+@login_required
+def ticket_detail(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    comments = ticket.comments.order_by('-created_at')
+    form = TicketEditForm(instance=ticket)
+    comment_form = TicketCommentForm()
+
+    # Check if the user is a manager or has a higher role (Staff, Manager, Director)
+    is_manager_or_above = request.user.groups.filter(name__in=['Manager', 'Director']).exists()
+
+    # Fetch all users from Staff, Manager, and Director for the dropdown (only for managers or higher)
+    assignable_users = User.objects.filter(groups__name__in=['Staff', 'Manager', 'Director'])
+
+    if request.method == 'POST':
+        if 'add_comment' in request.POST:
+            comment_form = TicketCommentForm(request.POST)
+            if comment_form.is_valid():
+                comment = comment_form.save(commit=False)
+                comment.ticket = ticket
+                comment.created_by = request.user
+                comment.save()
+                return redirect('ticket_detail', ticket_id=ticket.id)
+
+        elif 'edit_ticket' in request.POST:
+            form = TicketEditForm(request.POST, instance=ticket)
+            if form.is_valid():
+                old_ticket = Ticket.objects.get(id=ticket.id)
+                ticket = form.save(commit=False)
+                ticket.updated_by = request.user
+
+                changes = []
+                watch_fields = [
+                    'brts_unit', 'problem_category', 'title', 'terminal', 'description',
+                    'customer', 'region', 'assigned_to', 'responsible', 'status',
+                    'priority', 'is_escalated', 'current_escalation_level'
+                ]
+
+                for field in watch_fields:
+                    old_value = getattr(old_ticket, field)
+                    new_value = getattr(ticket, field)
+                    if old_value != new_value:
+                        changes.append((field, old_value, new_value))
+
+                ticket.save()
+
+                if changes:
+                    change_summary = "\n".join([
+                        f"• {field.replace('_', ' ').title()}: {old} → {new}"
+                        for field, old, new in changes
+                    ])
+
+                    action = f"Ticket updated:\n{change_summary}"
+                    ActivityLog.objects.create(
+                        ticket=ticket,
+                        action=action,
+                        user=request.user
+                    )
+
+                return redirect('ticket_detail', ticket_id=ticket.id)
+
+        elif 'assign_ticket' in request.POST and is_manager_or_above:
+            staff_id = request.POST.get('assigned_to')
+            if staff_id:
+                # Allow assignment to Staff, Manager, or Director
+                staff_member = get_object_or_404(
+                    User.objects.distinct(),
+                    id=staff_id,
+                    groups__name__in=['Staff', 'Manager', 'Director']
+                )
+
+                old_assigned_to = ticket.assigned_to
+                ticket.assigned_to = staff_member
+                ticket.updated_by = request.user
+                ticket.save()
+
+                if old_assigned_to != staff_member:
+                    ActivityLog.objects.create(
+                        ticket=ticket,
+                        action=f"Ticket assigned: {old_assigned_to} → {staff_member}",
+                        user=request.user
+                    )
+
+                # Email to the assignee (already exists)
+                subject = f"🎫 Ticket #{ticket.id} Assigned to You"
+                text_content = f"Hello {staff_member.get_full_name() or staff_member.username},\n\nYou have been assigned ticket #{ticket.id} - {ticket.title}.\nPlease log in to the system to view and resolve it:\n{request.build_absolute_uri(reverse('ticket_detail', args=[ticket.id]))}\n\nThank you."
+                html_content = render_to_string('email/ticket_detail_email.html', {'ticket': ticket, 'comments': comments, 'ticket_url': request.build_absolute_uri(reverse('ticket_detail', args=[ticket.id]))})
+
+                msg = EmailMultiAlternatives(
+                    subject,
+                    text_content,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [staff_member.email]
+                )
+                msg.attach_alternative(html_content, "text/html")
+
+                logo_path = os.path.join(settings.BASE_DIR, 'static', 'icons', 'logo.png')
+                if os.path.exists(logo_path):
+                    with open(logo_path, 'rb') as f:
+                        logo = MIMEImage(f.read())
+                        logo.add_header('Content-ID', '<logo>')
+                        logo.add_header('Content-Disposition', 'inline; filename="logo.png"')
+                        msg.attach(logo)
+
+                msg.send()
+
+                # New Email to the ticket creator
+                ticket_creator = ticket.created_by  # The user who created the ticket
+                subject_creator = f"🎫 Ticket #{ticket.id} Assigned to {staff_member.get_full_name() or staff_member.username}"
+                text_content_creator = (
+                    f"Hello {ticket_creator.get_full_name() or ticket_creator.username},\n\n"
+                    f"Ticket #{ticket.id} - {ticket.title} has been assigned to {staff_member.get_full_name() or staff_member.username}.\n\n"
+                    f"Assigned To: {staff_member.get_full_name() or staff_member.username}\n"
+                    f"Role: {', '.join([group.name for group in staff_member.groups.all()])}\n\n"
+                    f"Please log in to the system to view and manage the ticket:\n"
+                    f"{request.build_absolute_uri(reverse('ticket_detail', args=[ticket.id]))}\n\nThank you."
+                )
+
+                html_content_creator = render_to_string(
+                    'email/ticket_creator_notification.html',  
+                    {
+                        'ticket': ticket,
+                        'assignee': staff_member,
+                        'ticket_url': request.build_absolute_uri(reverse('ticket_detail', args=[ticket.id]))
+                    }
+                )
+
+                msg_creator = EmailMultiAlternatives(
+                    subject_creator,
+                    text_content_creator,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [ticket_creator.email]
+                )
+                msg_creator.attach_alternative(html_content_creator, "text/html")
+
+                logo_path_creator = os.path.join(settings.BASE_DIR, 'static', 'icons', 'logo.png')
+                if os.path.exists(logo_path_creator):
+                    with open(logo_path_creator, 'rb') as f:
+                        logo_creator = MIMEImage(f.read())
+                        logo_creator.add_header('Content-ID', '<logo>')
+                        logo_creator.add_header('Content-Disposition', 'inline; filename="logo.png"')
+                        msg_creator.attach(logo_creator)
+
+                msg_creator.send()
+
+                return redirect('ticket_detail', ticket_id=ticket.id)
+
+    activity_logs = ActivityLog.objects.filter(ticket=ticket).order_by('-timestamp')
+
+    # Determine the user's group for displaying relevant permissions
+    user_group = None
+    if Customer.objects.filter(custodian=request.user).exists():
+        user_group = "Custodian"
+    elif Customer.objects.filter(overseer=request.user).exists():
+        user_group = "Overseer"
+    else:
+        if request.user.groups.filter(name="Director").exists():
+            user_group = "Director"
+        elif request.user.groups.filter(name="Manager").exists():
+            user_group = "Manager"
+        elif request.user.groups.filter(name="Staff").exists():
+            user_group = "Staff"
+        else:
+            user_group = "Customer"  
+
+    context = {
+        'ticket': ticket,
+        'form': form,
+        'comments': comments,
+        'comment_form': comment_form,
+        'is_manager': is_manager_or_above,
+        'staff_users': assignable_users if is_manager_or_above else None,
+        'activity_logs': activity_logs,
+        'user_group': user_group,
+        'allowed_roles': ['Director', 'Manager', 'Staff', 'Superuser'],
     }
 
     return render(request, 'core/helpdesk/ticket_detail.html', context)
