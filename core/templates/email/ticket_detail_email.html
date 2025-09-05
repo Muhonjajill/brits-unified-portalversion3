@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Ticket Notification</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background: #f5f7fa;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color: #333333;
+      }
+
+      .container {
+        max-width: 820px;
+        margin: 32px auto;
+        padding: 0 12px;
+      }
+
+      .card {
+        position: relative;
+        background: #ffffff;
+        border-radius: 12px;
+        border-left: 6px solid #123692;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        transition: box-shadow 0.2s ease;
+      }
+
+      .card:hover {
+        box-shadow: 0 6px 28px rgba(0, 0, 0, 0.12);
+      }
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        padding: 20px 24px;
+        background: linear-gradient(to right, #f9fafc, #eef2f7);
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .card-header img.logo {
+        width: 72px;
+        height: 72px;
+        margin-right: 16px;
+        border-radius: 50%;
+        border: 2px solid #123692;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .card-header h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #123692;
+      }
+
+      .card-body {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+      }
+
+      .column {
+        flex: 1 1 50%;
+        padding: 16px 20px;
+        box-sizing: border-box;
+      }
+
+      .field {
+        margin-bottom: 14px;
+      }
+
+      .field-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+
+      /* Status colors */
+      .status-open       { background: #28a745; color: #ffffff; }
+      .status-in_progress{ background: #ffc107; color: #212529; }
+      .status-resolved   { background: #17a2b8; color: #ffffff; }
+      .status-closed     { background: #6c757d; color: #ffffff; }
+      .status-default    { background: #6b7280; color: #ffffff; }
+
+      /* Priority colors */
+      .priority-low      { background: #17a2b8; color: #ffffff; }
+      .priority-medium   { background: #ffc107; color: #212529; }
+      .priority-high     { background: #fd7e14; color: #ffffff; }
+      .priority-critical { background: #dc3545; color: #ffffff; }
+      .priority-default  { background: #6b7280; color: #ffffff; }
+
+      .quote {
+        margin-top: 4px;
+        padding: 10px 14px;
+        border-left: 3px solid rgba(18, 54, 146, 0.3);
+        background: #f8f9fa;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #444444;
+      }
+
+      .escalation {
+        margin: 18px 20px;
+        background: #fff3cd;
+        border: 1px solid #ffeeba;
+        color: #856404;
+        border-radius: 8px;
+        padding: 12px 14px;
+      }
+
+      .cta {
+        text-align: center;
+        padding: 20px;
+        background: #f9fafc;
+        border-top: 1px solid #e5e7eb;
+      }
+
+      .cta a {
+        display: inline-block;
+        background: #007bff;
+        color: #ffffff;
+        text-decoration: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-weight: 700;
+        transition: background 0.2s ease;
+      }
+
+      .cta a:hover {
+        background: #0056b3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <div class="card-header">
+          <img src="cid:logo" alt="Logo" class="logo" />
+          <h2>🎟️ Ticket {{ ticket.id|stringformat:"03d" }} – {{ ticket.title }}</h2>
+        </div>
+
+        <div class="card-body">
+          <div class="column">
+            <div class="field">
+              <div class="field-label">Status:</div>
+              {% with code=ticket.status|lower %}
+                <span class="badge
+                  {% if code == 'open' %}status-open
+                  {% elif code == 'in_progress' %}status-in_progress
+                  {% elif code == 'resolved' %}status-resolved
+                  {% elif code == 'closed' %}status-closed
+                  {% else %}status-default{% endif %}">
+                  {{ ticket.get_status_display }}
+                </span>
+              {% endwith %}
+            </div>
+            <div class="field">
+              <div class="field-label">BRTS Unit:</div>
+              <div>{{ ticket.brts_unit }}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Terminal:</div>
+              <div>{{ ticket.terminal }}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Problem Category:</div>
+              <div>{{ ticket.problem_category }}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Created By:</div>
+              <div>{{ ticket.created_by }}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Created At:</div>
+              <div>{{ ticket.created_at|date:"Y-m-d H:i" }}</div>
+            </div>
+            {% if ticket.resolution %}
+            <div class="field">
+              <div class="field-label">Resolution Statement:</div>
+              <div class="quote">{{ ticket.resolution }}</div>
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="column">
+            <div class="field">
+              <div class="field-label">Priority:</div>
+              {% with p=ticket.priority|lower %}
+                <span class="badge
+                  {% if p == 'low' %}priority-low
+                  {% elif p == 'medium' %}priority-medium
+                  {% elif p == 'high' %}priority-high
+                  {% elif p == 'critical' %}priority-critical
+                  {% else %}priority-default{% endif %}">
+                  {{ ticket.get_priority_display }}
+                </span>
+              {% endwith %}
+            </div>
+            <div class="field">
+              <div class="field-label">Customer:</div>
+              <div>{{ ticket.customer }}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Region:</div>
+              <div>{{ ticket.region }}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Description:</div>
+              <div class="quote">{{ ticket.description }}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Assigned To:</div>
+              <div>
+                {% if ticket.assigned_to %}
+                  <span style="color:#123692;font-weight:500;">
+                    {{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username }}
+                  </span>
+                {% else %}
+                  <em style="color:#6c757d;">Not assigned</em>
+                {% endif %}
+              </div>
+            </div>
+            <div class="field">
+              <div class="field-label">Updated At:</div>
+              <div>{{ ticket.updated_at|date:"Y-m-d H:i" }}</div>
+            </div>
+            <div class="field">
+              <div class="field-label">Resolved At:</div>
+              <div>
+                {% if ticket.resolved_at %}
+                  {{ ticket.resolved_at|date:"Y-m-d H:i" }}
+                {% else %}
+                  Not resolved yet
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {% if ticket.is_escalated %}
+        <div class="escalation">
+          <strong>🚨 Escalated</strong><br/>
+          <div><strong>By:</strong> {{ ticket.escalated_by }}</div>
+          <div><strong>At:</strong> {{ ticket.escalated_at|date:"Y-m-d H:i" }}</div>
+          <div><strong>Reason:</strong> <em>{{ ticket.escalation_reason }}</em></div>
+        </div>
+        {% endif %}
+
+        <div class="cta">
+          <a href="{{ ticket_url }}">View Ticket</a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

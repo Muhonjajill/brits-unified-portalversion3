@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Create New Ticket{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/create_ticket.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="form-wrapper">
+    <h2>Create New Ticket</h2>
+    
+    {% if form.errors %}
+    <div class="form-errors">
+    <ul>
+        {% for field in form %}
+        {% for error in field.errors %}
+            <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+        {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" class="ticket-form">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-column">
+                <div class="form-group">
+                    <label for="{{ form.brts_unit.id_for_label }}">BRTS Unit</label>
+                    {{ form.brts_unit }}
+                </div>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.problem_category.id_for_label }}">Problem Category</label>
+                    {{ form.problem_category }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}">Issue</label>
+                    {{ form.title }}
+                </div>
+                <div class="form-group">
+                    <label for="id_terminal">Terminal</label>
+                    <select name="terminal" id="id_terminal" class="form-control">
+                        <option value="" selected disabled>-- Select a Terminal --</option>
+                        {% for terminal in form.fields.terminal.queryset %}
+                            <option value="{{ terminal.id }}"
+                                {% if form.instance.terminal and form.instance.terminal.id == terminal.id %}selected{% endif %}
+                                {% if not terminal.is_active %}disabled style="color: grey;"{% endif %}>
+                                {{ terminal.branch_name }}{% if not terminal.is_active %} (Inactive){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.customer.id_for_label }}">Customer</label>
+                    {{ form.customer }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.region.id_for_label }}">Region</label>
+                    {{ form.region }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}">Description</label>
+                    {{ form.description }}
+                </div>
+            </div>
+
+            <div class="form-column">
+                <!--<div class="form-group">
+                    <label for="{{ form.priority.id_for_label }}">Priority</label>
+                    {{ form.priority }}
+                </div>-->
+                <div class="form-group">
+                    <label for="{{ form.status.id_for_label }}">Status</label>
+                    {{ form.status }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.custom_created_at.id_for_label }}">Ticket Date (optional)</label>
+                    {{ form.custom_created_at }}
+                </div>
+                <!--<div class="form-group">
+                    <label for="{{ form.responsible.id_for_label }}">Responsible</label>
+                    {{ form.responsible }}
+                </div>
+                <div class="form-group">
+                    <label for="comment_summary">Comments</label>
+                    {{ form.comment_summary }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.created_at.id_for_label }}">Created At</label>
+                    {{ form.created_at }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.updated_at.id_for_label }}">Updated At</label>
+                    {{ form.updated_at }}
+                </div>-->
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" name="create" class="btn btn-primary">Create</button>
+            <button type="submit" name="create_another" class="btn btn-outline">Create & Add Another</button>
+            <a href="{% url 'tickets' %}" class="btn btn-cancel">Cancel</a>
+        </div>
+    </form>
+
+</div>
+   
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const categorySelect = document.getElementById("id_problem_category");
+    const issueSelect    = document.getElementById("id_title");  
+    const terminalSelect = document.getElementById("id_terminal");
+    const customerSelect = document.getElementById("id_customer");
+    const regionSelect   = document.getElementById("id_region");
+
+    // ===== Update customer & region based on terminal =====
+    if (terminalSelect) {
+        terminalSelect.addEventListener('change', function() {
+            const terminalId = terminalSelect.value;
+            if (terminalId) {
+                fetch(`/get_terminal_details/${terminalId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (customerSelect) customerSelect.value = data.customer_id || "";
+                        if (regionSelect) regionSelect.value = data.region_id || "";
+                    });
+            }
+        });
+    }
+
+    // ===== Issue mapping for category -> issues =====
+    const issueMapping = {{ issue_mapping|safe }};
+    
+    function populateIssues(catPk) {
+        issueSelect.innerHTML = `<option value="">Select Issue</option>`;
+        if (catPk && issueMapping[catPk]) {
+            issueMapping[catPk].forEach(issue => {
+                const o = new Option(issue, issue);
+                issueSelect.append(o);
+            });
+            issueSelect.disabled = false;
+        } else {
+            issueSelect.disabled = true;
+        }
+    }
+
+    // ===== On load & on category change =====
+    if (categorySelect) {
+        populateIssues(categorySelect.value);
+        categorySelect.addEventListener("change", e =>
+            populateIssues(e.target.value)
+        );
+    }
+});
+</script>
+
+<script src="{% static 'js/ticketing_dashboard.js' %}"></script>
+{% endblock %}

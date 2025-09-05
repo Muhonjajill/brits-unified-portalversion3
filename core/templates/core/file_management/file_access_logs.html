@@ -1,0 +1,76 @@
+{% extends "files_base.html" %}
+
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/file_access_logs.css' %}">
+{% endblock %}
+
+{% block title %}File Access Logs{% endblock %}
+
+{% block content %}
+<div class="logs-container">
+    <div class="logs-header">
+        <h2>File Access Logs</h2>
+        <p>Below are the logs of file accesses.</p>
+    </div>
+
+    <div class="search-bar">
+        <form method="get" action="{% url 'file_access_logs' %}">
+            <input type="text" name="search" placeholder="Search logs..." value="{{ request.GET.search }}">
+        </form>
+    </div>
+
+    {% if can_view_logs %}
+        <a href="{% url 'clear_all_logs' %}" class="clear-all-btn">Clear All Logs</a>
+    {% endif %}
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>File Title</th>
+                    <th>Accessed By</th>
+                    <th>Action</th>
+                    <th>Access Time</th>
+                    <th>Delete Log</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in page_obj %}
+                    <tr>
+                        <td>{{ log.file.title }}</td>
+                        <td>{{ log.accessed_by.username }}</td>
+                        <td><span class="log-action {% if log.action == 'preview' %}preview{% elif log.action == 'download' %}download{% else %}none{% endif %}">{{ log.get_action_display }}</span></td>
+                        <td>{{ log.access_time|date:"F d, Y H:i" }}</td>
+                        <td>
+                            {% if can_view_logs %}
+                                <a href="{% url 'delete_log' log.id %}" class="delete-btn">Delete</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr class="no-logs">
+                        <td colspan="5">No access logs available.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; First</a>
+            <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+
+        <span class="current-page">{{ page_obj.number }}</span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

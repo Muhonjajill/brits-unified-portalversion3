@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ticket_activity_logs.css' %}">
+{% endblock %}
+
+{% block content %}
+<h2 class="ticket-title">Activity Log for Ticket: {{ ticket.title }}</h2>
+
+<form method="post" action="{% url 'clear_activity_logs' ticket.id %}" style="margin-bottom: 20px;" onsubmit="return confirmClearLogs()">
+    {% csrf_token %}
+    <button type="submit" class="clear-logs-btn">Clear All Logs</button>
+</form>
+
+<div class="activity-log-container">
+    {% if activity_logs %}
+    <table class="activity-log-table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Action</th>
+                <th>Timestamp</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in activity_logs %}
+            <tr>
+                <td>
+                    {% if log.user %}
+                        {{ log.user.username }}
+                    {% else %}
+                        System
+                    {% endif %}
+                </td>
+                <td>
+                    {% if log.action %}
+                        {% with log.action.splitlines as lines %}
+                            {% if lines %}
+                                <!-- Heading -->
+                                <div><strong>{{ lines.0 }}</strong></div>
+
+                                <!-- Remaining details in bullet form -->
+                                {% if lines|length > 1 %}
+                                    <ul>
+                                        {% for line in lines|slice:"1:" %}
+                                            {% if line %}
+                                                <li>{{ line|cut:"• " }}</li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            {% endif %}
+                        {% endwith %}
+                    {% endif %}
+                </td>
+                <td>{{ log.timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No activity yet for this ticket.</p>
+    {% endif %}
+</div>
+
+<script>
+function confirmClearLogs() {
+    return confirm("Are you sure you want to clear all activity logs for this ticket? This action cannot be undone.");
+}
+</script>
+{% endblock %}
+ template

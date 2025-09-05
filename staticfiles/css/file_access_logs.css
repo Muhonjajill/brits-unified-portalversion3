@@ -1,0 +1,235 @@
+/* Container Styles */
+.logs-container {
+    margin: 20px auto;
+    padding: 20px;
+    max-width: 1200px;
+    background-color: #f4f7fb;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* Header Styles */
+.logs-header {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.logs-header h2 {
+    font-size: 36px;
+    font-weight: 700;
+    color: #2c3e50;
+    text-transform: uppercase;
+    animation: fadeIn 1s ease-in-out;
+}
+
+.logs-header p {
+    font-size: 18px;
+    color: #666;
+    margin-top: 10px;
+}
+
+/* Search Bar */
+.search-bar {
+    margin-bottom: 20px;
+    text-align: center;
+    animation: fadeIn 1s ease-in-out;
+}
+
+.search-bar input[type="text"] {
+    padding: 12px;
+    width: 100%;
+    max-width: 350px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    transition: border-color 0.3s ease;
+}
+
+.search-bar input[type="text"]:focus {
+    border-color: #123692;
+}
+
+/* Table Container */
+.table-container {
+    overflow-x: auto;
+    margin-top: 20px;
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    animation: fadeIn 1s ease-in-out;
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border: 1px solid #ddd;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+th {
+    background-color: #123692;
+    color: #fff;
+    font-weight: bold;
+}
+
+td {
+    background-color: #fff;
+    color: #555;
+}
+
+tr:nth-child(even) td {
+    background-color: #ecf0f1;
+}
+
+.log-action.preview {
+    color: #f39c12; /* Yellow for preview */
+}
+
+.log-action.download {
+    color: #5cb85c; /* Green for download */
+}
+
+.log-action.none {
+    color: #e74c3c; /* Red for None */
+}
+
+/* Hover effect for rows */
+tr:hover td {
+    background-color: #e6f7ff;
+    cursor: pointer;
+    transform: scale(1.05);
+    transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    animation: fadeIn 1s ease-in-out;
+}
+
+.pagination a {
+    padding: 8px 16px;
+    margin: 0 5px;
+    background-color: #123692;
+    color: white;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.pagination a:hover {
+    background-color: #172d69;
+    transform: translateY(-3px);
+}
+
+.pagination .current-page {
+    background-color: #f4f7fb;
+    color: #123692;
+    font-weight: bold;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.delete-btn {
+    color: red;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.clear-all-btn {
+    background-color: #f44336;
+    color: white;
+    padding: 10px;
+    text-decoration: none;
+    margin: 10px 0;
+    display: inline-block;
+}
+
+.clear-all-btn:hover {
+    background-color: #d32f2f;
+}
+
+/* Mobile Responsiveness */
+@media screen and (max-width: 768px) {
+    .logs-container {
+        padding: 15px;
+        margin: 10px;
+    }
+
+    .logs-header h2 {
+        font-size: 28px;
+    }
+
+    .logs-header p {
+        font-size: 16px;
+    }
+
+    .search-bar input[type="text"] {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    table {
+        font-size: 14px;
+    }
+
+    th, td {
+        padding: 10px;
+    }
+
+    .pagination {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+
+    .pagination a {
+        margin: 5px 8px;
+    }
+
+    .clear-all-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .logs-header h2 {
+        font-size: 24px;
+    }
+
+    th, td {
+        font-size: 12px;
+    }
+
+    .search-bar input[type="text"] {
+        padding: 8px;
+    }
+
+    .pagination a {
+        font-size: 12px;
+    }
+
+    .clear-all-btn {
+        font-size: 14px;
+    }
+}

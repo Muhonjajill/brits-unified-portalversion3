@@ -1,0 +1,87 @@
+{% extends "files_base.html" %}
+{% block extra_css %}
+<style>
+    /* Modal Styles */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Overlay background */
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 400px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-content h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.modal .close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.5rem;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.modal .close:hover {
+  color: #333;
+}
+
+</style>
+{% endblock%}
+{% block title %}Update Passcode{% endblock %}
+
+{% block content %}
+<!-- Trigger the modal with a button -->
+<button onclick="showModal()">Change Passcode</button>
+
+<!-- The Modal -->
+<div id="passcode-modal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <h2>Update Passcode for {{ file.title }}</h2>
+
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <input type="submit" value="Update Passcode">
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Show the modal
+  function showModal() {
+    document.getElementById("passcode-modal").style.display = "block";
+  }
+
+  // Close the modal
+  function closeModal() {
+    document.getElementById("passcode-modal").style.display = "none";
+  }
+
+  // Close the modal if clicked outside the modal content
+  window.onclick = function(event) {
+    if (event.target == document.getElementById("passcode-modal")) {
+      closeModal();
+    }
+  }
+</script>
+{% endblock %}

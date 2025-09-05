@@ -1,0 +1,312 @@
+/* General Container Styles */
+#body{
+   margin-top: 100px;
+}
+.page-container {
+  background: #ffffff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  margin-top: 2rem;
+  color: #212529;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.page-container h2 {
+  color: #343a40;
+  margin-bottom: 1rem;
+  font-size: 1.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: slideInLeft 0.8s ease-in-out;
+}
+
+.page-container p {
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+  animation: fadeIn 1s ease-in-out;
+}
+
+/* Form Styling */
+.version-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  align-items: flex-start;
+  animation: fadeInUp 0.8s ease-in-out;
+}
+
+.version-form .form-group {
+  flex: 1 1 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.version-form label {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: #495057;
+}
+
+.version-form input,
+.version-form select,
+.version-form textarea {
+  padding: 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: #f8f9fa;
+  color: #212529;
+  transition: all 0.3s ease-in-out;
+}
+
+.version-form input:focus,
+.version-form select:focus,
+.version-form textarea:focus {
+  outline: none;
+  border-color: #123692;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.25);
+  transform: scale(1.02);
+}
+
+/* Button Styling */
+.form-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  animation: fadeIn 1.2s ease-in-out;
+}
+
+.form-buttons .btn {
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background-color: #bb2d3b;
+  transform: scale(1.05);
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: #fff;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  transform: scale(1.05);
+}
+
+.btn-outline-light {
+  background-color: transparent;
+  border: 1px solid #ced4da;
+  color: #495057;
+}
+
+.btn-outline-light:hover {
+  background-color: #f1f3f5;
+  transform: scale(1.05);
+}
+
+/* Table Styling */
+.version-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+  background-color: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.04);
+  animation: fadeIn 1s ease-in-out;
+}
+
+.version-table th,
+.version-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e9ecef;
+  text-align: left;
+  color: #212529;
+}
+
+.version-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #495057;
+}
+
+.version-table tbody tr:hover {
+  background-color: #f1f3f5;
+  transform: scale(1.02);
+  transition: all 0.2s ease-in-out;
+}
+
+.version-table td:last-child {
+  white-space: nowrap;
+}
+
+/* Modal Styling */
+.modal-backdrop.show {
+  opacity: 0.6;
+  animation: modalBackdropFadeIn 0.3s ease-out forwards;
+}
+
+.modal-dialog-animated {
+  transform: translateY(-50px) scale(0.9);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s ease-out;
+}
+
+.modal.show .modal-dialog-animated {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.modal-header .btn-close {
+  font-size: 1.25rem;
+  transition: transform 0.2s ease-in-out;
+}
+
+.modal-header .btn-close:hover {
+  transform: rotate(90deg);
+}
+
+/* Filters Row */
+.filters-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+
+.filters-row div {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.filters-row label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #495057;
+}
+
+.filter-select {
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+  color: #212529;
+  transition: all 0.3s ease-in-out;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #123692;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+  transform: translateY(-2px);
+}
+
+/* Hover Effect for Filters */
+.filter-select:hover {
+  background-color: #e9ecef;
+  border-color: #172d69;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 1rem; /* Reduce padding for smaller screens */
+  }
+
+  .version-form {
+    flex-direction: column; /* Stack form fields vertically */
+    gap: 1rem;
+  }
+
+  .version-form .form-group {
+    flex: 1 1 100%; /* Allow form fields to use full width */
+  }
+
+  .form-buttons .btn {
+    width: 100%; /* Make buttons full-width */
+    padding: 12px; /* Increase padding for buttons on small screens */
+  }
+
+  .version-table th,
+  .version-table td {
+    font-size: 0.85rem; /* Smaller font size for table cells */
+    padding: 10px 12px; /* Adjust table padding */
+  }
+
+  .filters-row {
+    flex-direction: column; /* Stack filter fields vertically */
+    gap: 1rem; /* Add space between filters */
+  }
+
+  .modal-content {
+    padding: 1rem; /* Reduce padding in modals */
+  }
+
+  .modal-footer .btn {
+    width: 100%; /* Make footer buttons full-width */
+  }
+
+  /* Additional Mobile Adjustments */
+  .modal-header {
+    justify-content: space-between; /* Make modal header more responsive */
+  }
+
+  .version-table {
+    font-size: 0.85rem; /* Smaller font for mobile */
+    overflow-x: auto; /* Allow horizontal scrolling on small screens */
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

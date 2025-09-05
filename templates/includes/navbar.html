@@ -1,0 +1,304 @@
+{% load static %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+
+<link rel="stylesheet" type="text/css" href="{% static 'css/navbar.css' %}">
+
+<div class="top-navbar">
+  <div class="left">
+    <div class="hamburger" id="hamburger">
+      <i class="fa-solid fa-bars"></i>
+    </div>
+    <div class="logo">BRITS Helpdesk</div>
+  </div>
+
+  
+
+  <div class="nav-right">
+    <!-- Notification Bell -->
+    <div class="notifications" id="notificationBell">
+      <i class="fas fa-bell"></i>
+      <span class="badge" id="notificationCount" style="display: none;">0</span>
+
+      <div class="dropdown-menu notifications-dropdown" id="notificationsDropdown">
+        <div id="notificationsList">
+          <p class="empty">No tickets</p>
+        </div>
+        <div class="view-all">
+          <a href="{% url 'escalated_tickets_list' %}">View all</a>
+        </div>
+      </div>
+    </div>
+  
+
+
+    <div class="user-profile" id="userProfile">
+      <div class="profile-trigger">
+          <img src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}https://placehold.co/40x40{% endif %}" alt="User Avatar">
+        <span>{{ user.get_full_name|default:user.username }}</span>
+        <i class="fas fa-chevron-down"></i>
+      </div>
+      <div class="dropdown-menu">
+        <a href="{% url 'profile_view' %}"><i class="fa-solid fa-user"></i>  Profile</a>
+        <a href="{% url 'settings' %}"><i class="fa-solid fa-gear"></i>  Settings</a>
+        <form id="logout-form" method="post" action="{% url 'logout' %}" style="margin: 0;">
+          {% csrf_token %}
+          <button type="submit" class="dropdown-link logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const profileViewUrl = "{% url 'profile_view' %}";
+  const fetchEscalationsUrl = "{% url 'get_notifications' %}";
+  let escalationSocket;
+
+  // ==== Initialize WebSocket ====
+  (function () {
+    const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+    const url = `${wsScheme}://${window.location.host}/ws/escalations/`;
+    console.log("Connecting to WebSocket at:", url);
+
+    escalationSocket = new WebSocket(url);
+    escalationSocket.onopen = () => {
+      console.log("✅ Connected to escalation WebSocket");
+    };
+    escalationSocket.onclose = () => {
+      console.error("❌ WebSocket closed unexpectedly");
+    };
+
+    escalationSocket.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      console.log("📩 WebSocket message received:", data);
+      switch (data.type) {
+        case "notifications_list":
+          if (data.tickets) renderNotifications(data.tickets, data.count);
+          break;
+        case "ticket_creation":
+          console.log("➡️ Ticket creation payload:", data);
+          if (data.ticket) handleNewTicket(data.ticket);
+          break;
+        case "escalation_message":
+          if (data.message) showNotification(data.message);
+          break;
+        case "unassigned_ticket_notification":
+          if (data.ticket) handleNewUnassignedTicket(data.ticket);
+          break;
+        default:
+          console.warn("⚠️ Unknown WebSocket event type:", data.type);
+      }
+    };
+  })();  <!--– IIFE closed here -->
+
+  // ==== Initial Fetch ====
+  fetch(fetchEscalationsUrl)
+    .then((r) => {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const ct = r.headers.get("content-type") || "";
+      if (!ct.includes("application/json")) {
+        return r.text().then((txt) => {
+          throw new Error("Expected JSON, got: " + txt.slice(0, 100));
+        });
+      }
+      return r.json();
+    })
+    .then((data) => renderNotifications(data.tickets || [], data.count))
+    .catch((err) => console.error("Error fetching tickets:", err));
+
+    /*
+  // ==== Render Single Notification ====
+  function createNotificationItem(ticket) {
+    const div = document.createElement("div");
+    div.classList.add("notification-item");
+
+    const isEsc =
+      ticket.notification_type === "escalated" ||
+      ticket.is_escalated === true ||
+      (ticket.escalated_at && ticket.escalated_at !== null);
+    const isUnassigned = ticket.notification_type === "unassigned";
+    let typeLabel = "";
+
+    if (isEsc) {
+      typeLabel = `<span class="badge badge-escalated">Escalated</span>`;
+    } else if (isUnassigned) {
+      typeLabel = `<span class="badge badge-unassigned">Unassigned</span>`;
+    } else {
+      typeLabel = `<span class="badge badge-new">New</span>`;
+    }
+
+    const priorityText =
+      typeof ticket.priority === "string"
+        ? ticket.priority
+        : JSON.stringify(ticket.priority);
+
+    div.innerHTML = `
+      <a class="dropdown-item" href="/tickets/${ticket.id}/">
+        ${typeLabel} #${ticket.id} - ${ticket.title}<br>
+        <small>${priorityText} | ${
+      ticket.escalated_at ? ticket.escalated_at : ticket.created_at
+    }</small>
+      </a>
+    `;
+    return div;
+  }*/
+
+  // Handle clicking on a notification to mark it as read
+function createNotificationItem(ticket) {
+  const div = document.createElement("div");
+  div.classList.add("notification-item");
+
+  // Add the badge (Escalated, Unassigned, New)
+  const isEsc = ticket.notification_type === "escalated" || ticket.is_escalated === true || (ticket.escalated_at && ticket.escalated_at !== null);
+  const isUnassigned = ticket.notification_type === "unassigned";
+  let typeLabel = "";
+  if (isEsc) {
+    typeLabel = `<span class="badge badge-escalated">Escalated</span>`;
+  } else if (isUnassigned) {
+    typeLabel = `<span class="badge badge-unassigned">Unassigned</span>`;
+  } else {
+    typeLabel = `<span class="badge badge-new">New</span>`;
+  }
+
+  const priorityText = typeof ticket.priority === "string" ? ticket.priority : JSON.stringify(ticket.priority);
+
+  div.innerHTML = `
+    <a class="dropdown-item" href="/tickets/${ticket.id}/" data-ticket-id="${ticket.id}">
+      ${typeLabel} #${ticket.id} - ${ticket.title}<br>
+      <small>${priorityText} | ${ticket.escalated_at ? ticket.escalated_at : ticket.created_at}</small>
+    </a>
+  `;
+
+  // Event listener to mark as read when clicked
+  div.querySelector("a").addEventListener("click", function () {
+    markNotificationRead(ticket.id); // Call to mark the notification as read
+  });
+
+  return div;
+}
+
+// Function to mark notification as read on the server
+function markNotificationRead(ticketId) {
+  fetch(`/mark_notification_read/${ticketId}/`, {
+    method: 'POST',
+    body: JSON.stringify({ type: 'read' }),
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken, // Include CSRF token if necessary
+    },
+  })
+  .then((response) => response.json())
+  .then((data) => {
+    if (data.success) {
+      // Remove or update the notification visually
+      const notificationItem = document.querySelector(`[data-ticket-id="${ticketId}"]`);
+      if (notificationItem) {
+        notificationItem.parentElement.removeChild(notificationItem); // Remove the notification from the list
+      }
+      updateNotificationCount();
+    } else {
+      console.error("Failed to mark notification as read.");
+    }
+  });
+}
+
+// Update notification count after marking as read
+function updateNotificationCount() {
+  const countEl = document.getElementById("notificationCount");
+  let currentCount = parseInt(countEl.textContent || "0", 10);
+  if (currentCount > 0) {
+    countEl.textContent = currentCount - 1;
+  }
+  if (currentCount <= 1) {
+    countEl.style.display = "none"; // Hide the badge if no notifications are left
+  }
+}
+
+
+  // ==== Render Escalations ====
+  function renderNotifications(tickets, totalCount) {
+    const countEl = document.getElementById("notificationCount");
+    const listEl = document.getElementById("notificationsList");
+    const viewAllEl = document.querySelector(".view-all");
+    if (!countEl || !listEl) return;
+
+    listEl.innerHTML = "";
+    if (!tickets || tickets.length === 0) {
+      listEl.innerHTML = `<div class="dropdown-item text-muted empty">No tickets</div>`;
+      countEl.style.display = "none";
+      return;
+    }
+
+    tickets.slice(0, 5).forEach((t) =>
+      listEl.appendChild(createNotificationItem(t))
+    );
+    countEl.textContent =
+      typeof totalCount === "number" ? totalCount : tickets.length;
+    countEl.style.display = "inline-block";
+    if (viewAllEl) viewAllEl.style.display = "block";
+  }
+
+  // Handle new ticket event
+  function handleNewTicket(ticket) {
+    const countEl = document.getElementById("notificationCount");
+    const listEl = document.getElementById("notificationsList");
+    if (!countEl || !listEl) return;
+
+    const emptyMsg = document.querySelector(".empty");
+    if (emptyMsg) emptyMsg.remove();
+
+    ticket.notification_type = ticket.notification_type || "new";
+    listEl.prepend(createNotificationItem(ticket));
+
+    const items = listEl.querySelectorAll(".notification-item");
+    if (items.length > 5) listEl.removeChild(items[items.length - 1]);
+
+    const current = parseInt(countEl.textContent || "0", 10);
+    countEl.textContent = isNaN(current) ? 1 : current + 1;
+    countEl.style.display = "inline-block";
+  }
+
+  // Handle new unassigned ticket event
+  function handleNewUnassignedTicket(ticket) {
+    const countEl = document.getElementById("notificationCount");
+    const listEl = document.getElementById("notificationsList");
+    if (!countEl || !listEl) return;
+
+    const emptyMsg = document.querySelector(".empty");
+    if (emptyMsg) emptyMsg.remove();
+
+    ticket.notification_type = "unassigned";
+    listEl.prepend(createNotificationItem(ticket));
+
+    const items = listEl.querySelectorAll(".notification-item");
+    if (items.length > 5) listEl.removeChild(items[items.length - 1]);
+
+    const current = parseInt(countEl.textContent || "0", 10);
+    countEl.textContent = isNaN(current) ? 1 : current + 1;
+    countEl.style.display = "inline-block";
+  }
+
+  // ==== Show Text Notification ====
+  function showNotification(message) {
+    const listEl = document.getElementById("notificationsList");
+    if (!listEl) return;
+
+    const text = typeof message === "string" ? message : JSON.stringify(message);
+    const div = document.createElement("div");
+    div.classList.add("notification-item", "new-message");
+    div.innerHTML = `<div class="dropdown-item">🔔 ${text}</div>`;
+    listEl.prepend(div);
+    setTimeout(() => {
+      div.remove();
+    }, 10000);
+  }
+
+  // ==== Dropdown Toggle ====
+  const bell = document.getElementById("notificationBell");
+  const menu = document.getElementById("notificationsDropdown");
+  if (bell && menu) {
+    bell.addEventListener("click", () => menu.classList.toggle("show"));
+  }
+</script>
+<script src="{% static 'js/ticketing_dashboard.js' %}"></script>

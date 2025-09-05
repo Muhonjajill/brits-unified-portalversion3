@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ticket_list.css' %}">
+{% endblock %}
+
+{% block title %}🎫 Ticket List{% endblock %}
+
+{% block content %}
+<div class="ticket-list-container">
+    <h1>Tickets for {{ period|capfirst }} Period</h1>
+
+    <!-- Search Bar -->
+    <div class="search-bar-container">
+        <form method="get" action="{% url 'show_tickets_by_period' period=period %}" class="search-form">
+            <input type="text" name="q" placeholder="Search tickets..."
+                   value="{{ search_query }}" class="search-bar">
+            <button type="submit" class="search-button">Search</button>
+        </form>
+    </div>
+
+    <!-- Ticket Table -->
+    <div class="ticket-table-container">
+        <table class="ticket-table">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th>Customer</th>
+                    <th>Terminal</th>
+                    <th>Assigned To</th>
+                    <th>Created On</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr onclick="window.location='{% url 'ticket_detail' ticket_id=ticket.id %}'" class="ticket-row">
+                    <td>{{ ticket.title }}</td>
+                    <td><span class="status-{{ ticket.status|lower }}">{{ ticket.status }}</span></td>
+                    <td><span class="priority-{{ ticket.priority|lower }}">{{ ticket.priority }}</span></td>
+                    <td>{{ ticket.customer.name }}</td>
+                    <td>{{ ticket.terminal|default:"—" }}</td>
+                    <td>{{ ticket.assigned_to|default:"Unassigned" }}</td>
+                    <td>{{ ticket.created_at|date:"Y-m-d" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="no-tickets">No tickets found for the selected period.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if tickets.has_other_pages %}
+    <div class="pagination">
+        {% if tickets.has_previous %}
+            <a href="?page={{ tickets.previous_page_number }}&q={{ search_query }}" class="page-btn">« Prev</a>
+        {% endif %}
+
+        <span class="page-info">
+            Page {{ tickets.number }} of {{ tickets.paginator.num_pages }}
+        </span>
+
+        {% if tickets.has_next %}
+            <a href="?page={{ tickets.next_page_number }}&q={{ search_query }}" class="page-btn">Next »</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script src="{% static 'js/ticketing_dashboard.js' %}"></script>
+{% endblock %}

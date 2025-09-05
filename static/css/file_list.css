@@ -1,0 +1,558 @@
+body {
+  font-family: "Inter", "Segoe UI", sans-serif;
+  background-color: #f8fafc;
+  color: #333;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 1.2rem;
+}
+
+.page-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: #2563eb;
+  letter-spacing: -0.5px;
+}
+
+.section-subtitle {
+  font-size: 1.2rem;
+  color: #444;
+  margin-top: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.category-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.category-nav a {
+  padding: 0.5rem 1.1rem;
+  background-color: #e9ecef;
+  color: #123692;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+  font-weight: 500;
+}
+
+.category-nav a:hover {
+  background-color: #123692;
+  color: #fff;
+}
+
+.category-nav .active {
+  background-color: #123692;
+  color: #fff;
+}
+
+.upload-button {
+  background-color: #28a745 !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+.upload-button:hover {
+  background-color: #218838 !important;
+}
+
+/* === Animation Effects === */
+@keyframes fadeInPage {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadein {
+  animation: fadeInPage 0.7s cubic-bezier(.46,.03,.52,.96) 1;
+}
+
+@keyframes rowGlow {
+  from { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+  to { box-shadow: 0 1px 18px 2px rgba(37,99,235,0.18); }
+}
+
+.file-row {
+  transition: box-shadow 0.2s, background 0.2s;
+}
+
+.file-row.animate-row:hover {
+  animation: rowGlow 0.4s;
+  background: #e8f1ff;
+  box-shadow: 0 2px 16px 0 rgba(37,99,235,.09);
+  z-index: 2;
+  position: relative;
+}
+
+/* ===== File Grid Layout ===== */
+.file-grid-header,
+.file-row {
+  display: grid;
+  grid-template-columns: 2.5fr 1fr 1.2fr 1fr 1.1fr 1fr;
+  gap: 1.2rem;
+  align-items: center;
+}
+
+.file-row {
+  padding: 0.9rem 1rem;
+  border-top: 1px solid #f1f1f1;
+}
+
+.file-grid-header {
+  background-color: #2563eb;
+  color: white;
+  font-weight: bold;
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  padding: 0.75rem 1rem;
+}
+
+.file-grid {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+
+.file-row:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.file-row.empty {
+  justify-content: center;
+  font-style: italic;
+  color: #888;
+  text-align: center;
+}
+
+/* ===== File Details (Name, Icon, Title, Description) ===== */
+.file-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.file-name img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 4px;
+  background-color: #f1f1f1;
+}
+
+.file-title-group {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.file-title {
+  font-weight: bold;
+  color: #212529;
+}
+
+.file-description {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+/* ===== Buttons ===== */
+.btn {
+  display: inline-block;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  border: none;
+  transition: background-color 0.2s ease;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+.preview-link {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.preview-link:hover {
+  background-color: #e0a800;
+}
+
+.download-link {
+  background-color: #17a2b8;
+  color: white;
+}
+
+.download-link:hover {
+  background-color: #138496;
+}
+
+.delete-link,
+.delete-form button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.2s ease;
+}
+
+.delete-link:hover,
+.delete-form button:hover {
+  background-color: #c82333;
+}
+
+.delete-form {
+  display: inline-block;
+  margin-left: 0.5rem;
+}
+
+/* ===== Access Level Tag ===== */
+.tag {
+  padding: 0.3rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.tag.public {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.tag.private {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* ===== Pagination ===== */
+.pagination {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.pagination a,
+.pagination span {
+  margin: 0 5px;
+  padding: 6px 12px;
+  background: #f0f0f0;
+  text-decoration: none;
+  border-radius: 4px;
+  color: #333;
+}
+
+.pagination a:hover {
+  background-color: #123692;
+  color: white;
+}
+
+.pagination .current {
+  background-color: #123692;
+  color: #fff;
+  font-weight: bold;
+}
+
+.delete-header, 
+.file-row > div:last-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+}
+
+.file-row > div:last-child form,
+.file-row > div:last-child {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-row > div:last-child .btn.delete-link {
+  width: 80px;
+  text-align: center;
+}
+
+/* Titles are given more space, vertically aligned with icon */
+.file-name {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.file-title-group {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  transition: color .2s;
+}
+
+/* Animate title on hover */
+.file-row:hover .file-title {
+  color: #2563eb;
+  transition: color 0.2s;
+}
+
+/* Icon improvements */
+.file-name img {
+  width: 38px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  border: 1.5px solid #e0e0e0;
+}
+
+/* Tag */
+.tag {
+  transition: background 0.2s, color 0.2s;
+}
+
+/* Glowing animation for buttons on hover */
+.btn:active, .btn:focus, .btn:hover {
+  filter: brightness(1.1) drop-shadow(0 2px 8px #c1d6ff);
+}
+
+.delete-link:active, .delete-link:focus, .delete-link:hover {
+  filter: brightness(1.15) drop-shadow(0 1px 8px #ffccd6);
+}
+
+/* Modal Styles */
+.passcode-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.passcode-modal-content {
+  position: relative;
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.4s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.passcode-modal h3 {
+  text-align: center;
+  font-size: 1.2rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.passcode-modal input {
+  width: 100%;
+  padding: 0.8rem;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  transition: border-color 0.3s ease;
+}
+
+.passcode-modal input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.passcode-modal button {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.passcode-modal button:hover {
+  background-color: #0056b3;
+}
+
+.passcode-modal .close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 1.6rem;
+  color: #aaa;
+  cursor: pointer;
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.passcode-modal .close:hover {
+  color: #333;
+  transform: rotate(45deg);
+}
+
+/* Add a subtle fade-in effect for the modal when it's shown */
+.passcode-modal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Adding additional styling to the buttons */
+.passcode-modal button,
+.passcode-modal .close {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Button Hover Effects */
+.passcode-modal button:hover {
+  transform: scale(1.05);
+}
+
+.passcode-modal .close:hover {
+  transform: rotate(45deg);
+  color: #333;
+}
+
+
+/* ===========================
+   SMALL ––––– UP TO 768px
+   =========================== */
+@media (max-width: 768px) {
+  /* 1. Make category nav scrollable */
+  .category-nav {
+    overflow-x: auto;
+    padding-bottom: .5rem;
+  }
+  .category-nav a {
+    flex: 0 0 auto;
+  }
+
+  /* 2. Turn each row into a card */
+  .file-row {
+    display: block;
+    background: #fff;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    padding: 1rem;
+  }
+  .file-row > div {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: .75rem;
+  }
+  .file-row > div:last-child {
+    margin-bottom: 0;
+  }
+
+  /* 3. Add labels before each value */
+  .file-row > div:nth-child(2)::before { content: "Size:"; font-weight:500; }
+  .file-row > div:nth-child(3)::before { content: "Access:"; font-weight:500; }
+  .file-row > div:nth-child(4)::before { content: ""; } /* preview button w/o label */
+  .file-row > div:nth-child(5)::before { content: ""; } /* download button */
+  .file-row > div:nth-child(6)::before { content: ""; } /* delete */
+
+  /* 4. Adjust title/icon layout */
+  .file-name {
+    flex-direction: row;
+    align-items: center;
+  }
+  .file-name img {
+    width: 40px;
+    height: 40px;
+    margin-right: .75rem;
+  }
+  .file-title {
+    font-size: 1.1rem;
+  }
+
+  /* 5. Hide grid header */
+  .file-grid-header { display: none; }
+
+  /* 6. Bigger tap targets */
+  .btn {
+    padding: .6rem 1rem;
+    width: 100%;
+    margin-top: .5rem;
+  }
+}
+
+/* ===========================
+   X-SMALL ––– UP TO 480px
+   =========================== */
+@media (max-width: 480px) {
+  /* 1. Reduce card padding */
+  .file-row {
+    padding: .75rem;
+  }
+  /* 2. Stack file-name vertically */
+  .file-name {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .file-name img {
+    margin-bottom: .5rem;
+  }
+  /* 3. Reduce font sizes */
+  .file-title { font-size: 1rem; }
+  .file-description { font-size: .75rem; }
+  .tag { font-size: .75rem; padding: .25rem .6rem; }
+  .btn { font-size: .8rem; padding: .5rem .8rem; }
+
+  .passcode-modal-content {
+    width: 90%;
+    padding: 1.2rem;
+  }
+}
+
+/* ===========================
+   UTILITY: Data-label via attr()
+   =========================== */
+/* If you prefer explicit labels, add data-label attributes in HTML:
+   <div data-label="Size">{{file.size}}</div>
+   Then style:
+*/
+@media (max-width: 768px) {
+  .file-row > div[data-label]::before {
+    content: attr(data-label) ": ";
+    font-weight: 500;
+    flex: 0 0 90px;
+  }
+
+  .passcode-modal-content {
+    width: 90%;
+    padding: 1.2rem;
+  }
+}

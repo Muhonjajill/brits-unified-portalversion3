@@ -1,0 +1,164 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #eef1f5, #dbe2ef);
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+/* Upload container */
+.upload-container {
+    max-width: 650px;
+    margin: 3rem auto;
+    background: #ffffff;
+    padding: 2.5rem;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.upload-container:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.upload-container h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: #123692;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+/* Form styles */
+form label {
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+    color: #222;
+    display: inline-block;
+}
+
+form input[type="text"],
+form input[type="file"],
+form select,
+form textarea {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: #fafafa;
+    margin-bottom: 1.3rem;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+form input[type="text"]:focus,
+form input[type="file"]:focus,
+form select:focus,
+form textarea:focus {
+    outline: none;
+    border-color: #123692;
+    background-color: #fff;
+    box-shadow: 0 0 6px rgba(18, 54, 146, 0.3);
+}
+
+form input[type="submit"],
+.btn-primary {
+    background: linear-gradient(135deg, #123692, #172d69);
+    color: #fff;
+    border: none;
+    padding: 0.85rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.15s ease;
+    width: 100%;
+    display: block;
+    text-align: center;
+}
+
+form input[type="submit"]:hover,
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0f2b6e, #0c1d47);
+    transform: translateY(-2px);
+}
+
+/* Modal styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.55);
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+}
+
+/* Modal content */
+.modal-content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    width: 480px;
+    max-width: 95%;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    animation: zoomIn 0.4s ease-out;
+    position: relative;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: #123692;
+    font-size: 1.4rem;
+    font-weight: 700;
+    border-bottom: 2px solid #eef1f5;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Close button */
+.close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    color: #999;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.close:hover {
+    color: #333;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes zoomIn {
+    from { transform: scale(0.85); opacity: 0.7; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .upload-container {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    form input[type="submit"] {
+        font-size: 0.95rem;
+    }
+    .modal-content {
+        width: 90%;
+        padding: 1.5rem;
+    }
+}

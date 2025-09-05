@@ -1,0 +1,132 @@
+/* Container styles */
+.page-container {
+  margin: 20px auto;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  max-width: 1200px;
+}
+
+.page-container h2 {
+  font-size: 1.8rem;
+  color: #123692;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Table Styles */
+.ticket-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ticket-table th, .ticket-table td {
+  padding: 12px 20px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  font-size: 1rem;
+}
+
+.ticket-table th {
+  background-color: #f1f1f1;
+  font-weight: bold;
+  color: #333;
+}
+
+.ticket-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.ticket-table td {
+  color: #555;
+}
+
+.ticket-table td a {
+  color: #123692;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.ticket-table td a:hover {
+  color: #172d69;
+  text-decoration: underline;
+}
+
+/* Pagination styles */
+.pagination {
+  margin-top: 30px;
+  text-align: center;
+}
+
+.page-links {
+  display: inline-block;
+}
+
+.page-links a {
+  padding: 8px 16px;
+  background-color: #123692;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 5px;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  margin: 0 5px;
+}
+
+.page-links a:hover {
+  background-color: #172d69;
+}
+
+.current-page {
+  font-size: 14px;
+  color: #333;
+  padding: 8px 16px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .ticket-table th, .ticket-table td {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .ticket-table {
+    font-size: 14px;
+  }
+
+  .pagination {
+    font-size: 14px;
+  }
+
+  .page-links a {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+}
+
+/* Tablet and smaller screen adjustments */
+@media (max-width: 480px) {
+  .ticket-table th, .ticket-table td {
+    padding: 8px 12px;
+  }
+
+  .ticket-table {
+    font-size: 12px;
+  }
+
+  .pagination {
+    font-size: 12px;
+  }
+
+  .page-links a {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}

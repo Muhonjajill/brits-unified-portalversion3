@@ -1,0 +1,71 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">🚨 Escalated Tickets</h2>
+        <span class="badge bg-danger fs-6">{{ tickets|length }} Active</span>
+    </div>
+
+    {% if tickets %}
+        <div class="row g-4">
+            {% for ticket in tickets %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow-sm border-0 rounded-3 h-100 hover-card">
+                        <div class="card-body">
+                            <h5 class="card-title text-dark fw-bold">{{ ticket.title }}</h5>
+                            
+                            <!-- Priority Badge -->
+                            <p class="mb-2">
+                                <strong>Priority:</strong>
+                                <span class="badge badge-{{ ticket.priority }}">
+                                    {{ ticket.get_priority_display }}
+                                </span>
+                            </p>
+
+                            <!-- Escalation Info -->
+                            <p class="text-muted small mb-2">
+                                <i class="bi bi-arrow-up-circle text-danger"></i> Escalated to: 
+                                <span class="badge bg-warning text-dark">{{ ticket.get_current_escalation_level_display }}</span>
+                            </p>
+
+                            <!-- Short Description -->
+                            <p class="card-text">
+                                {{ ticket.description|truncatewords:20 }}
+                            </p>
+                        </div>
+                        <div class="card-footer bg-light border-0 d-flex justify-content-between">
+                            <span class="text-muted small">
+                                <i class="bi bi-clock-history"></i> {{ ticket.created_at|date:"M d, Y H:i" }}
+                            </span>
+                            <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-outline-primary">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-success text-center p-4 rounded-3 shadow-sm">
+            <i class="bi bi-check-circle-fill text-success fs-3"></i>
+            <p class="mt-2 mb-0 fw-semibold">No escalated tickets found 🎉</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .hover-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    }
+    /* Match your detail page priority badge styles */
+    .badge-high { background-color: #dc3545; }    /* Red */
+    .badge-medium { background-color: #fd7e14; } /* Orange */
+    .badge-low { background-color: #198754; }    /* Green */
+</style>
+{% endblock %}

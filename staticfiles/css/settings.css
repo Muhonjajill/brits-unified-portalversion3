@@ -1,0 +1,243 @@
+/* ==== Background & Universal Styles ==== */
+body {
+    font-family: 'Roboto', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e9eff1 100%);
+    overflow-x: hidden;
+}
+
+/* Glassmorphism Cards */
+.profile-container, .settings-container {
+    max-width: 640px;
+    margin: 2.5rem auto;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(206, 221, 236, 0.3);
+    position: relative;
+    animation: card-in 0.9s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* Logo */
+.logo-container {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.site-logo {
+    width: 80px;
+    height: auto;
+    filter: drop-shadow(0 0 8px rgba(0, 76, 140, 0.4));
+}
+
+/* Profile Details Section */
+.profile-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Flex container for pairs of details */
+.details-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.details-row p {
+    font-size: 1.15rem;
+    color: #475f77;
+    background: rgba(242, 247, 255, 0.9);
+    padding: 0.75rem 1.1rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(36, 100, 243, 0.05);
+    margin: 0;
+}
+
+/* Avatar Section */
+.avatar-glow-container {
+    text-align: center;
+    position: relative;
+    margin-top: 1.5rem;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 3px 25px rgba(46, 140, 236, 0.12);
+    transition: transform 0.35s cubic-bezier(.47, 1.64, .41, .8);
+}
+
+.profile-avatar.zoom-in:hover {
+    transform: scale(1.15);
+}
+
+/* Profile Links Section */
+.profile-links {
+    margin-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.profile-links a,
+.profile-links button {
+    text-decoration: none;
+    color: #004c8c;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.7rem 1.3rem;
+    border-radius: 30px;
+    background: rgba(204, 230, 255, 0.25);
+    box-shadow: 0 2px 8px rgba(36, 100, 243, 0.07);
+    transition: background 0.25s, color 0.25s, transform 0.25s;
+    opacity: 0;
+    animation: fadeInLeft 0.8s 0.5s forwards;
+}
+
+.profile-links a:hover,
+.profile-links button:hover {
+    background: #004c8c;
+    color: #fff;
+    transform: translateY(-2.5px) scale(1.06);
+    text-shadow: 0 2px 6px rgba(0, 76, 140, 0.3);
+}
+
+/* Buttons */
+button, button.btn-primary {
+    background: linear-gradient(90deg, #4c72e0 10%, #14cdd1 90%);
+    color: #fff;
+    padding: 0.75rem 1.8rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    box-shadow: 0 3px 18px rgba(56, 167, 246, 0.13);
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    margin: 1.2rem auto 0;
+    display: block;
+    opacity: 0;
+    animation: fadeInUp 0.8s 0.8s forwards;
+}
+
+button:hover, .btn-primary:hover {
+    background: linear-gradient(90deg, #14cdd1 10%, #4c72e0 90%);
+    transform: scale(1.08);
+}
+
+/* Form Inputs */
+input, select, textarea {
+    border: 1.4px solid #d1d8e2;
+    border-radius: 6px;
+    padding: 0.7rem;
+    background: #fafdff;
+    color: #242638;
+    font-size: 1.05rem;
+    margin-bottom: 1.4rem;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+    border: 1.8px solid #004c8c;
+    box-shadow: 0 0 0 1.5px #b3dcff;
+}
+
+/* Form Fieldsets */
+.form-section {
+    background: rgba(225, 243, 253, 0.85);
+    border-radius: 12px;
+    padding: 1.3rem 1.4rem 0.75rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 6px rgba(46, 140, 236, 0.06);
+}
+
+.form-section legend {
+    font-weight: 700;
+    color: #2563eb;
+    letter-spacing: 0.02em;
+    font-size: 1.1rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+@keyframes fadeInLeft {
+    from { opacity: 0; transform: translateX(-30px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(35px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes card-in {
+    from { opacity: 0; transform: scale(0.95) translateY(24px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+/* Settings Links Styling */
+.settings-links {
+    margin-top: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}
+
+.settings-links a {
+    text-decoration: none;
+    color: #004c8c;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 0.7rem 1.3rem;
+    border-radius: 30px;
+    background: rgba(204, 230, 255, 0.25);
+    box-shadow: 0 2px 8px rgba(36, 100, 243, 0.07);
+    transition: background 0.25s, color 0.25s, transform 0.25s;
+    opacity: 0;
+    animation: fadeInLeft 0.8s 0.5s forwards;
+}
+
+.settings-links a:hover {
+    background: #004c8c;
+    color: #fff;
+    transform: translateY(-2.5px) scale(1.06);
+    text-shadow: 0 2px 6px rgba(0, 76, 140, 0.3);
+}
+
+/* Responsiveness */
+@media screen and (max-width: 600px) {
+    .profile-container, .settings-container {
+        margin: 1rem;
+        padding: 1.2rem 0.5rem 1.6rem;
+        border-radius: 14px;
+    }
+
+    .avatar-img, .profile-avatar { 
+        width: 100px; 
+        height: 100px; 
+    }
+
+    h1 { 
+        font-size: 1.4rem; 
+    }
+
+    .details-row {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .details-row p {
+        font-size: 1rem;
+    }
+}

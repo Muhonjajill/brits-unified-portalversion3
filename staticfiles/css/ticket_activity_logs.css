@@ -1,0 +1,69 @@
+.ticket-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-align: center;  /* optional */
+}
+
+
+.activity-log-container {
+    overflow-x: auto;
+}
+
+.activity-log-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.activity-log-table th, .activity-log-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    vertical-align: top;
+}
+
+.activity-log-table th {
+    background-color: #172d69;
+    color: #fff;
+    text-align: left;
+}
+
+.activity-log-table td ul {
+    padding-left: 20px;
+    margin: 0;
+}
+
+.activity-log-table td li {
+    list-style-type: disc;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.clear-logs-btn {
+    background-color: #e74c3c;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.clear-logs-btn:hover {
+    background-color: #c0392b;
+}
+
+@media screen and (max-width: 768px) {
+    .activity-log-table th, .activity-log-table td {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .clear-logs-btn {
+        width: 100%;
+        padding: 12px 0;
+    }
+}

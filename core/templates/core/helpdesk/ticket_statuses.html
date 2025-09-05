@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{% block title %}Ticket Statuses Overview{% endblock %} 
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ticket_statuses.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="tickets-container">
+  <div class="section-header">
+    <h2><i class="fas fa-clipboard-list"></i>  Ticket Statuses Overview</h2> 
+    <p class="subtitle">
+      Understanding the current state of support tickets in the system.
+    </p>
+    <p class="access-info"> 
+      {% if is_custodian %}
+        You are viewing ticket statuses for your assigned terminal only.
+      {% elif is_overseer or is_customer %}
+        You are viewing ticket statuses for your assigned customer only.
+      {% else %}
+        You have global access and are viewing all ticket statuses.
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="ticket-table-wrapper">
+    <table class="ticket-table">
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Description</th>
+          <th class="text-center">Visual Cue</th> 
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <a href="{% url 'ticket_by_status' 'open' %}" class="status-link"> 
+              <span class="badge badge-open">Open</span>
+            </a>
+          </td>
+          <td>Tickets that are currently active and require attention.</td> 
+          <td class="text-center"><span class="color-box bg-open"></span></td> 
+        </tr>
+        <tr>
+          <td>
+            <a href="{% url 'ticket_by_status' 'in-progress' %}" class="status-link">
+              <span class="badge badge-in-progress">In Progress</span> 
+            </a>
+          </td>
+          <td>Tickets that are actively being worked on by a support agent.</td>
+          <td class="text-center"><span class="color-box bg-in-progress"></span></td>
+        </tr>
+        <tr>
+          <td>
+            <a href="{% url 'ticket_by_status' 'closed' %}" class="status-link">
+              <span class="badge badge-closed">Closed</span>
+            </a>
+          </td>
+          <td>Tickets that have been successfully completed and archived.</td>
+          <td class="text-center"><span class="color-box bg-closed"></span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="{% static 'js/ticketing_dashboard.js' %}"></script>
+
+{% endblock %}

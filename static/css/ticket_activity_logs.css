@@ -1,0 +1,111 @@
+.ticket-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-align: center;
+    font-size: 1.5em;  /* Larger font on desktop */
+}
+
+.activity-log-container {
+    overflow-x: auto;
+    padding: 10px;  /* Padding for better spacing */
+}
+
+.activity-log-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-family: 'Segoe UI', sans-serif;
+    min-width: 600px; /* Ensure the table has enough width on small screens */
+}
+
+.activity-log-table th, .activity-log-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    vertical-align: top;
+    font-size: 16px; /* Adjust text size for readability */
+}
+
+.activity-log-table th {
+    background-color: #172d69;
+    color: #fff;
+    text-align: left;
+}
+
+.activity-log-table td ul {
+    padding-left: 20px;
+    margin: 0;
+}
+
+.activity-log-table td li {
+    list-style-type: disc;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+.clear-logs-btn {
+    background-color: #e74c3c;
+    color: #fff;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+    text-align: center; /* Center button text */
+    margin-bottom: 20px; /* Add space below the button */
+    width: auto;  /* Make it auto width on large screens */
+}
+
+.clear-logs-btn:hover {
+    background-color: #c0392b;
+}
+
+@media screen and (max-width: 768px) {
+    /* Title font size for mobile */
+    .ticket-title {
+        font-size: 1.2em;
+    }
+
+    /* Table styling for smaller screens */
+    .activity-log-table th, .activity-log-table td {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .activity-log-table td ul {
+        padding-left: 10px; 
+    }
+
+    .clear-logs-btn {
+        width: 100%;  
+        padding: 12px 0;  
+    }
+
+    .activity-log-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; 
+    }
+
+    .ticket-title {
+        text-align: left;
+        padding: 10px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .ticket-title {
+        font-size: 1.1em;
+        padding: 8px; 
+    }
+
+    .activity-log-table th, .activity-log-table td {
+        font-size: 12px;
+        padding: 6px; 
+    }
+
+    .clear-logs-btn {
+        font-size: 14px; 
+    }
+}

@@ -1,0 +1,173 @@
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f4f6f9;
+}
+
+/* Layout wrapper */
+.login-wrapper {
+  display: flex;
+  width: 90%;
+  max-width: 950px;
+  height: 600px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  flex-wrap: wrap;
+}
+
+/* Left branding panel */
+.login-wrapper .left-panel {
+  background: linear-gradient(to bottom right, #ffffff, #e74c3c, #3498db);
+  color: #f8f1f1;
+  width: 50%;
+  padding: 40px 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.left-panel img {
+  width: 150px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+.left-panel h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.left-panel p {
+  font-size: 16px;
+  opacity: 0.85;
+}
+
+/* Right login form card */
+.login-wrapper .right-panel {
+  background: white;
+  width: 50%;
+  padding: 50px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Align content to top */
+  max-height: 100%;
+  overflow-y: auto; /* Allow scrolling if needed */
+}
+
+/* Ensure the heading and paragraph are visible */
+.right-panel h2 {
+  font-size: 28px;
+  margin-bottom: 10px;
+  color: #0f1f47;
+}
+
+.right-panel p {
+  color: #161616;
+  margin-bottom: 30px;
+}
+
+/* Styling for form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-form input[type="text"],
+.login-form input[type="email"],
+.login-form input[type="password"],
+.login-form input[type="tel"] {
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 15px;
+  transition: border 0.3s ease;
+}
+
+.login-form input:focus {
+  border-color: #1a1f3d;
+  outline: none;
+}
+
+.btn-login {
+  background: #123692;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  margin-bottom: 20px; /* Ensure space for other elements below */
+}
+
+.btn-login:hover {
+  background: #1a1f3d;
+  opacity: 0.9;
+}
+
+.login-links {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #555;
+}
+
+.login-links .link {
+  color: #0f1f47;
+  text-decoration: none;
+  margin: 0 4px;
+}
+
+.login-links .link:hover {
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .login-wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .login-wrapper .left-panel,
+  .login-wrapper .right-panel {
+    width: 100%;
+    padding: 20px;
+  }
+
+  .right-panel h2 {
+    font-size: 24px; /* Reduced font size */
+  }
+
+  .right-panel p {
+    font-size: 14px; /* Adjusted font size for smaller screens */
+  }
+
+  .login-form input {
+    font-size: 14px; /* Smaller font for mobile inputs */
+  }
+
+  .login-links {
+    font-size: 12px; /* Slightly smaller link text */
+  }
+
+  .login-links .link {
+    font-size: 14px; /* Ensure it's legible */
+  }
+
+  .btn-login {
+    padding: 10px; /* Reduced padding for mobile screens */
+  }
+}

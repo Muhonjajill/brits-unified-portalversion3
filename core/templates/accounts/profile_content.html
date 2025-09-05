@@ -1,0 +1,81 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.get_full_name|default:user.username }}'s Profile</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/profile_content.css' %}" />
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
+    />
+</head>
+<body>
+    <div class="profile-container fade-in">
+
+        <!-- Profile Header -->
+        <div class="profile-header">
+            {% if user.profile.avatar %}
+                <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="profile-avatar">
+            {% else %}
+                <img src="{% static 'icons/default-avatar.png' %}" alt="Default Avatar" class="profile-avatar">
+            {% endif %}
+            <div class="profile-info">
+                <h1>{{ user.get_full_name|default:user.username }}</h1>
+                <p>{{ user.profile.get_role_display }}</p>
+            </div>
+        </div>
+
+        <!-- Profile Details -->
+        <div class="profile-details">
+
+            <!-- Basic Info -->
+            <div class="details-card">
+                <h2>👤 Basic Info</h2>
+                <p><strong>First Name:</strong> {{ user.first_name }}</p>
+                <p><strong>Last Name:</strong> {{ user.last_name }}</p>
+                <p><strong>Username:</strong> {{ user.username }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+            </div>
+
+            <!-- Role & Assignments -->
+            <div class="details-card">
+                <h2>🛠 Role & Assignments</h2>
+                <p><strong>Role:</strong> {{ user.profile.get_role_display }}</p>
+                {% if user.profile.role == "Overseer" or user.profile.role == "Custodian" %}
+                    <p><strong>Customer:</strong> {{ user.profile.customer.name|default:"No customer assigned" }}</p>
+                {% endif %}
+                {% if user.profile.role == "Custodian" %}
+                    <p><strong>Terminal:</strong> {{ user.profile.terminal.branch_name|default:"No terminal assigned" }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Account Info -->
+            <div class="details-card">
+                <h2>📅 Account Info</h2>
+                <p><strong>Phone Number:</strong> {{ user.profile.phone_number }}</p>
+                <p><strong>ID Number:</strong> {{ user.profile.id_number }}</p>
+                <p><strong>Date Joined:</strong> {{ user.date_joined|date:"M d, Y" }}</p>
+            </div>
+
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="profile-actions">
+            <a href="{% url 'settings' %}" class="settings">⚙️ Update Settings</a>
+            
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="logout"><i class="fas fa-door-open"></i> Logout</button>
+            </form>
+            
+            <a href="{% url 'pre_dashboards' %}" class="back">⬅️ Back to Pre-dashboards</a>
+        </div>
+
+    </div>
+</body>
+</html>

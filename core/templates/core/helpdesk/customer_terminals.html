@@ -1,0 +1,58 @@
+{% extends "base.html" %} 
+
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/customer_terminals.css' %}" >
+{% endblock%}
+{% block title %}Terminals for {{ customer.name }}{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <h2>Terminals for {{ customer.name }}</h2>
+
+  <div class="table-responsive">
+    <table class="ticket-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Branch Name</th>
+          <th>Model</th>
+          <th>Serial Number</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for terminal in terminals %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ terminal.branch_name }}</td>
+          <td>{{ terminal.model }}</td>
+          <td>{{ terminal.serial_number }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">No terminals found for this customer.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div class="pagination">
+    <span class="page-links">
+      {% if terminals.has_previous %}
+        <a href="?page=1">First</a>
+        <a href="?page={{ terminals.previous_page_number }}">Previous</a>
+      {% endif %}
+      
+      <span class="current-page">Page {{ terminals.number }} of {{ terminals.paginator.num_pages }}</span>
+
+      {% if terminals.has_next %}
+        <a href="?page={{ terminals.next_page_number }}">Next</a>
+        <a href="?page={{ terminals.paginator.num_pages }}">Last</a>
+      {% endif %}
+    </span>
+  </div>
+</div>
+
+<script src="{% static 'js/ticketing_dashboard.js' %}"></script>
+{% endblock %}
