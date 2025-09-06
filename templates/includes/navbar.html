@@ -53,6 +53,24 @@
 <script>
   const profileViewUrl = "{% url 'profile_view' %}";
   const fetchEscalationsUrl = "{% url 'get_notifications' %}";
+
+  // CSRF helper
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === name + "=") {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrfToken = getCookie("csrftoken");
+
   let escalationSocket;
 
   // ==== Initialize WebSocket ====
@@ -107,111 +125,66 @@
     .then((data) => renderNotifications(data.tickets || [], data.count))
     .catch((err) => console.error("Error fetching tickets:", err));
 
-    /*
-  // ==== Render Single Notification ====
-  function createNotificationItem(ticket) {
-    const div = document.createElement("div");
-    div.classList.add("notification-item");
-
-    const isEsc =
-      ticket.notification_type === "escalated" ||
-      ticket.is_escalated === true ||
-      (ticket.escalated_at && ticket.escalated_at !== null);
-    const isUnassigned = ticket.notification_type === "unassigned";
-    let typeLabel = "";
-
-    if (isEsc) {
-      typeLabel = `<span class="badge badge-escalated">Escalated</span>`;
-    } else if (isUnassigned) {
-      typeLabel = `<span class="badge badge-unassigned">Unassigned</span>`;
-    } else {
-      typeLabel = `<span class="badge badge-new">New</span>`;
-    }
-
-    const priorityText =
-      typeof ticket.priority === "string"
-        ? ticket.priority
-        : JSON.stringify(ticket.priority);
-
-    div.innerHTML = `
-      <a class="dropdown-item" href="/tickets/${ticket.id}/">
-        ${typeLabel} #${ticket.id} - ${ticket.title}<br>
-        <small>${priorityText} | ${
-      ticket.escalated_at ? ticket.escalated_at : ticket.created_at
-    }</small>
-      </a>
-    `;
-    return div;
-  }*/
-
-  // Handle clicking on a notification to mark it as read
 function createNotificationItem(ticket) {
   const div = document.createElement("div");
   div.classList.add("notification-item");
 
   const isEsc = ticket.notification_type === "escalated" || ticket.is_escalated === true || (ticket.escalated_at && ticket.escalated_at !== null);
   const isUnassigned = ticket.notification_type === "unassigned";
+
   let typeLabel = "";
+  let badgeClass = "";
+
   if (isEsc) {
-    typeLabel = `<span class="badge badge-escalated">Escalated</span>`;
+    typeLabel = "Escalated";
+    badgeClass = "badge-escalated";
   } else if (isUnassigned) {
-    typeLabel = `<span class="badge badge-unassigned">Unassigned</span>`;
+    typeLabel = "Unassigned";
+    badgeClass = "badge-unassigned";
   } else {
-    typeLabel = `<span class="badge badge-new">New</span>`;
+    typeLabel = "New";
+    badgeClass = "badge-new";
   }
 
   const priorityText = typeof ticket.priority === "string" ? ticket.priority : JSON.stringify(ticket.priority);
 
   div.innerHTML = `
-    <a class="dropdown-item" href="/tickets/${ticket.id}/" data-ticket-id="${ticket.id}" style="${ticket.is_read ? 'opacity: 0.5;' : ''}">
-      ${typeLabel} #${ticket.id} - ${ticket.title}<br>
-      <small>${priorityText} | ${ticket.escalated_at ? ticket.escalated_at : ticket.created_at}</small>
+    <a href="/tickets/${ticket.id}/"
+       class="dropdown-item"
+       data-ticket-id="${ticket.id}"
+       style="${ticket.is_read ? 'opacity: 0.5;' : ''}">
+      <div>
+        #${ticket.id} - ${ticket.title}<br>
+        <small>${priorityText} | ${ticket.escalated_at ? ticket.escalated_at : ticket.created_at}</small>
+      </div>
+      <span class="badge ${badgeClass}">${typeLabel}</span>
     </a>
   `;
 
-  // Event listener to mark as read when clicked
-  div.querySelector("a").addEventListener("click", function () {
-    markNotificationRead(ticket.id); // Call to mark the notification as read
+  // Handle click
+  div.querySelector("a").addEventListener("click", async function (e) {
+    e.preventDefault(); 
+    const targetUrl = this.getAttribute("href");
+
+    try {
+      await markNotificationRead(ticket.id);
+    } catch (err) {
+      console.error("Mark read failed, still redirecting:", err);
+    }
+    window.location.href = targetUrl; 
   });
 
   return div;
 }
 
 
-
-/*
-// Function to mark notification as read on the server
 function markNotificationRead(ticketId) {
-  fetch(`/mark_notification_read/${ticketId}/`, {
-    method: 'POST',
-    body: JSON.stringify({ type: 'read' }),
+  return fetch(`/notifications/mark_read/${ticketId}/`, {
+    method: "POST",
+    body: JSON.stringify({ type: "read" }),
     headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': csrfToken, // Include CSRF token if necessary
-    },
-  })
-  .then((response) => response.json())
-  .then((data) => {
-    if (data.success) {
-      // Remove or update the notification visually
-      const notificationItem = document.querySelector(`[data-ticket-id="${ticketId}"]`);
-      if (notificationItem) {
-        notificationItem.parentElement.removeChild(notificationItem); // Remove the notification from the list
-      }
-      updateNotificationCount();
-    } else {
-      console.error("Failed to mark notification as read.");
-    }
-  });
-}*/
-
-function markNotificationRead(ticketId) {
-  fetch(`/mark_notification_read/${ticketId}/`, {
-    method: 'POST',
-    body: JSON.stringify({ type: 'read' }),
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRFToken': csrfToken, // Include CSRF token if necessary
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken,
     },
   })
   .then((response) => response.json())
@@ -219,14 +192,17 @@ function markNotificationRead(ticketId) {
     if (data.success) {
       const notificationItem = document.querySelector(`[data-ticket-id="${ticketId}"]`);
       if (notificationItem) {
-        notificationItem.parentElement.removeChild(notificationItem); 
+        notificationItem.parentElement.removeChild(notificationItem);
       }
       updateNotificationCount();
     } else {
       console.error("Failed to mark notification as read.");
     }
-  });
+  })
+  .catch((err) => console.error("Error marking read:", err));
 }
+
+
 
 
 // Update notification count after marking as read
@@ -237,33 +213,33 @@ function updateNotificationCount() {
     countEl.textContent = currentCount - 1;
   }
   if (currentCount <= 1) {
-    countEl.style.display = "none"; // Hide the badge if no notifications are left
+    countEl.style.display = "none"; 
   }
 }
 
 
   // ==== Render Escalations ====
-  function renderNotifications(tickets, totalCount) {
-    const countEl = document.getElementById("notificationCount");
-    const listEl = document.getElementById("notificationsList");
-    const viewAllEl = document.querySelector(".view-all");
-    if (!countEl || !listEl) return;
+ function renderNotifications(tickets, totalCount) {
+  const countEl = document.getElementById("notificationCount");
+  const listEl = document.getElementById("notificationsList");
+  const viewAllEl = document.querySelector(".view-all");
+  if (!countEl || !listEl) return;
 
-    listEl.innerHTML = "";
-    if (!tickets || tickets.length === 0) {
-      listEl.innerHTML = `<div class="dropdown-item text-muted empty">No tickets</div>`;
-      countEl.style.display = "none";
-      return;
-    }
+  listEl.innerHTML = "";
 
-    tickets.slice(0, 5).forEach((t) =>
-      listEl.appendChild(createNotificationItem(t))
-    );
-    countEl.textContent =
-      typeof totalCount === "number" ? totalCount : tickets.length;
-    countEl.style.display = "inline-block";
-    if (viewAllEl) viewAllEl.style.display = "block";
+  if (!tickets || tickets.length === 0) {
+    listEl.innerHTML = `<div class="dropdown-item text-muted empty">No unread tickets</div>`;
+    countEl.style.display = "none";
+    return;
   }
+
+  tickets.forEach((t) => listEl.appendChild(createNotificationItem(t)));
+
+  countEl.textContent = totalCount;
+  countEl.style.display = "inline-block";
+  if (viewAllEl) viewAllEl.style.display = "block";
+}
+
 
   // Handle new ticket event
   function handleNewTicket(ticket) {

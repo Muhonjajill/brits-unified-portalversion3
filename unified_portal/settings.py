@@ -107,8 +107,8 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'pre_dashboards'
 LOGOUT_REDIRECT_URL = 'login'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'           
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
@@ -123,6 +123,27 @@ ESCALATION_LEVEL_EMAILS = {
     'Tier 4': ('godblessodhiambo@gmail.com',EMAIL_HOST_USER),
 }
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "WARNING",  # root logger default
+    },
+    "loggers": {
+        # Catch your app logs
+        "core": {   # replace `core` with your app name
+            "handlers": ["console"],
+            "level": "DEBUG",   # show DEBUG, INFO, WARNING, ERROR
+            "propagate": False,
+        },
+    },
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

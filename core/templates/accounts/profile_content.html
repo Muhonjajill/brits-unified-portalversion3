@@ -26,7 +26,7 @@
             {% endif %}
             <div class="profile-info">
                 <h1>{{ user.get_full_name|default:user.username }}</h1>
-                <p>{{ user.profile.get_role_display }}</p>
+                <p>{{ user.profile.role }}</p>
             </div>
         </div>
 
@@ -45,14 +45,19 @@
             <!-- Role & Assignments -->
             <div class="details-card">
                 <h2>🛠 Role & Assignments</h2>
-                <p><strong>Role:</strong> {{ user.profile.get_role_display }}</p>
-                {% if user.profile.role == "Overseer" or user.profile.role == "Custodian" %}
-                    <p><strong>Customer:</strong> {{ user.profile.customer.name|default:"No customer assigned" }}</p>
-                {% endif %}
-                {% if user.profile.role == "Custodian" %}
-                    <p><strong>Terminal:</strong> {{ user.profile.terminal.branch_name|default:"No terminal assigned" }}</p>
-                {% endif %}
+                <p><strong>Role:</strong> {{ user.profile.role }}</p>
+
+                {% with role=user.profile.role|lower %}
+                    {% if role == "overseer" %}
+                        <p><strong>Customer:</strong> {{ user.profile.customer.name|default:"No customer assigned" }}</p>
+                    {% elif role == "custodian" %}
+                        <p><strong>Customer:</strong> {{ user.profile.customer.name|default:"No customer assigned" }}</p>
+                        <p><strong>Terminal/Branch:</strong> {{ user.profile.terminal.branch_name|default:"No terminal assigned" }}</p>
+                    {% endif %}
+                {% endwith %}
+
             </div>
+
 
             <!-- Account Info -->
             <div class="details-card">

@@ -88,27 +88,23 @@ class Profile(models.Model):
 """
 
 class Profile(models.Model):
-    ROLE_CHOICES = [
-        ('Admin', 'Admin'),
-        ('Director', 'Director'),
-        ('Manager', 'Manager'),
-        ('Staff', 'Staff'),
-        ('Customer', 'Customer'),
-        ('Overseer', 'Overseer'),
-        ('Custodian', 'Custodian'),
-        ('Guest', 'Guest'),
-    ]
-
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     avatar = models.ImageField(upload_to=user_directory_path, blank=True, null=True)
-    phone_number = models.CharField(max_length=15, blank=True, null=True)  
-    id_number = models.CharField(max_length=20, blank=True, null=True) 
-    role = models.CharField(max_length=50, choices=ROLE_CHOICES, default='Guest')
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    id_number = models.CharField(max_length=20, blank=True, null=True)
     customer = models.ForeignKey('Customer', on_delete=models.CASCADE, null=True, blank=True)
     terminal = models.ForeignKey('Terminal', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.user.username
+
+    @property
+    def role(self):
+        if self.user.is_superuser:
+            return "Superuser"
+        elif self.user.groups.exists():
+            return self.user.groups.first().name
+        return "Guest"
 
 
 # Help desk models

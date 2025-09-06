@@ -2,7 +2,7 @@ from django.db.models.signals import post_migrate, post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from core.models import ActivityLog, File, FileAccessLog, Profile, Ticket, TicketComment
+from core.models import ActivityLog, File, FileAccessLog, Profile, Ticket, TicketComment, UserNotification
 from django.core.exceptions import ObjectDoesNotExist
 
 
@@ -11,11 +11,10 @@ def setup_groups_and_permissions(sender, **kwargs):
     """
     Signal that sets up user groups and file model permissions after migrations.
     """
-    # File model permissions
     file_content_type = ContentType.objects.get_for_model(File)
 
     try:
-        # File permissions for CRUD operations on files
+        # File permissions (Django already creates add/change/delete/view by default)
         view_file = Permission.objects.get(codename='view_file')
         change_file = Permission.objects.get(codename='change_file')
         delete_file = Permission.objects.get(codename='delete_file')
@@ -27,7 +26,7 @@ def setup_groups_and_permissions(sender, **kwargs):
             content_type=file_content_type
         )
 
-        # User model permissions
+        # User permissions
         view_user = Permission.objects.get(codename='view_user')
         change_user = Permission.objects.get(codename='change_user')
         delete_user = Permission.objects.get(codename='delete_user')
@@ -35,13 +34,13 @@ def setup_groups_and_permissions(sender, **kwargs):
     except ObjectDoesNotExist:
         return
 
-    # Create groups
+    # Groups
     director_group, _ = Group.objects.get_or_create(name='Director')
     manager_group, _ = Group.objects.get_or_create(name='Manager')
     staff_group, _ = Group.objects.get_or_create(name='Staff')
     customer_group, _ = Group.objects.get_or_create(name='Customer')
 
-    # Assign permissions to groups
+    # Assign permissions
     director_group.permissions.set([
         view_file, change_file, delete_file, add_file, can_edit_file_perm,
         view_user, change_user, delete_user
@@ -59,21 +58,19 @@ def setup_groups_and_permissions(sender, **kwargs):
 
     customer_group.permissions.set([view_file, view_user])
 
-    # Add permission for file access logs view
-    file_access_log_permission, created = Permission.objects.get_or_create(
+    # ✅ Instead of creating manually, fetch the already existing one
+    file_access_log_permission = Permission.objects.get(
         codename='view_fileaccesslog',
-        name='Can view file access logs',
         content_type=ContentType.objects.get_for_model(FileAccessLog)
     )
 
-    # Assign the permission to the appropriate groups
     director_group.permissions.add(file_access_log_permission)
     manager_group.permissions.add(file_access_log_permission)
 
-    # Explicitly assign this permission to all superusers
-    superusers = User.objects.filter(is_superuser=True)
-    for user in superusers:
+    # Assign to superusers
+    for user in User.objects.filter(is_superuser=True):
         user.user_permissions.add(file_access_log_permission)
+
 
 
 
@@ -223,3 +220,34 @@ def log_ticket_resolution(sender, instance, created, **kwargs):
     if instance.status == 'Resolved':  # You can check your ticket status values
         action = f"Ticket resolved: {instance.title}"
         ActivityLog.objects.create(ticket=instance, action=action, user=instance.updated_by)
+
+@receiver(post_save, sender=Ticket)
+def create_ticket_notifications(sender, instance, created, **kwargs):
+    """
+    Ensure notifications are created whenever a ticket is created or updated.
+    """
+
+    # Case 1: Newly created ticket
+    if created:
+        # Notify the ticket creator
+        if instance.created_by:
+            UserNotification.objects.get_or_create(
+                user=instance.created_by,
+                ticket=instance
+            )
+
+        # Notify the assigned user if any
+        if instance.assigned_to:
+            UserNotification.objects.get_or_create(
+                user=instance.assigned_to,
+                ticket=instance
+            )
+
+    # Case 2: Updates that matter (like reassignment)
+    else:
+        # If reassigned to someone else, make sure they get a notification
+        if instance.assigned_to:
+            UserNotification.objects.get_or_create(
+                user=instance.assigned_to,
+                ticket=instance
+            )

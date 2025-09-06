@@ -4,7 +4,7 @@ from channels.db import database_sync_to_async
 from django.db.models.functions import Coalesce
 from django.db.models import DateTimeField
 from core.uttils.serializers import serialize_ticket
-from core.models import Ticket, Customer, Terminal, Profile
+from core.models import Ticket, Customer, Terminal, Profile, UserNotification
 
 class EscalationConsumer(AsyncWebsocketConsumer):
     group_name = "escalations"
@@ -17,54 +17,14 @@ class EscalationConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
-    """async def send_latest(self):
-        tickets = await self._get_latest_tickets()
-        payload = [serialize_ticket(t) for t in tickets]
-        total = await self._get_total_count()
-        await self.send(text_data=json.dumps({
-            "type": "notifications_list",
-            "tickets": payload,   
-            "count": total,       
-        }))"""
-
     async def send_latest(self):
         tickets = await self._get_latest_tickets()
-        payload = [serialize_ticket(t['ticket']) for t in tickets] 
         total = await self._get_total_count()
         await self.send(text_data=json.dumps({
             "type": "notifications_list",
-            "tickets": payload,   
-            "count": total,       
+            "tickets": tickets,   
+            "count": total,
         }))
-
-
-
-    """
-    @database_sync_to_async
-    def _get_latest_tickets(self):
-        user = self.scope["user"]
-        profile = getattr(user, "profile", None)
-
-        qs = Ticket.objects.none()
-
-        # Internal staff see all tickets
-        if user.is_superuser or user.groups.filter(
-            name__in=['Admin', 'Director', 'Manager', 'Staff']
-        ).exists():
-            qs = Ticket.objects.all()
-
-        # Overseer: tickets for their customers
-        elif Customer.objects.filter(overseer=user).exists():
-            overseer_customers = Customer.objects.filter(overseer=user)
-            qs = Ticket.objects.filter(customer__in=overseer_customers)
-
-        # Custodian: tickets for their terminal
-        elif profile and profile.terminal:
-            if profile.terminal.custodian == user:
-                qs = Ticket.objects.filter(terminal=profile.terminal)
-
-        return list(qs.order_by("-created_at")[:5])"""
-
     
     
     @database_sync_to_async
@@ -72,31 +32,35 @@ class EscalationConsumer(AsyncWebsocketConsumer):
         user = self.scope["user"]
         profile = getattr(user, "profile", None)
 
-        qs = Ticket.objects.none()
+        qs = UserNotification.objects.none()
 
-        # Internal staff see all tickets
+        # Staff/admins: see all notifications
         if user.is_superuser or user.groups.filter(
             name__in=['Admin', 'Director', 'Manager', 'Staff']
         ).exists():
-            qs = Ticket.objects.all()
+            qs = UserNotification.objects.filter(user=user, is_read=False)
 
-        # Overseer: tickets for their customers
+        # Overseer: notifications for their customers
         elif Customer.objects.filter(overseer=user).exists():
             overseer_customers = Customer.objects.filter(overseer=user)
-            qs = Ticket.objects.filter(customer__in=overseer_customers)
+            qs = UserNotification.objects.filter(
+                ticket__customer__in=overseer_customers,
+                user=user,
+                is_read=False
+            )
 
-        # Custodian: tickets for their terminal
-        elif profile and profile.terminal:
-            if profile.terminal.custodian == user:
-                qs = Ticket.objects.filter(terminal=profile.terminal)
+        # Custodian: notifications for their terminal
+        elif profile and profile.terminal and profile.terminal.custodian == user:
+            qs = UserNotification.objects.filter(
+                ticket__terminal=profile.terminal,
+                user=user,
+                is_read=False
+            )
 
-        tickets = qs.order_by("-created_at")[:5]
+        notifications = qs.select_related("ticket") \
+                        .order_by("-ticket__created_at")[:5]
 
-        # Attach read/unread state using the correct reverse relation 'notifications'
-        return [{
-            "ticket": t,
-            "is_read": t.notifications.filter(user=user, is_read=True).exists()  # Corrected to 'notifications'
-        } for t in tickets]
+        return [serialize_ticket(un.ticket) for un in notifications]
 
 
 
@@ -105,24 +69,32 @@ class EscalationConsumer(AsyncWebsocketConsumer):
         user = self.scope["user"]
         profile = getattr(user, "profile", None)
 
-        qs = Ticket.objects.none()
+        qs = UserNotification.objects.none()
 
+        # Staff/admins: all unread
         if user.is_superuser or user.groups.filter(
             name__in=['Admin', 'Director', 'Manager', 'Staff']
         ).exists():
-            qs = Ticket.objects.all()
+            qs = UserNotification.objects.filter(user=user, is_read=False)
 
+        # Overseer: unread for customers they oversee
         elif Customer.objects.filter(overseer=user).exists():
             overseer_customers = Customer.objects.filter(overseer=user)
-            qs = Ticket.objects.filter(customer__in=overseer_customers)
+            qs = UserNotification.objects.filter(
+                ticket__customer__in=overseer_customers,
+                user=user,
+                is_read=False
+            )
 
-        elif profile and profile.terminal:
-            if profile.terminal.custodian == user:
-                qs = Ticket.objects.filter(terminal=profile.terminal)
+        # Custodian: unread for their terminal
+        elif profile and profile.terminal and profile.terminal.custodian == user:
+            qs = UserNotification.objects.filter(
+                ticket__terminal=profile.terminal,
+                user=user,
+                is_read=False
+            )
 
         return qs.count()
-
-
 
     async def escalation_update(self, event):
         # On escalation, refresh the list

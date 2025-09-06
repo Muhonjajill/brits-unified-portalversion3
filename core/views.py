@@ -1136,20 +1136,6 @@ class SettingsView(View):
         profile, created = Profile.objects.get_or_create(user=request.user)
         profile_form = ProfileUpdateForm(instance=profile)
 
-        # Handle visibility of role, customer, and terminal based on user role
-        if profile.role in ['Customer', 'Overseer', 'Custodian']:
-            if 'role' in profile_form.fields:
-                profile_form.fields['role'].widget = forms.HiddenInput()
-            if 'customer' in profile_form.fields:
-                profile_form.fields['customer'].widget = forms.HiddenInput()
-            if 'terminal' in profile_form.fields:
-                profile_form.fields['terminal'].widget = forms.HiddenInput()
-        else:
-            if 'customer' in profile_form.fields:
-                profile_form.fields['customer'].widget = forms.HiddenInput()
-            if 'terminal' in profile_form.fields:
-                profile_form.fields['terminal'].widget = forms.HiddenInput()
-
         return render(request, 'accounts/settings.html', {
             'user_form': user_form,
             'profile_form': profile_form
@@ -1972,71 +1958,6 @@ def tickets(request):
         'allowed_roles':allowed_roles,
     })
 
-"""
-@login_required(login_url='login')
-def create_ticket(request):
-    user_group = None
-    allowed_roles = []
-    if request.user.groups.exists():
-        user_group = request.user.groups.first().name
-    if user_group == 'Admin':
-        allowed_roles = ['Admin', 'Manager']
-    elif user_group == 'Manager':
-        allowed_roles = ['Manager', 'Staff']
-    else:
-        allowed_roles = ['Staff']
-    
-    if request.method == 'POST':
-        form = TicketForm(request.POST, user=request.user)
-        if form.is_valid():
-            ticket = form.save(commit=False)
-
-            # Prevent using inactive terminal
-            if ticket.terminal and not ticket.terminal.is_active:
-                messages.error(request, f"Terminal '{ticket.terminal.cdm_name}' is disabled. Please enable it before creating a ticket.")
-                return redirect('create_ticket')
-
-            ticket.created_by = request.user
-            custom_date = form.cleaned_data.get('custom_created_at')
-            if custom_date:
-                ticket.created_at = custom_date
-
-            if ticket.terminal:
-                ticket.customer = ticket.terminal.customer
-                ticket.region = ticket.terminal.region
-
-            ticket.save()
-
-            # Send notification about the new ticket via WebSocket
-            channel_layer = get_channel_layer()
-            channel_layer.group_send(
-                "ticket_notifications",  # Group name
-                {
-                    'type': 'send_ticket_notification',
-                    'ticket_id': ticket.id,
-                    'title': ticket.title,
-                    'priority': ticket.priority,
-                    'created_at': ticket.created_at.strftime('%Y-%m-%d %H:%M:%S')
-                }
-            )
-
-            return redirect('create_ticket' if 'create_another' in request.POST else 'tickets')
-    else:
-        terminal_id = request.GET.get('terminal_id')
-        if terminal_id:
-            form = TicketForm(user=request.user, terminal_id=terminal_id)
-        else:
-            form = TicketForm(user=request.user)
-
-    cats = ProblemCategory.objects.all()
-    js_mapping = { str(cat.pk): ISSUE_MAPPING.get(cat.name, []) for cat in cats }
-    return render(request, 'core/helpdesk/create_ticket.html', {
-        'form': form,
-        'issue_mapping': json.dumps(js_mapping),
-        'user_group': user_group,
-        'allowed_roles': allowed_roles})
-"""
-
 @login_required(login_url='login')
 def create_ticket(request):
     # Determine the user's group and allowed roles
@@ -2255,8 +2176,9 @@ def get_notifications(request):
 
     # ---- Prepare response ----
     total_unread = qs.filter(is_read=False).count()
-    top5 = qs.select_related("ticket", "ticket__customer", "ticket__terminal") \
-             .order_by("-ticket__created_at")[:5]
+    top5 = qs.filter(is_read=False) \
+         .select_related("ticket", "ticket__customer", "ticket__terminal") \
+         .order_by("-ticket__created_at")[:5]
 
     if not top5:
         return JsonResponse({
@@ -2271,34 +2193,9 @@ def get_notifications(request):
         "count": total_unread,
     })
 
+import logging
 
-
-"""
-@login_required
-@require_POST
-def mark_notification_read(request, ticket_id):
-    try:
-        data = json.loads(request.body.decode("utf-8") or "{}")
-        notif_type = data.get("type")
-    except json.JSONDecodeError:
-        notif_type = None
-
-    notif = UserNotification.objects.filter(
-        user=request.user,
-        ticket_id=ticket_id,
-        is_read=False
-    ).first()
-
-    if notif:
-        notif.is_read = True
-        notif.save()
-        return JsonResponse({"success": True, "type": notif_type})
-
-    return JsonResponse({
-        "success": False,
-        "info": "No UserNotification found, handled client-side",
-        "type": notif_type,
-    })"""
+logger = logging.getLogger(__name__)
 
 @login_required
 @require_POST
@@ -2311,28 +2208,48 @@ def mark_notification_read(request, ticket_id):
 
     notif = UserNotification.objects.filter(
         user=request.user,
-        ticket_id=ticket_id,
-        is_read=False
+        ticket_id=ticket_id
     ).first()
 
     if notif:
-        notif.is_read = True
-        notif.save()
-
+        if not notif.is_read:
+            notif.is_read = True
+            notif.save(update_fields=["is_read"])
+        logger.info("Notification marked read: user=%s ticket=%s", request.user, ticket_id)
         return JsonResponse({"success": True, "type": notif_type})
 
-    return JsonResponse({
-        "success": False,
-        "info": "No UserNotification found, handled client-side",
-        "type": notif_type,
-    })
-
-
+    logger.error("Unexpected: No UserNotification found for user=%s ticket=%s", request.user, ticket_id)
+    return JsonResponse({"success": False, "info": "Notification not found", "type": notif_type})
 
 @login_required
 def escalated_tickets_page(request):
-    tickets = Ticket.objects.filter(is_escalated=True).order_by('-escalated_at')
-    return render(request, "core/helpdesk/escalated_list.html", {"tickets": tickets})
+    profile = getattr(request.user, 'profile', None)
+    tickets_qs = Ticket.objects.filter(is_escalated=True)  
+
+    if request.user.is_superuser or request.user.groups.filter(
+        name__in=['Director', 'Manager', 'Staff']
+    ).exists():
+        pass 
+
+    elif Customer.objects.filter(overseer=request.user).exists():
+        overseer_customers = Customer.objects.filter(overseer=request.user)
+        tickets_qs = tickets_qs.filter(customer__in=overseer_customers)
+
+    elif profile and profile.terminal:
+        if profile.terminal.custodian == request.user:
+            tickets_qs = tickets_qs.filter(terminal=profile.terminal)
+        else:
+            tickets_qs = Ticket.objects.none() 
+
+    else:
+        tickets_qs = Ticket.objects.none() 
+
+    tickets_qs = tickets_qs.order_by('-escalated_at')
+
+    return render(request, "core/helpdesk/escalated_list.html", {
+        "tickets": tickets_qs,
+    })
+
 
 @login_required
 def ticket_activity_log(request, ticket_id):

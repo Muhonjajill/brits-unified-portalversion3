@@ -136,34 +136,37 @@ class UserUpdateForm(forms.ModelForm):
         fields = ['username', 'email']
 
 class ProfileUpdateForm(forms.ModelForm):
+    role = forms.CharField(
+        disabled=True,   
+        required=False,
+        label="Role"
+    )
+
     class Meta:
         model = Profile
-        fields = ['avatar', 'phone_number', 'id_number', 'role']  # Include role but make it read-only
-
-    phone_number = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
-    id_number = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
+        fields = ['role', 'avatar', 'phone_number', 'id_number', 'customer', 'terminal']
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.get('instance').user
         super().__init__(*args, **kwargs)
 
-        # Handle visibility of role, customer, and terminal based on user role
-        if user.profile.role == 'Customer':
-            # Exclude role, customer, terminal for Customer role
-            self.fields.pop('role', None)
-            self.fields.pop('customer', None)
-            self.fields.pop('terminal', None)
-        elif user.profile.role == 'Overseer':
-            # For Overseer, make customer read-only but show terminal
-            self.fields['customer'].widget.attrs['disabled'] = True
-        elif user.profile.role == 'Custodian':
-            # For Custodian, make terminal read-only but show customer
-            self.fields['terminal'].widget.attrs['disabled'] = True
-        
-        # Make role field read-only (not editable)
-        if 'role' in self.fields:
-            self.fields['role'].disabled = True
+        # Set initial role value from instance
+        if self.instance and hasattr(self.instance, "role"):
+            self.fields['role'].initial = self.instance.role
 
+        # Overseer → lock customer, hide terminal
+        if self.instance and self.instance.role == 'Overseer':
+            self.fields['customer'].disabled = True
+            self.fields['terminal'].widget = forms.HiddenInput()
+
+        # Custodian → lock both customer & terminal
+        elif self.instance and self.instance.role == 'Custodian':
+            self.fields['customer'].disabled = True
+            self.fields['terminal'].disabled = True
+
+        # Customer → hide both
+        elif self.instance and self.instance.role == 'Customer':
+            self.fields['customer'].widget = forms.HiddenInput()
+            self.fields['terminal'].widget = forms.HiddenInput()
 
 
 
