@@ -137,7 +137,7 @@ class UserUpdateForm(forms.ModelForm):
 
 class ProfileUpdateForm(forms.ModelForm):
     role = forms.CharField(
-        disabled=True,   
+        disabled=True,
         required=False,
         label="Role"
     )
@@ -149,22 +149,33 @@ class ProfileUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Set initial role value from instance
+        # Seed the role field
         if self.instance and hasattr(self.instance, "role"):
             self.fields['role'].initial = self.instance.role
 
-        # Overseer → lock customer, hide terminal
-        if self.instance and self.instance.role == 'Overseer':
-            self.fields['customer'].disabled = True
-            self.fields['terminal'].widget = forms.HiddenInput()
+        role = self.instance.role if self.instance else None
 
-        # Custodian → lock both customer & terminal
-        elif self.instance and self.instance.role == 'Custodian':
+        if role == 'Overseer':
+            # Overseer → customer visible but locked, terminal hidden
             self.fields['customer'].disabled = True
-            self.fields['terminal'].disabled = True
+            self.fields['terminal'].widget = forms.TextInput(attrs={
+                "readonly": "readonly"
+            })
+            self.fields['terminal'].initial = "Overseer (no terminal assigned)"
 
-        # Customer → hide both
-        elif self.instance and self.instance.role == 'Customer':
+        elif role == 'Custodian':
+            # Custodian → show terminal but readonly, customer locked
+            self.fields['customer'].disabled = True
+            self.fields['terminal'].widget = forms.TextInput(attrs={
+                "readonly": "readonly"
+            })
+            if self.instance and self.instance.terminal:
+                self.fields['terminal'].initial = self.instance.terminal.cdm_name
+            else:
+                self.fields['terminal'].initial = "No terminal assigned"
+
+        else:
+            # Guest or others → hide both
             self.fields['customer'].widget = forms.HiddenInput()
             self.fields['terminal'].widget = forms.HiddenInput()
 

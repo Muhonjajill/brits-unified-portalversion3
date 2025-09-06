@@ -47,17 +47,40 @@
                 <h2>🛠 Role & Assignments</h2>
                 <p><strong>Role:</strong> {{ user.profile.role }}</p>
 
-                {% with role=user.profile.role|lower %}
-                    {% if role == "overseer" %}
-                        <p><strong>Customer:</strong> {{ user.profile.customer.name|default:"No customer assigned" }}</p>
-                    {% elif role == "custodian" %}
-                        <p><strong>Customer:</strong> {{ user.profile.customer.name|default:"No customer assigned" }}</p>
-                        <p><strong>Terminal/Branch:</strong> {{ user.profile.terminal.branch_name|default:"No terminal assigned" }}</p>
+                {% if user.overseeing_branches.exists %}
+                    <p><strong>Customer(s):</strong>
+                        {% for cust in user.overseeing_branches.all %}
+                            {{ cust.name }} (Overseer){% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+                {% endif %}
+
+                {% if user.custodians_of_customers.exists %}
+                    <p><strong>Customer(s):</strong>
+                        {% for cust in user.custodians_of_customers.all %}
+                            {{ cust.name }} (Custodian){% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
+
+                    {% if user.custodian_terminals.exists %}
+                        <p><strong>Terminal(s):</strong>
+                            {% for term in user.custodian_terminals.all %}
+                                {{ term.branch_name }} ({{ term.customer.name }}){% if not forloop.last %}, {% endif %}
+                            {% endfor %}
+                        </p>
                     {% endif %}
-                {% endwith %}
+                {% endif %}
 
+                {# Only show profile.customer / profile.terminal if they exist #}
+                {% if not user.overseeing_branches.exists and not user.custodians_of_customers.exists %}
+                    {% if user.profile.customer %}
+                        <p><strong>Customer:</strong> {{ user.profile.customer.name }}</p>
+                    {% endif %}
+                    {% if user.profile.terminal %}
+                        <p><strong>Terminal/Branch:</strong> {{ user.profile.terminal.branch_name }}</p>
+                    {% endif %}
+                {% endif %}
             </div>
-
 
             <!-- Account Info -->
             <div class="details-card">
@@ -68,6 +91,7 @@
             </div>
 
         </div>
+        
 
         <!-- Action Buttons -->
         <div class="profile-actions">
