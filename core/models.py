@@ -331,6 +331,8 @@ class Ticket(models.Model):
     escalation_action = models.TextField(null=True, blank=True)
     escalation_type = models.CharField(max_length=100, null=True, blank=True)
 
+    comment_summary = models.TextField(blank=True, null=True) 
+
     #created_at = models.DateTimeField(auto_now_add=True)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

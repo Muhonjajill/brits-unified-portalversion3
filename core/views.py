@@ -2351,7 +2351,6 @@ def ticket_detail(request, ticket_id):
         elif 'assign_ticket' in request.POST and is_manager_or_above:
             staff_id = request.POST.get('assigned_to')
             if staff_id:
-                # Allow assignment to Staff, Manager, or Director
                 staff_member = get_object_or_404(
                     User.objects.distinct(),
                     id=staff_id,
@@ -2370,7 +2369,6 @@ def ticket_detail(request, ticket_id):
                         user=request.user
                     )
 
-                # Email to the assignee (already exists)
                 subject = f"🎫 Ticket #{ticket.id} Assigned to You"
                 text_content = f"Hello {staff_member.get_full_name() or staff_member.username},\n\nYou have been assigned ticket #{ticket.id} - {ticket.title}.\nPlease log in to the system to view and resolve it:\n{request.build_absolute_uri(reverse('ticket_detail', args=[ticket.id]))}\n\nThank you."
                 html_content = render_to_string('email/ticket_detail_email.html', {'ticket': ticket, 'comments': comments, 'ticket_url': request.build_absolute_uri(reverse('ticket_detail', args=[ticket.id]))})
@@ -2431,6 +2429,56 @@ def ticket_detail(request, ticket_id):
                         msg_creator.attach(logo_creator)
 
                 msg_creator.send()
+
+                if old_assigned_to and old_assigned_to != staff_member:
+                    ActivityLog.objects.create(
+                        ticket=ticket,
+                        action=f"Ticket assigned: {old_assigned_to} → {staff_member}",
+                        user=request.user
+                    )
+
+                    recipients = [staff_member.email, ticket.created_by.email]
+                    if old_assigned_to:  
+                        recipients.append(old_assigned_to.email)
+
+                    subject = f"🎫 Ticket #{ticket.id} Reassigned"
+                    text_content = (
+                        f"Hello,\n\n"
+                        f"Ticket #{ticket.id} - {ticket.title} has been reassigned.\n\n"
+                        f"Previous Assignee: {old_assigned_to.get_full_name() if old_assigned_to else 'None'}\n"
+                        f"New Assignee: {staff_member.get_full_name() or staff_member.username}\n\n"
+                        f"View Ticket: {request.build_absolute_uri(reverse('ticket_detail', args=[ticket.id]))}\n\n"
+                        f"Thank you."
+                    )
+
+                    html_content = render_to_string(
+                        'email/ticket_reassigned_notification.html',
+                        {
+                            'ticket': ticket,
+                            'old_assignee': old_assigned_to,
+                            'new_assignee': staff_member,
+                            'ticket_url': request.build_absolute_uri(reverse('ticket_detail', args=[ticket.id]))
+                        }
+                    )
+
+                    msg = EmailMultiAlternatives(
+                        subject,
+                        text_content,
+                        settings.DEFAULT_FROM_EMAIL,
+                        recipients
+                    )
+                    msg.attach_alternative(html_content, "text/html")
+
+                    
+                    logo_path = os.path.join(settings.BASE_DIR, 'static', 'icons', 'logo.png')
+                    if os.path.exists(logo_path):
+                        with open(logo_path, 'rb') as f:
+                            logo = MIMEImage(f.read())
+                            logo.add_header('Content-ID', '<logo>')
+                            logo.add_header('Content-Disposition', 'inline; filename="logo.png"')
+                            msg.attach(logo)
+
+                    msg.send()
 
                 return redirect('ticket_detail', ticket_id=ticket.id)
 
