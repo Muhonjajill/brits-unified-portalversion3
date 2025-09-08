@@ -40,7 +40,7 @@
           <th>Terminal</th>
           <th>Issue Raised</th>
           <th>Status</th>
-          <th>Priority</th>
+          <!--<th>Priority</th>-->
           <th>Assigned To</th>
           <th>View Ticket</th>
           {% if request.user.is_superuser %}
@@ -59,9 +59,14 @@
               <span class="badge-escalated">Escalated</span>
             {% endif %}
           </td>
-          <td><span class="status-{{ ticket.status|lower }}">{{ ticket.get_status_display }}</span></td>
-          <!--<td><span class="badge badge-{{ ticket.status }}">{{ ticket.get_status_display }}</span></td>-->
-          <td><span class="badge badge-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>
+          <td>
+            {% if ticket.status == "closed" %}
+              <span class="status-closed">{{ ticket.get_status_display }}</span>
+            {% else %}
+              <span class="status-{{ ticket.priority|lower }}">{{ ticket.get_status_display }}</span>
+            {% endif %}
+          </td>
+          <!--<td><span class="badge badge-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></td>-->
           <td>
             {% if ticket.assigned_to %}
               {{ ticket.assigned_to.username }}
