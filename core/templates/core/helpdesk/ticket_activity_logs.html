@@ -9,10 +9,12 @@
 
 
 <div class="activity-log-container">
+    {% if request.user.is_superuser %}
     <form method="post" action="{% url 'clear_activity_logs' ticket.id %}" style="margin-bottom: 20px;" onsubmit="return confirmClearLogs()">
         {% csrf_token %}
         <button type="submit" class="clear-logs-btn">Clear All Logs</button>
     </form>
+    {% endif %}
 
     <h2 class="ticket-title">Activity Log for Ticket: {{ ticket.title }}</h2>
 
@@ -72,4 +74,6 @@ function confirmClearLogs() {
 }
 </script>
 {% endblock %}
- template
+{% block extra_js %}
+<script src="{% static 'js/ticketing_dashboard.js' %}"></script>
+{% endblock %}

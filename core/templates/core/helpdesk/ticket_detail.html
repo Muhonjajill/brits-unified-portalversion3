@@ -13,6 +13,7 @@
 
     <div class="ticket-header d-flex justify-content-between align-items-center flex-wrap">
         <h2><i class="fas fa-info-circle"></i> Ticket 0{{ ticket.id }} - {{ ticket.title }}</h2>
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editTicketModal">✏️ Edit Ticket</button>
         <a href="{% url 'ticket_activity_log' ticket.id %}" class="btn view-log-btn">View Activity Log</a>
     </div>
 
@@ -70,8 +71,6 @@
     </div>
 
     <div class="mt-4">
-      
-        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editTicketModal">✏️ Edit Ticket</button>
 
           <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#resolveTicketModal">
             ✅ Resolve Ticket
@@ -80,6 +79,8 @@
           <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#escalateTicketModal">
             <i class="fa-solid fa-triangle-exclamation"></i> Escalate Ticket
           </button>
+
+          <a href="{% url 'tickets' %}" class="btn btn-back" style="background-color: #007bff; color: #fff;">← Back to Tickets</a>
 
 
       {% if can_resolve %}
@@ -91,9 +92,8 @@
       {% else %}
         <span class="badge badge-success">✔️ Resolved</span>
       {% endif %}
-    </div>
 
-    <a href="{% url 'tickets' %}" class="btn btn-back mt-3" style="background-color: #007bff; color: #fff;">← Back to Tickets</a>
+    </div>
 
     <div class="card mt-5">
       <div class="card-header bg-light">
@@ -169,14 +169,6 @@
             {{ form.problem_category }}
             {% if form.problem_category.errors %}
               <div class="text-danger">{{ form.problem_category.errors }}</div>
-            {% endif %}
-          </div>
-
-          <div class="form-group mb-3">
-            <label for="{{ form.comment_summary.id_for_label }}">Comment Summary</label>
-            {{ form.comment_summary|add_class:"form-control" }}
-            {% if form.comment_summary.errors %}
-              <div class="text-danger">{{ form.comment_summary.errors }}</div>
             {% endif %}
           </div>
 

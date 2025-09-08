@@ -1,6 +1,7 @@
 .activity-log-container {
     overflow-x: auto;
     padding: 10px; 
+    margin-top: 50px;
 }
 
 .ticket-title {
@@ -18,14 +19,14 @@
     border-collapse: collapse;
     margin-bottom: 20px;
     font-family: 'Segoe UI', sans-serif;
-    min-width: 600px; /* Ensure the table has enough width on small screens */
+    min-width: 600px; 
 }
 
 .activity-log-table th, .activity-log-table td {
     border: 1px solid #ddd;
     padding: 12px;
     vertical-align: top;
-    font-size: 16px; /* Adjust text size for readability */
+    font-size: 16px; 
 }
 
 .activity-log-table th {

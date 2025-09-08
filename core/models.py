@@ -318,7 +318,6 @@ class Ticket(models.Model):
     resolution = models.TextField(null=True, blank=True)
     resolved_by = models.ForeignKey(User, related_name='resolved_tickets', null=True, blank=True, on_delete=models.SET_NULL)
     resolved_at = models.DateTimeField(null=True, blank=True)
-    comment_summary = models.TextField(blank=True, null=True)
     due_date = models.DateTimeField(null=True, blank=True)
 
     is_escalated = models.BooleanField(default=False)

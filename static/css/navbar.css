@@ -112,17 +112,17 @@
 }
 
 .profile-trigger img {
-  width: 36px; /* Slightly larger for better visibility */
+  width: 36px; 
   height: 36px;
   object-fit: cover;
   border-radius: 50%;
   border: 2px solid #ddd;
   display: inline-block;
-  transition: transform 0.3s ease; /* Subtle hover animation */
+  transition: transform 0.3s ease; 
 }
 
 .profile-trigger img:hover {
-  transform: scale(1.05); /* Slightly grow the image on hover */
+  transform: scale(1.05); 
 }
 
 .notifications {
@@ -226,7 +226,7 @@
 }
 
 .badge-escalated {
-  background-color: orange;
+  background-color: #e74c3c;
   color: white;
   padding: 3px 6px;
   border-radius: 8px;
