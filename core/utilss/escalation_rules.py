@@ -1,5 +1,6 @@
 #escalation_rules.py
-from django.utils import timezone  # ✅ correct
+import pytz
+from django.utils import timezone 
 from datetime import timedelta
 from core.models import Zone, Ticket
 from core.models import EscalationHistory
@@ -186,15 +187,15 @@ def escalate_ticket(ticket):
         logger.info(f"Ticket {ticket.id} has not yet exceeded escalation time. No escalation.")
 """
 
+
 def is_within_working_hours():
-    now = timezone.now()
-    weekday = now.weekday()  
+    nairobi_tz = pytz.timezone("Africa/Nairobi")
+    now = timezone.now().astimezone(nairobi_tz)
+
+    weekday = now.weekday()
     hour = now.hour
 
-    
-    if weekday < 5 and 9 <= hour < 17:
-        return True
-    return False
+    return weekday < 5 and 9 <= hour <= 17
 
 
 def escalate_ticket(ticket):

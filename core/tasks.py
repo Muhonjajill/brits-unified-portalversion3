@@ -33,12 +33,11 @@ def send_escalation_notification(ticket):
         {"type": "escalation_message", "message": message}
     )
 
-
-"""
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def run_auto_escalation(self):
+    """Periodic task that checks tickets for unassigned notifications and escalations."""
     now = timezone.now()
-    logger.info(f"Auto-escalation kicked off at {now}")
+    logger.info(f"Auto-escalation check started at {now}")
 
     tickets = Ticket.objects.filter(status__in=['open', 'in_progress'])
 
@@ -52,35 +51,9 @@ def run_auto_escalation(self):
         )
 
         if ticket.assigned_to:
-            escalate_ticket(ticket)
-        else:
-            send_unassigned_ticket_notification(ticket)
-"""
-
-@shared_task(bind=True, max_retries=3, default_retry_delay=60)
-def run_auto_escalation(self):
-    """Periodic task that checks unassigned tickets and escalates based on zones and priority."""
-    now = timezone.now()
-    
-    # Only proceed with auto-escalation if it's within working hours
-    if not is_within_working_hours():
-        logger.info("Auto-escalation skipped because it's outside of working hours.")
-        return
-
-    logger.info(f"Auto-escalation kicked off at {now}")
-
-    tickets = Ticket.objects.filter(status__in=['open', 'in_progress'])
-
-    for ticket in tickets:
-        ticket = Ticket.objects.get(id=ticket.id)
-
-        logger.debug(
-            f"Checking ticket {ticket.id}: "
-            f"Escalation={ticket.current_escalation_level}, "
-            f"Assigned={ticket.assigned_to}, Priority={ticket.priority}"
-        )
-
-        if ticket.assigned_to:
-            escalate_ticket(ticket)
+            if is_within_working_hours():
+                escalate_ticket(ticket)
+            else:
+                logger.info(f"Escalation for ticket {ticket.id} skipped (outside working hours).")
         else:
             send_unassigned_ticket_notification(ticket)
