@@ -77,34 +77,103 @@ ESCALATION_FLOW = {
     'Tier 4': None,
 }
 
+MAX_ESCALATION_LEVEL = {
+    'low': 'Tier 3',
+    'medium': 'Tier 3',
+    'high': 'Tier 3',
+    'critical': 'Tier 4',
+}
+# Zone & Priority → Escalation thresholds (minutes)
+ZONE_PRIORITY_THRESHOLDS = {
+    'Zone A': {
+        'critical': timedelta(minutes=2),
+        'high': timedelta(minutes=5),
+        'medium': timedelta(minutes=8),
+        'low': timedelta(minutes=10),
+    },
+    'Zone B': {
+        'critical': timedelta(minutes=6),
+        'high': timedelta(minutes=7),
+        'medium': timedelta(minutes=9),
+        'low': timedelta(minutes=10),
+    },
+    'Zone C': {
+        'critical': timedelta(minutes=8),
+        'high': timedelta(minutes=9),
+        'medium': timedelta(minutes=11),
+        'low': timedelta(minutes=12),
+    },
+    'Zone D': {
+        'critical': timedelta(minutes=10),
+        'high': timedelta(minutes=11),
+        'medium': timedelta(minutes=13),
+        'low': timedelta(minutes=14),
+    },
+    'Zone E': {
+        'critical': timedelta(minutes=12),
+        'high': timedelta(minutes=13),
+        'medium': timedelta(minutes=15),
+        'low': timedelta(minutes=16),
+    },
+}
+
+
+
+
 def send_unassigned_ticket_notification(ticket):
-    """Send periodic notifications if ticket is not assigned within the threshold."""
     now = timezone.now()
 
-    # Notification condition if the ticket is unassigned
-    if not ticket.assigned_to and now >= ticket.created_at + timedelta(minutes=2):
-        # Send a WebSocket notification to inform users about unassigned tickets
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            "escalations",  # Group name
-            {
-                "type": "unassigned_ticket_notification",
-                "ticket": serialize_ticket(ticket),  
-            }
-        )
+    PRIORITY_THRESHOLDS = {
+        'low': timedelta(minutes=8),
+        'medium': timedelta(minutes=6),
+        'high': timedelta(minutes=4),
+        'critical': timedelta(minutes=2),
+    }
+
+    priority = (ticket.priority or "low").lower()
+    threshold = PRIORITY_THRESHOLDS.get(priority, timedelta(minutes=8))
+
+    if not ticket.assigned_to:
+        elapsed = now - ticket.created_at
+
+        # 🔹 FIRST ROUND — if ticket just passed threshold and no notification sent yet
+        if not ticket.last_unassigned_notification and elapsed >= threshold:
+            _trigger_unassigned_alert(ticket, now)
+
+        # 🔹 SUBSEQUENT ROUNDS — check repeat intervals
+        elif ticket.last_unassigned_notification and now >= ticket.last_unassigned_notification + threshold:
+            _trigger_unassigned_alert(ticket, now)
 
 
-"""
-def send_ticket_assignment_notification(ticket):
-    message = f"Ticket #{ticket.id} is not assigned yet. Please assign it within 2 hours."
-    send_mail("Unassigned Ticket Reminder", message, None, [settings.EMAIL_HOST_USER])
-
-    # WebSocket notification
+def _trigger_unassigned_alert(ticket, now):
+    """Send WebSocket + Email alert for unassigned ticket."""
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
-        "ticket_notifications",
-        {"type": "ticket_assignment_notification", "message": message}
-    )"""
+        "escalations",
+        {
+            "type": "unassigned_ticket_notification",
+            "ticket": serialize_ticket(ticket),
+        }
+    )
+
+    subject = f"[Unassigned Ticket] Ticket #{ticket.id} ({ticket.priority.capitalize()} Priority)"
+    message = (
+        f"Ticket #{ticket.id} ({ticket.priority.capitalize()} priority) is still unassigned.\n\n"
+        f"- Created At: {ticket.created_at}\n"
+        f"- Current Status: {ticket.status}\n\n"
+        f"Please assign this ticket as soon as possible."
+    )
+
+    try:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [settings.EMAIL_HOST_USER])
+        logger.info(f"✅ Unassigned ticket email sent for Ticket #{ticket.id}")
+    except Exception as e:
+        logger.error(f"❌ Failed to send unassigned ticket email for Ticket #{ticket.id}: {str(e)}")
+
+    ticket.last_unassigned_notification = now
+    ticket.save(update_fields=["last_unassigned_notification"])
+
+
 
 def send_ticket_assignment_notification(ticket):
     """Send notification to admins or assigned staff to assign the ticket."""
@@ -125,68 +194,6 @@ def send_ticket_assignment_notification(ticket):
     )
 
 
-"""
-def escalate_ticket(ticket):
-    now = timezone.now()
-    escalation_level = ticket.current_escalation_level or 'Tier 1'
-
-    if not ticket.zone:
-        logger.warning(f"Ticket {ticket.id} has no zone defined. Assigning default zone 'A'.")
-        try:
-            ticket.zone = Zone.objects.get(name='Zone A')
-        except Zone.DoesNotExist:
-            ticket.zone = Zone.objects.create(name='Zone A')
-
-    if ticket.zone.name == 'Zone A':
-        zone_threshold = timedelta(minutes=5)
-    elif ticket.zone.name == 'Zone B':
-        zone_threshold = timedelta(minutes=10)
-    elif ticket.zone.name == 'Zone C':
-        zone_threshold = timedelta(minutes=15)
-    else:
-        zone_threshold = timedelta(minutes=5)
-
-    threshold_hours = ESCALATION_TIME_LIMITS.get(ticket.priority.lower(), 1)
-    priority_threshold = timedelta(hours=threshold_hours)
-
-    escalation_time = min(priority_threshold, zone_threshold)
-
-    last_escalation_time = ticket.escalated_at or ticket.created_at
-
-    if now >= last_escalation_time + escalation_time:
-        logger.info(f"Ticket {ticket.id} exceeds escalation time. Proceeding with escalation.")
-
-        if ticket.priority.lower() == 'critical':
-            if escalation_level != 'Tier 4':
-                next_level = ESCALATION_FLOW.get(escalation_level)
-            else:
-                next_level = None
-        else:
-            next_level = ESCALATION_FLOW.get(escalation_level)
-
-        if next_level:
-            logger.info(f"Ticket {ticket.id} escalated from {escalation_level} → {next_level}")
-
-            ticket.current_escalation_level = next_level
-            ticket.is_escalated = True
-            ticket.escalated_at = now  
-            ticket.save()
-
-            send_escalation_email(ticket, next_level)
-
-            EscalationHistory.objects.create(
-                ticket=ticket,
-                from_level=escalation_level,
-                to_level=next_level,
-                note=f"Auto-escalated based on zone {ticket.zone.name} "
-                     f"and priority {ticket.priority}."
-            )
-        else:
-            logger.info(f"Ticket {ticket.id} cannot be escalated further (already at Tier 4).")
-    else:
-        logger.info(f"Ticket {ticket.id} has not yet exceeded escalation time. No escalation.")
-"""
-
 
 def is_within_working_hours():
     nairobi_tz = pytz.timezone("Africa/Nairobi")
@@ -198,71 +205,96 @@ def is_within_working_hours():
     return weekday < 5 and 9 <= hour <= 17
 
 
+
 def escalate_ticket(ticket):
     now = timezone.now()
     escalation_level = ticket.current_escalation_level or 'Tier 1'
 
     if not ticket.zone:
-        logger.warning(f"Ticket {ticket.id} has no zone defined. Assigning default zone 'A'.")
-        try:
-            ticket.zone = Zone.objects.get(name='Zone A')
-        except Zone.DoesNotExist:
-            ticket.zone = Zone.objects.create(name='Zone A')
+        logger.warning(f"Ticket {ticket.id} has no zone. Defaulting to Zone A.")
+        ticket.zone, _ = Zone.objects.get_or_create(name='Zone A')
 
-    # Check if the current time is within working hours
     if not is_within_working_hours():
-        logger.info(f"Ticket {ticket.id} escalation skipped because it's outside of working hours.")
+        logger.info(f"⏸ Escalation skipped for Ticket {ticket.id} (outside working hours).")
         return
 
-    if ticket.zone.name == 'Zone A':
-        zone_threshold = timedelta(minutes=5)
-    elif ticket.zone.name == 'Zone B':
-        zone_threshold = timedelta(minutes=10)
-    elif ticket.zone.name == 'Zone C':
-        zone_threshold = timedelta(minutes=15)
-    else:
-        zone_threshold = timedelta(minutes=5)
+    # 🚫 Do not escalate unassigned tickets
+    if not ticket.assigned_to or not ticket.assigned_at:
+        logger.info(f"⏸ Escalation skipped for Ticket {ticket.id} (not yet assigned).")
+        return
 
-    threshold_hours = ESCALATION_TIME_LIMITS.get(ticket.priority.lower(), 1)
-    priority_threshold = timedelta(hours=threshold_hours)
+    zone_name = ticket.zone.name
+    priority = (ticket.priority or "low").lower()
 
-    escalation_time = min(priority_threshold, zone_threshold)
+    zone_thresholds = ZONE_PRIORITY_THRESHOLDS.get(zone_name, ZONE_PRIORITY_THRESHOLDS['Zone A'])
+    escalation_time = zone_thresholds.get(priority, timedelta(minutes=10))
 
-    last_escalation_time = ticket.escalated_at or ticket.created_at
+    last_escalation_time = ticket.escalated_at
 
-    if now >= last_escalation_time + escalation_time:
-        logger.info(f"Ticket {ticket.id} exceeds escalation time. Proceeding with escalation.")
+    # 🔹 FIRST ROUND — only after assigned_at
+    if not last_escalation_time and now >= ticket.assigned_at + escalation_time:
+        _do_escalation(ticket, escalation_level, now)
 
-        if ticket.priority.lower() == 'critical':
-            if escalation_level != 'Tier 4':
-                next_level = ESCALATION_FLOW.get(escalation_level)
-            else:
-                next_level = None
-        else:
-            next_level = ESCALATION_FLOW.get(escalation_level)
+    # 🔹 SUBSEQUENT ROUNDS
+    elif last_escalation_time and now >= last_escalation_time + escalation_time:
+        _do_escalation(ticket, escalation_level, now)
 
-        if next_level:
-            logger.info(f"Ticket {ticket.id} escalated from {escalation_level} → {next_level}")
 
-            ticket.current_escalation_level = next_level
-            ticket.is_escalated = True
-            ticket.escalated_at = now  
-            ticket.save()
 
-            send_escalation_email(ticket, next_level)
+"""def _do_escalation(ticket, escalation_level, now):
+    next_level = ESCALATION_FLOW.get(escalation_level)
+    if not next_level:
+        logger.info(f"Ticket {ticket.id} already at highest escalation level ({escalation_level}).")
+        return
 
-            EscalationHistory.objects.create(
-                ticket=ticket,
-                from_level=escalation_level,
-                to_level=next_level,
-                note=f"Auto-escalated based on zone {ticket.zone.name} "
-                     f"and priority {ticket.priority}."
-            )
-        else:
-            logger.info(f"Ticket {ticket.id} cannot be escalated further (already at Tier 4).")
-    else:
-        logger.info(f"Ticket {ticket.id} has not yet exceeded escalation time. No escalation.")
+    # ✅ FIX: define priority here so it’s available for logging and history
+    priority = (ticket.priority or "low").lower()
 
+    ticket.current_escalation_level = next_level
+    ticket.is_escalated = True
+    ticket.escalated_at = now
+    ticket.save()
+
+    send_escalation_email(ticket, next_level)
+    EscalationHistory.objects.create(
+        ticket=ticket,
+        from_level=escalation_level,
+        to_level=next_level,
+        note=f"Auto-escalated at {priority} priority in {ticket.zone.name}."
+    )
+
+    logger.info(f"🚀 Ticket {ticket.id} escalated from {escalation_level} → {next_level}")"""
+
+def _do_escalation(ticket, escalation_level, now):
+    priority = (ticket.priority or "low").lower()
+    max_level = MAX_ESCALATION_LEVEL.get(priority, "Tier 3")
+
+    # 🚫 Stop escalation if already at or beyond max allowed level
+    if escalation_level == max_level:
+        logger.info(
+            f"⏹ Ticket {ticket.id} ({priority}) reached its max escalation level ({max_level})."
+        )
+        return
+
+    next_level = ESCALATION_FLOW.get(escalation_level)
+    if not next_level:
+        logger.info(f"Ticket {ticket.id} already at highest escalation level ({escalation_level}).")
+        return
+
+    ticket.current_escalation_level = next_level
+    ticket.is_escalated = True
+    ticket.escalated_at = now
+    ticket.save()
+
+    send_escalation_email(ticket, next_level)
+    EscalationHistory.objects.create(
+        ticket=ticket,
+        from_level=escalation_level,
+        to_level=next_level,
+        note=f"Auto-escalated at {priority} priority in {ticket.zone.name}."
+    )
+
+    logger.info(f"🚀 Ticket {ticket.id} escalated from {escalation_level} → {next_level}")
 
 
 

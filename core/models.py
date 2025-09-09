@@ -311,6 +311,7 @@ class Ticket(models.Model):
 
     created_by = models.ForeignKey(User, related_name='created_tickets', on_delete=models.SET_NULL, null=True)
     assigned_to = models.ForeignKey(User, related_name='assigned_tickets', on_delete=models.SET_NULL, null=True, blank=True)
+    assigned_at = models.DateTimeField(null=True, blank=True)  # ⬅️ NEW FIELD
     responsible = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
@@ -332,6 +333,8 @@ class Ticket(models.Model):
     escalation_type = models.CharField(max_length=100, null=True, blank=True)
 
     comment_summary = models.TextField(blank=True, null=True) 
+
+    last_unassigned_notification = models.DateTimeField(null=True, blank=True)
 
     #created_at = models.DateTimeField(auto_now_add=True)
     created_at = models.DateTimeField(default=timezone.now)
@@ -356,6 +359,16 @@ class Ticket(models.Model):
     def save(self, *args, **kwargs):
         if self.terminal and not self.zone:
             self.zone = self.terminal.zone
+
+
+        # Auto-update assigned_at if assigned_to is set and changed
+        if self.pk:  # existing ticket
+            old_ticket = Ticket.objects.filter(pk=self.pk).first()
+            if old_ticket and old_ticket.assigned_to != self.assigned_to:
+                self.assigned_at = timezone.now()
+        else:  # new ticket
+            if self.assigned_to and not self.assigned_at:
+                self.assigned_at = timezone.now()   
 
         if self.problem_category and self.priority:
             from core.utilss.escalation import get_escalation_guidance
