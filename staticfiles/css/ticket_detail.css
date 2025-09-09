@@ -134,9 +134,9 @@
 .badge-resolved { background-color: #17a2b8; color: white; }
 .badge-closed { background-color: #6c757d; color: white; }
 
-.badge-low { background-color: #17a2b8; color: white; }
-.badge-medium { background-color: #ffc107; color: #212529; }
-.badge-high { background-color: #dc3545; color: white; }
+.badge-low { background-color: #17b845; color: white; }
+.badge-medium { background-color: #007bff; color: #212529; }
+.badge-high { background-color: #dc9c35; color: white; }
 .badge-critical { background-color: #bd2130; color: white; }
 
 /* Back button */

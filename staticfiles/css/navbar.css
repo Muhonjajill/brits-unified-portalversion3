@@ -1,29 +1,32 @@
+:root { --sidebar-width: 250px; }
+
 /* Base Layout */
 .top-navbar {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-width);
+  right: 0; /* keep this so it stretches to the edge */
+  width: calc(100% - var(--sidebar-width));
   height: 60px;
-  background-color: #fff;
-  border-bottom: 1px solid #e0e0e0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 1.5rem;
-  position: fixed;
-  top: 0;
-  left: 250px;
-  right: 0;
+  background: #fff;
+  border-bottom: 1px solid #e0e0e0;
   z-index: 1050;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Slightly stronger shadow for depth */
-  transition: box-shadow 0.3s ease-in-out; /* Smooth transition effect */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: left .3s ease, width .3s ease;
 }
 
 /* Logo */
 .logo {
   font-weight: 700;
-  font-size: 1.5rem; /* Slightly larger for better visibility */
+  font-size: 1.5rem; 
   color: #123692;
-  letter-spacing: 1px; /* Add a little spacing to the letters */
+  letter-spacing: 1px; 
   flex-shrink: 0;
-  transition: color 0.3s ease; /* Smooth transition for hover effect */
+  transition: color 0.3s ease; 
 }
 
 .logo:hover {
@@ -44,6 +47,14 @@
   align-items: center;
   gap: 2rem; /* Increased spacing for better readability */
 }
+
+/* layout helpers */
+.left { display:flex; align-items:center; gap:1rem; }
+.nav-right { display:flex; align-items:center; gap:0.75rem; }
+
+/* ensure these are visible and aligned */
+.nav-right .notifications,
+.nav-right .user-profile { display:flex; align-items:center; }
 
 /* Search bar */
 .search-bar {
@@ -101,17 +112,17 @@
 }
 
 .profile-trigger img {
-  width: 36px; /* Slightly larger for better visibility */
+  width: 36px; 
   height: 36px;
   object-fit: cover;
   border-radius: 50%;
   border: 2px solid #ddd;
   display: inline-block;
-  transition: transform 0.3s ease; /* Subtle hover animation */
+  transition: transform 0.3s ease; 
 }
 
 .profile-trigger img:hover {
-  transform: scale(1.05); /* Slightly grow the image on hover */
+  transform: scale(1.05); 
 }
 
 .notifications {
@@ -123,17 +134,6 @@
 .notifications .fas.fa-bell {
   font-size: 1.4rem;
   color: #007bff;
-}
-
-.notifications .badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: red;
-    color: white;
-    border-radius: 50%;
-    padding: 5px 10px;
-    font-size: 12px;
 }
 
 .notifications-dropdown {
@@ -156,11 +156,39 @@
 .notification-item {
     padding: 8px;
     border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between; 
+    align-items: center; 
 }
+
+#notificationCount {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+.notification-item .badge {
+  position: static;
+  margin-left: 10px;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: white;
+}
+
 .notification-item a {
-    text-decoration: none;
-    color: #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
 }
+
 .notifications-dropdown.show {
   display: block;
 }
@@ -190,22 +218,27 @@
 }
 
 .badge-unassigned {
-  background-color: #ffc107; 
-  color: #fff;
-  font-size: 0.7rem;
-  padding: 2px 6px;
-  border-radius: 6px;
-  margin-right: 4px;
+  background-color: blue;
+  color: white;
+  padding: 3px 6px;
+  border-radius: 8px;
+  font-size: 0.75rem;
 }
 
 .badge-escalated {
-  background-color: #dc3545;
-  color: #000;
+  background-color: #e74c3c;
+  color: white;
+  padding: 3px 6px;
+  border-radius: 8px;
+  font-size: 0.75rem;
 }
 
 .badge-new {
-  background-color: #0d6efd; 
-  color: #fff;
+  background-color: red;
+  color: white;
+  padding: 3px 6px;
+  border-radius: 8px;
+  font-size: 0.75rem;
 }
 
 
@@ -214,7 +247,7 @@
   display: none;
   position: absolute;
   right: 0;
-  top: 120%;
+  top: 100%;
   background-color: #fff;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); 
   border-radius: 8px;
@@ -236,6 +269,7 @@
   font-size: 1rem;
   transition: background-color 0.2s ease, color 0.2s ease;
   border-bottom: 1px solid #f1f1f1;
+  white-space: nowrap;
 }
 
 .dropdown-menu a:hover,
@@ -267,32 +301,82 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@media (min-width: 769px) {
+  .nav-items { /* center area; optional */ flex: 1; display:flex; justify-content:center; align-items:center; }
+}
+
 /* Responsive Styles */
 @media (max-width: 768px) {
+
+  .top-navbar {
+    left: 0 !important; 
+    right: 0 !important;
+    width: 100% !important; 
+  }
+
   .hamburger {
     display: block;
   }
 
-  .top-navbar {
-    left: 0;
-    right: 0;
-    width: 100%;
-    padding: 0 1rem;
-  }
-
   .nav-items {
+    flex-direction: column;
+    position: absolute;
+    top: 60px;
+    right: 0;
+    background-color: #fff;
+    width: 100%;
+    padding: 1rem;
     display: none;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
   }
 
   .nav-items.active {
     display: flex;
-    flex-direction: column;
-    width: 100%;
-    background: #fff;
-    position: absolute;
-    top: 60px;
-    left: 0;
-    padding: 1rem;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+
+  .profile-name { display: none; }         
+  .nav-right { gap: 0.5rem; padding-right: 0.5rem; }
+
+
+  /* ensure dropdowns float above everything */
+  .dropdown-menu, .notifications-dropdown {
+    z-index: 3000;
+  }
+}
+
+/* Extra small screens (phones <480px) */
+@media (max-width: 480px) {
+  .top-navbar {
+    padding: 0 0.75rem;
+    height: auto;                
+    flex-wrap: wrap;      
+  }
+
+  .logo {
+    font-size: 1.1rem;          
+  }
+
+  .profile-trigger span { 
+    display: none;              
+  }
+
+  .nav-right {
+    gap: 0.5rem;              
+  }
+
+  .notifications .fas.fa-bell {
+    font-size: 1.2rem;          
+  }
+
+  .profile-trigger img {
+    width: 32px;                 
+    height: 32px;
+  }
+
+  .dropdown-menu,
+  .notifications-dropdown {
+    min-width: 90vw;
+    right: 0;
+    left: auto;
   }
 }

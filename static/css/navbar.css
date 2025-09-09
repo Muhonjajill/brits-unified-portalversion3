@@ -247,7 +247,7 @@
   display: none;
   position: absolute;
   right: 0;
-  top: 120%;
+  top: 100%;
   background-color: #fff;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); 
   border-radius: 8px;
@@ -269,6 +269,7 @@
   font-size: 1rem;
   transition: background-color 0.2s ease, color 0.2s ease;
   border-bottom: 1px solid #f1f1f1;
+  white-space: nowrap;
 }
 
 .dropdown-menu a:hover,

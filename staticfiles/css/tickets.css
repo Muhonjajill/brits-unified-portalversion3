@@ -78,19 +78,55 @@
   border-radius: 5px;
   font-size: 0.8em;
   font-weight: 500;
-  color: white;
 }
-.badge-in_progress { background-color: #ffc107; color: #212529; }
-.badge-resolved { background-color: #17a2b8; }
 
-.badge-open { background-color: #28a745; }
-.badge-closed { background-color: #6c757d; }
-.badge-pending { background-color: #ffc107; color: #212529; }
+.badge-critical { background-color: #e74c3c; }  
+.badge-high { background-color: #dc9c35; }     
+.badge-medium { background-color: #007bff; }   
+.badge-low { background-color: #17b845; }      
 
-.badge-critical { background-color: #e74c3c;}
-.badge-high { background-color: #dc9c35; }
-.badge-medium { background-color: #007bff; color: #212529; }
-.badge-low { background-color: #17b845; }
+.status-critical { 
+  color: #e74c3c; 
+  background-color: rgba(231, 76, 60, 0.15); 
+  font-weight: 850; 
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.status-high { 
+  color: #dc9c35; 
+  background-color: rgba(220, 156, 53, 0.15); 
+  font-weight: 850; 
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.status-medium { 
+  color: #007bff; 
+  background-color: rgba(0, 123, 255, 0.15); 
+  font-weight: 850; 
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.status-low { 
+  color: #17b845; 
+  background-color: rgba(23, 184, 69, 0.15); 
+  font-weight: 850; 
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+.status-closed { 
+  color: #6c757d; 
+  background-color: rgba(108, 117, 125, 0.15); 
+  font-weight: 850; 
+  padding: 3px 8px;
+  border-radius: 10px;
+}
+
+
+
 
 .view-link {
   color: var(--primary-color);
@@ -162,14 +198,13 @@
   border-color: #172d69;
 }
 
-/* Current page display styling */
 .step-links .current {
   padding: 8px 16px;
   background-color: #e9ecef;
   border-radius: 5px;
   font-weight: bold;
 }
-/*escalation*/
+
 .badge-escalated {
   background-color:#e74c3c;
   color: white;

@@ -38,25 +38,6 @@ body.dark-mode {
   --button-background: #6a11cb; 
 }
 
-.user-profile .dropdown-menu,
-.dropdown-menu {
-  display: none;
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 1000;       
-  min-width: 180px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
-  overflow: hidden;
-}
-
-.user-profile.active .dropdown-menu,
-.user-profile .dropdown-menu.show,
-.dropdown-menu.active {
-  display: block;
-}
 
 body {
   font-family: 'Roboto', sans-serif;
@@ -74,7 +55,7 @@ body {
   max-width: 1600px;
   margin: auto;
   padding: 2rem;
-  margin-top: 50px;
+  margin-top: calc(60px + 1rem);
 }
 
 .dashboard-header {
