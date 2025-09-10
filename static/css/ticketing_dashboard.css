@@ -112,13 +112,6 @@ body {
 .gradient-3 { background: linear-gradient(135deg, #6a11cb, #4fa3f7); }
 .gradient-4 { background: linear-gradient(135deg, #2a3d66, #f7971e); }
 
-/* CHARTS GRID */
-.charts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.2rem;
-}
-
 .chart-card {
   background: var(--card-background);
   color: var(--card-text);
@@ -126,6 +119,7 @@ body {
   padding: 1.2rem;
   box-shadow: 0 6px 18px var(--shadow);
   transition: all var(--transition);
+  flex: 1 1 320px;
 }
 
 .chart-card:hover {
@@ -136,6 +130,15 @@ body {
 
 .chart-card.full-width { grid-column: 1 / -1; }
 
+.chart-card.hidden {
+  display: none;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1.5rem;
+}
 /* CARD HEADER */
 .card-header {
   display: flex;
@@ -156,12 +159,16 @@ body {
 /* CHART CANVAS */
 canvas { width: 100% !important; height: auto !important; max-height: 350px; }
 canvas.tall-chart { max-height: 400px; }
-.chart-card.full-width canvas { margin-top: 1rem; }
+.chart-card.full-width canvas { margin-top: 1rem; width: 110% !important;}
 
 /* KPI CARDS FIX */
 .kpi-card, .kpi-card * { text-decoration: none !important; }
 
 /* CHARTS ROW */
+.hidden {
+  visibility: hidden; 
+}
+
 .charts-row {
   display: flex;
   flex-wrap: wrap;
@@ -192,12 +199,32 @@ canvas.tall-chart { max-height: 400px; }
 @media (max-width: 1024px) {
   .dashboard-header h1 { font-size: 2rem; }
   .kpi-card { flex: 1 1 calc(33.33% - 1rem); }
+  .charts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+
+  .chart-card { 
+    flex: 1 1 calc(50% - 1rem); 
+  }
 }
 
 @media (max-width: 768px) {
   .dashboard-header h1 { font-size: 1.8rem; }
   .kpi-card { flex: 1 1 calc(50% - 1rem); }
   .card-header h2 { font-size: 1rem; }
+  .charts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+  }
+
+  .chart-card {
+    flex: 1 1 calc(50% - 1rem); 
+  }.charts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+  }
+
+  .chart-card {
+    flex: 1 1 calc(50% - 1rem);
+  }
 }
 
 @media (max-width: 576px) {
@@ -205,6 +232,9 @@ canvas.tall-chart { max-height: 400px; }
   .dashboard-header h1 { font-size: 1.5rem; }
   .kpi-card { flex: 1 1 100%; min-width: auto; }
   .charts-grid { grid-template-columns: 1fr; }
+  .chart-card {
+    flex: 1 1 100%;
+  }
   .charts-row { flex-direction: column; }
 }
 

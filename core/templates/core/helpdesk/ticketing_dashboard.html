@@ -51,11 +51,13 @@
     </div>
 
 
+
     <!-- Ticket Report by Status -->
+    <!--
     <div class="chart-card" id="ticketReportByStatus">
       <div class="card-header"><h2><i class="fas fa-clipboard-list"></i> Ticket Report by Status</h2></div>
       <canvas id="ticketReportChart"></canvas>
-    </div>
+    </div>-->
 
     <!-- Monthly Trends -->
     <div class="chart-card" id="monthlyTrendsOverview">
@@ -68,6 +70,7 @@
       <div class="card-header"><h2><i class="fas fa-hourglass-half"></i> Time-Based Trends</h2></div>
       <canvas id="timeTrendChart"></canvas>
     </div>
+
 
     <!-- Distribution Breakdown -->
     <div class="chart-card full-width">
@@ -86,16 +89,16 @@
       </div>
     </div>
 
-
     <!-- Tickets by Region -->
-    <div class="chart-card full-width" id="regionchartOverview">
-      <div class="card-header"><h2><i class="fas fa-map-marker-alt"></i> Tickets by Region</h2></div>
+    <div class="chart-card full-width {% if hide_region %}hidden{% endif %}" id="regionchartOverview">
+      <div class="card-header">
+        <h2><i class="fas fa-map-marker-alt"></i> Tickets by Region</h2>
+      </div>
       <canvas id="regionChart" class="tall-chart"></canvas>
     </div>
 
-
     <!-- Tickets by Terminal -->
-    <div class="chart-card full-width" id="terminalChartOverview">
+    <div class="chart-card full-width {% if hide_terminal %}hidden{% endif %}" id="terminalChartOverview">
       <div class="card-header">
         <h2><i class="fas fa-warehouse"></i> Tickets by Terminal</h2>
         <i class="fas fa-chart-bar menu-btn"></i>
@@ -104,10 +107,12 @@
     </div>
 
     <!-- Tickets by Customer -->
-    <div class="chart-card full-width" id="customerChartOverview">
+    <div class="chart-card full-width {% if hide_customer %}hidden{% endif %}" id="customerChartOverview">
       <div class="card-header"><h2><i class="fas fa-user"></i> Tickets by Customer</h2></div>
       <canvas id="customerChart" class="tall-chart"></canvas>
     </div>
+
+
 
   </section>
 </div>

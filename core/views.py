@@ -1171,6 +1171,25 @@ def ticketing_dashboard(request):
     ticket_filter = Ticket.objects.none()
     profile = getattr(request.user, 'profile', None)
 
+    if Customer.objects.filter(custodian=request.user).exists() or Terminal.objects.filter(custodian=request.user).exists():
+        user_group = "Custodian"
+    elif Customer.objects.filter(overseer=request.user).exists():
+        user_group = "Overseer"
+    elif request.user.groups.filter(name="Director").exists():
+        user_group = "Director"
+    elif request.user.groups.filter(name="Manager").exists():
+        user_group = "Manager"
+    elif request.user.groups.filter(name="Staff").exists():
+        user_group = "Staff"
+    elif request.user.is_superuser:
+        user_group = "Superuser"
+    else:
+        user_group = "Customer"
+        
+    hide_region = user_group == "Custodian"
+    hide_terminal = user_group == "Custodian"
+    hide_customer = user_group in ["Custodian", "Overseer"]
+
     if request.user.is_superuser or request.user.groups.filter(name__in=['Director', 'Manager', 'Staff']).exists():
         # Superusers and internal staff see all tickets
         ticket_filter = Ticket.objects.all()
@@ -1294,6 +1313,9 @@ def ticketing_dashboard(request):
         'user_group': user_group,
         "allowed_roles": allowed_roles,
         "kpi_data": kpi_data,
+        "hide_region": hide_region,
+        "hide_terminal": hide_terminal,
+        "hide_customer": hide_customer,
         'status_data': json.dumps(list(status_counts)),
         'priority_data': json.dumps(list(priority_counts)),
         'monthly_data': json.dumps([
@@ -2195,6 +2217,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+"""
 @login_required
 @require_POST
 def mark_notification_read(request, ticket_id):
@@ -2218,6 +2241,29 @@ def mark_notification_read(request, ticket_id):
 
     logger.error("Unexpected: No UserNotification found for user=%s ticket=%s", request.user, ticket_id)
     return JsonResponse({"success": False, "info": "Notification not found", "type": notif_type})
+"""
+
+@login_required
+@require_POST
+def mark_notification_read(request, ticket_id):
+    # Fetch notification
+    notif = UserNotification.objects.filter(
+        user=request.user,
+        ticket_id=ticket_id
+    ).first()
+
+    if notif:
+        if not notif.is_read:
+            notif.is_read = True
+            notif.save(update_fields=["is_read"])
+
+        logger.info("Notification marked read: user=%s ticket=%s", request.user, ticket_id)
+
+        # After marking as read, make sure it's removed from the notifications list on the frontend
+        return JsonResponse({"success": True, "ticket_id": ticket_id})
+
+    logger.error("Unexpected: No UserNotification found for user=%s ticket=%s", request.user, ticket_id)
+    return JsonResponse({"success": False, "info": "Notification not found"})
 
 @login_required
 def escalated_tickets_page(request):

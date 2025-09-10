@@ -87,7 +87,7 @@
       console.error("❌ WebSocket closed unexpectedly");
     };
 
-    escalationSocket.onmessage = (e) => {
+    /*escalationSocket.onmessage = (e) => {
       const data = JSON.parse(e.data);
       console.log("📩 WebSocket message received:", data);
       switch (data.type) {
@@ -107,8 +107,33 @@
         default:
           console.warn("⚠️ Unknown WebSocket event type:", data.type);
       }
-    };
-  })();  <!--– IIFE closed here -->
+    };*/
+  escalationSocket.onmessage = (e) => {
+  const data = JSON.parse(e.data);
+  console.log("📩 WebSocket message received:", data);
+  switch (data.type) {
+    case "notifications_list":
+      if (data.tickets) renderNotifications(data.tickets, data.count);
+      break;
+    case "ticket_creation":
+      console.log("➡️ Ticket creation payload:", data);
+      if (data.ticket) handleNewTicket(data.ticket);
+      break;
+    case "escalation_message":
+      if (data.message) showNotification(data.message);
+      break;
+    case "unassigned_ticket_notification":
+      if (data.ticket) handleNewUnassignedTicket(data.ticket);
+      break;
+    case "ticket_read":
+      // Handle read ticket and remove it from the list
+      renderNotifications(data.tickets, data.count); // Re-render the notifications list
+      break;
+    default:
+      console.warn("⚠️ Unknown WebSocket event type:", data.type);
+  }
+};
+})();  <!--– IIFE closed here -->
 
   // ==== Initial Fetch ====
   fetch(fetchEscalationsUrl)
@@ -177,7 +202,7 @@ function createNotificationItem(ticket) {
   return div;
 }
 
-
+/*
 function markNotificationRead(ticketId) {
   return fetch(`/notifications/mark_read/${ticketId}/`, {
     method: "POST",
@@ -200,7 +225,33 @@ function markNotificationRead(ticketId) {
     }
   })
   .catch((err) => console.error("Error marking read:", err));
+}*/
+
+function markNotificationRead(ticketId) {
+  return fetch(`/notifications/mark_read/${ticketId}/`, {
+    method: "POST",
+    body: JSON.stringify({ type: "read" }),
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken,
+    },
+  })
+  .then((response) => response.json())
+  .then((data) => {
+    if (data.success) {
+      // Ensure the notification disappears
+      const notificationItem = document.querySelector(`[data-ticket-id="${ticketId}"]`);
+      if (notificationItem) {
+        notificationItem.parentElement.removeChild(notificationItem);
+      }
+      updateNotificationCount();
+    } else {
+      console.error("Failed to mark notification as read.");
+    }
+  })
+  .catch((err) => console.error("Error marking read:", err));
 }
+
 
 
 
@@ -217,6 +268,7 @@ function updateNotificationCount() {
   }
 }
 
+/*
 
   // ==== Render Escalations ====
  function renderNotifications(tickets, totalCount) {
@@ -238,7 +290,29 @@ function updateNotificationCount() {
   countEl.textContent = totalCount;
   countEl.style.display = "inline-block";
   if (viewAllEl) viewAllEl.style.display = "block";
+}*/
+
+function renderNotifications(tickets, totalCount) {
+  const countEl = document.getElementById("notificationCount");
+  const listEl = document.getElementById("notificationsList");
+
+  if (!countEl || !listEl) return;
+
+  listEl.innerHTML = "";
+
+  if (!tickets || tickets.length === 0) {
+    listEl.innerHTML = `<div class="dropdown-item text-muted empty">No unread tickets</div>`;
+    countEl.style.display = "none";
+    return;
+  }
+
+  // Only show notifications that are unread
+  tickets.filter(ticket => !ticket.is_read).forEach((t) => listEl.appendChild(createNotificationItem(t)));
+
+  countEl.textContent = totalCount;
+  countEl.style.display = "inline-block";
 }
+
 
 
   // Handle new ticket event
