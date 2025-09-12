@@ -2,7 +2,7 @@ $(document).ready(function() {
     const data = window.initialData;
     const allowAll = window.allowAll;
     // Declare chart instances outside of updateCharts function
-    let dayChart, weekdayChart, hourChart, monthChart, yearChart, statusChart, terminalChart, categoryChart, monthlyChart, slaComplianceChart, creatorChart, assigneeChart, resolverChart, unresolvedChart;  
+    let dayChart, weekdayChart, hourChart, monthChart, yearChart, statusChart, terminalChart, categoryChart, monthlyChart, slaComplianceChart, creatorChart, assigneeChart, resolverChart, unresolvedChart, ticketsTimeChart;;  
 
     // Initialize the chart rendering with the default data
     updateCharts(data);
@@ -57,6 +57,65 @@ $(document).ready(function() {
         destroyChart(terminalChart);
         destroyChart(categoryChart);
         destroyChart(monthlyChart);
+
+        const unit = $('#timeUnitFilter').val() || 'day';
+
+        // After creating the other charts
+        renderTicketsTimeChart(unit, data);
+
+        $('#timeUnitFilter').on('change', function () {
+        const unit = $(this).val();
+        renderTicketsTimeChart(unit, data);
+    });
+
+
+    // ✅ Render the Tickets Over Time chart
+        function renderTicketsTimeChart(unit, data) {
+            const ctx = document.getElementById("ticketsTimeChart");
+            if (!ctx) return;
+
+            const c = ctx.getContext("2d");
+            destroyChart(ticketsTimeChart);
+
+            let labels = [];
+            let values = [];
+
+            if (unit === "day") {
+                labels = data.ticketsPerDay.labels;
+                values = data.ticketsPerDay.data;
+            } else if (unit === "weekday") {
+                labels = data.ticketsPerWeekday.labels;
+                values = data.ticketsPerWeekday.data;
+            } else if (unit === "hour") {
+                labels = data.ticketsPerHour.labels;
+                values = data.ticketsPerHour.data;
+            }
+
+            ticketsTimeChart = new Chart(c, {
+                type: "line",
+                data: {
+                    labels,
+                    datasets: [{
+                        label: "Tickets",
+                        data: values,
+                        borderColor: "#007bff",
+                        backgroundColor: function(context) {
+                            const chart = context.chart;
+                            const { ctx, chartArea } = chart;
+                            if (!chartArea) return null;
+                            return createGradient(ctx, chartArea, "rgba(0,123,255,0.5)", "rgba(0,123,255,0)");
+                        },
+                        fill: true,
+                        tension: 0.3,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
 
         // Per day chart with gradient animation
         dayChart = new Chart(ctxDay, {
@@ -384,7 +443,7 @@ $(document).ready(function() {
                 labels: ['Resolved', 'Unresolved'],
                 datasets: [{
                     label: 'Ticket Resolution',
-                    data: [data.resolvedTickets, data.unresolvedTickets], 
+                    data: [data.resolvedTickets, data.unresolvedCount], 
                     backgroundColor: ['#28a745', '#dc3545'],
                 }]
             },

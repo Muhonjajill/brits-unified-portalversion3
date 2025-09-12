@@ -91,40 +91,65 @@
 
   <!-- Timeline Charts -->
   <div class="row mb-5">
-    <div class="col-md-6"><div class="card"><div class="card-body"><h5 class="card-title text-center">Tickets per Day</h5><canvas id="ticketsPerDayChart"></canvas></div></div></div>
-    <div class="col-md-6"><div class="card"><div class="card-body"><h5 class="card-title text-center">Tickets per Weekday</h5><canvas id="ticketsPerWeekdayChart"></canvas></div></div></div>
-  </div>
-  <div class="row mb-5">
-<!--<div class="col-md-6"><div class="card"><div class="card-body"><h5 class="card-title text-center">Tickets per Hour</h5><canvas id="ticketsPerHourChart"></canvas></div></div></div>-->
-    <div class="col-md-6"><div class="card"><div class="card-body"><h5 class="card-title text-center">Tickets per Month</h5><canvas id="ticketsPerMonthChart"></canvas></div></div></div>
-  </div>
-  <div class="row mb-5">
-    <div class="col-md-6"><div class="card"><div class="card-body"><h5 class="card-title text-center">Tickets per Year</h5><canvas id="ticketsPerYearChart"></canvas></div></div></div>
-    <div class="col-md-6"><div class="card"><div class="card-body"><h5 class="card-title text-center">Monthly Ticket Trends</h5><canvas id="monthlyTicketTrendsChart"></canvas></div></div></div>
-  </div>
+    <div class="row mb-5">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Tickets Over Time</h5>
+          <select id="timeUnitFilter" class="form-select form-select-sm" style="width: auto;">
+             <option value="hour">Hourly</option>
+            <option value="day">Daily</option>
+            <option value="weekday">Weekly</option>
+            <option value="month">Monthly</option>   
+            <option value="year">Yearly</option> 
+          </select>
+        </div>
+        <div class="card-body">
+          <canvas id="ticketsTimeChart" height="250"></canvas>
+        </div>
+      </div>
+    </div>
 
-  <!-- SLA & Status -->
+    <div class="col-md-6"><div class="card"><div class="card-body"><h5 class="card-title text-center">Ticket Statuses</h5><canvas id="ticketStatusChart"></canvas><div id="ticket-status-breakdown" class="mt-3"></div></div></div></div>
+
+  <!-- SLA & Category -->
   <div class="row mb-5">
     <div class="col-md-6"><div class="card"><div class="card-body"><h5 class="card-title text-center">SLA Compliance</h5><canvas id="slaComplianceChart"></canvas></div></div></div>
-    <div class="col-md-6"><div class="card"><div class="card-body"><h5 class="card-title text-center">Ticket Statuses</h5><canvas id="ticketStatusChart"></canvas><div id="ticket-status-breakdown" class="mt-3"></div></div></div></div>
+    <div class="col-md-6"><div class="card"><div class="card-body"><h5 class="card-title text-center">Tickets by Category</h5><canvas id="ticketsByCategoryChart"></canvas></div></div></div>
   </div>
 
   <!-- Users -->
   <div class="row mb-5">
-    <div class="col-md-4"><div class="card"><div class="card-body"><h5 class="card-title text-center">Tickets by Creator</h5><canvas id="ticketsByCreatorChart"></canvas></div></div></div>
-    <div class="col-md-4"><div class="card"><div class="card-body"><h5 class="card-title text-center">Tickets by Assignee</h5><canvas id="ticketsByAssigneeChart"></canvas></div></div></div>
-    <div class="col-md-4"><div class="card"><div class="card-body"><h5 class="card-title text-center">Tickets by Resolver</h5><canvas id="ticketsByResolverChart"></canvas></div></div></div>
+    <div class="col-md-4">
+      <div class="card chart-card">
+        <div class="card-body">
+          <h5 class="card-title text-center">Tickets by Assignee</h5>
+          <canvas id="ticketsByAssigneeChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card chart-card">
+        <div class="card-body">
+          <h5 class="card-title text-center">Tickets by Resolver</h5>
+          <canvas id="ticketsByResolverChart"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-8 mx-auto mt-4">
+      <div class="card chart-card">
+        <div class="card-body">
+          <h5 class="card-title text-center">Unresolved Tickets</h5>
+          <canvas id="unresolvedTicketsChart"></canvas>
+        </div>
+      </div>
+    </div>
   </div>
+
 
   <!-- Categories & Terminals -->
   <div class="row mb-5">
     <div class="col-md-6"><div class="card"><div class="card-body"><h5 class="card-title text-center">Tickets per Terminal</h5><canvas id="ticketsPerTerminalChart"></canvas></div></div></div>
-    <div class="col-md-6"><div class="card"><div class="card-body"><h5 class="card-title text-center">Tickets by Category</h5><canvas id="ticketsByCategoryChart"></canvas></div></div></div>
-  </div>
-
-  <!-- Unresolved -->
-  <div class="row mb-5">
-    <div class="col-md-12"><div class="card"><div class="card-body"><h5 class="card-title text-center">Unresolved Tickets</h5><canvas id="unresolvedTicketsChart"></canvas></div></div></div>
   </div>
 
   <!-- Export -->
@@ -169,14 +194,12 @@
           terminalDropdown.append(`<option value="${term.id}">${term.branch_name} (${term.customer_name} - ${term.region_name})</option>`);
       });
 
-      // Restore previous selection if it exists in the filtered list
       if (previousSelection && filteredTerminals.some(t => String(t.id) === previousSelection)) {
           terminalDropdown.val(previousSelection);
       } else {
           terminalDropdown.val('all');
       }
 
-      // Trigger chart update
       terminalDropdown.trigger('change');
   });
 </script>

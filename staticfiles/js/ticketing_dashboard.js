@@ -185,7 +185,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
     // Function to fetch tickets for the selected period
-    function fetchTickets(period) {
+    /*function fetchTickets(period) {
       fetch(`/tickets/${period}/`)  
           .then(response => {
               if (!response.ok) {
@@ -208,7 +208,32 @@ window.addEventListener('DOMContentLoaded', () => {
               });
           })
           .catch(error => console.error('Error fetching tickets:', error));
-  }
+  }*/
+  function fetchTickets(period) {
+  fetch(`/tickets/${period}/`)  
+      .then(response => {
+          if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+      })
+      .then(data => {
+          const ticketList = document.getElementById('ticket-list');
+          ticketList.innerHTML = ''; // Clear current tickets
+          data.tickets.forEach(ticket => {
+              const ticketElement = document.createElement('div');
+              ticketElement.classList.add('ticket-item');
+              ticketElement.innerHTML = `
+                  <h4>${ticket.title}</h4>
+                  <p>Status: ${ticket.status}</p>
+                  <p>Priority: ${ticket.priority}</p>
+              `;
+              ticketList.appendChild(ticketElement);
+          });
+      })
+      .catch(error => console.error('Error fetching tickets:', error));
+}
+
 
 
   // Initial Load: Fetch Daily Tickets by Default
@@ -334,15 +359,18 @@ window.addEventListener('DOMContentLoaded', () => {
     if (priorityChart) {
       destroyExistingChart('priorityChart');
       console.log(PRIORITY_DATA);
-      const priorityLabels = PRIORITY_DATA.map(item => item.priority.replace(/\b\w/g, l => l.toUpperCase()));
+      //const priorityLabels = PRIORITY_DATA.map(item => item.priority.replace(/\b\w/g, l => l.toUpperCase()));
+      const priorityLabels = PRIORITY_DATA.map(item => item.priority.toLowerCase());
       const priorityCounts = PRIORITY_DATA.map(item => item.count);
       new Chart(priorityChart, {
         type: 'pie',
         data: {
-          labels: priorityLabels,
+          //labels: priorityLabels,
+          labels: priorityLabels.map(label => label.charAt(0).toUpperCase() + label.slice(1)),
           datasets: [{
             data: priorityCounts,
-            backgroundColor: [COLOR_MAP.low, COLOR_MAP.medium, COLOR_MAP.high, COLOR_MAP.critical],
+            //backgroundColor: [COLOR_MAP.low, COLOR_MAP.medium, COLOR_MAP.high, COLOR_MAP.critical],
+            backgroundColor: priorityLabels.map(label => COLOR_MAP[label] || '#CCCCCC'),
             borderColor: '#fff',
             borderWidth: 2
           }]
@@ -354,15 +382,17 @@ window.addEventListener('DOMContentLoaded', () => {
     const statusChart = document.getElementById('statusChart');
     if (statusChart) {
       destroyExistingChart('statusChart');
-      const statusLabels = STATUS_DATA.map(item => item.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()));
+      //const statusLabels = STATUS_DATA.map(item => item.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()));
+      const statusLabels = STATUS_DATA.map(item => item.status.toLowerCase().replace(' ', '_'));
       const statusCounts = STATUS_DATA.map(item => item.count);
       new Chart(statusChart, {
         type: 'pie',
         data: {
-          labels: statusLabels,
+          labels: statusLabels.map(label => label.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())),
           datasets: [{
             data: statusCounts,
-            backgroundColor: [COLOR_MAP.open, COLOR_MAP.in_progress, COLOR_MAP.closed],
+            //backgroundColor: [COLOR_MAP.open, COLOR_MAP.in_progress, COLOR_MAP.closed],
+            backgroundColor: statusLabels.map(label => COLOR_MAP[label] || '#cccccc'),
             borderColor: '#fff',
             borderWidth: 2
           }]

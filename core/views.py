@@ -865,8 +865,23 @@ def file_list_view(request, category_name=None):
             })
 
     # Filter by category if provided
+    """if category_name:
+        visible_files = [file for file in visible_files if isinstance(file, dict) and file['file'].category.name.lower() == category_name.lower() or isinstance(file, File) and file.category.name.lower() == category_name.lower()]"""
     if category_name:
-        visible_files = [file for file in visible_files if isinstance(file, dict) and file['file'].category.name.lower() == category_name.lower() or isinstance(file, File) and file.category.name.lower() == category_name.lower()]
+        visible_files = [
+            file for file in visible_files
+            if (
+                isinstance(file, dict) 
+                and file['file'].category 
+                and file['file'].category.name.lower() == category_name.lower()
+            )
+            or (
+                isinstance(file, File) 
+                and file.category 
+                and file.category.name.lower() == category_name.lower()
+            )
+        ]
+
 
     # Sort files
     sort_option = request.GET.get('sort')
@@ -1602,7 +1617,7 @@ def statistics_view(request):
         .order_by("-count")
     )
 
-    unresolved_stats = tickets.filter(status__in=["Open", "Pending", "New", "In Progress"]) \
+    unresolved_stats = tickets.filter(status__in=["Open", "In Progress"]) \
     .values("assigned_to__username") \
     .annotate(count=Count("id")) \
     .order_by("-count")
@@ -1629,22 +1644,36 @@ def statistics_view(request):
         'ticketCategories': {'labels': [entry['problem_category__name'] for entry in ticket_categories], 'data': [entry['ticket_count'] for entry in ticket_categories]},
         'ticketStatuses': {'labels': status_labels, 'data': status_counts},
         'days': [day.strftime('%Y-%m-%d') for day in days],
-        'ticketsPerDay': tickets_per_day,
         'weekdays': weekdays,
-        'ticketsPerWeekday': tickets_per_weekday,
         'hours': hours,
-        'ticketsPerHour': tickets_per_hour,
         'months': months,
-        'ticketsPerMonth': tickets_per_month,
         'years': years,
-        'ticketsPerYear': tickets_per_year,
+        "ticketsPerDay": {
+            "labels": [day.strftime('%Y-%m-%d') for day in days],
+            "data": tickets_per_day,
+        },
+        "ticketsPerWeekday": {
+            "labels": weekdays,
+            "data": tickets_per_weekday,
+        },
+        "ticketsPerHour": {
+            "labels": hours,
+            "data": tickets_per_hour,
+        },
+        "ticketsPerMonth": {
+            "labels": months,
+            "data": tickets_per_month,
+        },
+        "ticketsPerYear": {
+            "labels": years,
+            "data": tickets_per_year,
+        },
         'terminals': terminals_for_frontend,
         'customers': available_customers,
         'regions': available_regions,
         'data_json': data_json,
-        # SLA stats
         "slaStats": {
-            "labels": ["Met SLA", "Breached SLA"],
+            "labels": ["Met", "Breached"],
             "data": [sla_met, sla_breaches],
         },
 
@@ -1667,7 +1696,7 @@ def statistics_view(request):
             "labels": [r.get("resolved_by__username") or "Unresolved" for r in resolved_by_stats],
             "data": [r["count"] for r in resolved_by_stats],
         },
-        "unresolvedByAssignee": {
+        "unresolvedTickets": {
             "labels": [u.get("assigned_to__username") or "Unassigned" for u in unresolved_stats],
             "data": [u["count"] for u in unresolved_stats],
         },
@@ -1679,6 +1708,9 @@ def statistics_view(request):
             "labels": [r.get("resolved_by__username") or "Unresolved" for r in resolved_by_stats],
             "data": [r["count"] for r in resolved_by_stats],
         },
+
+        "resolvedTickets": tickets.filter(status__iexact="Closed").count(),
+        "unresolvedCount": tickets.filter(status__in=["Open", "Pending", "New", "In Progress"]).count(),
     }
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -2264,6 +2296,25 @@ def mark_notification_read(request, ticket_id):
 
     logger.error("Unexpected: No UserNotification found for user=%s ticket=%s", request.user, ticket_id)
     return JsonResponse({"success": False, "info": "Notification not found"})
+
+
+"""def mark_notification_read(request, ticket_id):
+    try:
+        # Find the notification for this ticket (regardless of who created it)
+        notif = UserNotification.objects.filter(ticket_id=ticket_id, is_read=False).first()
+
+        if notif:
+            notif.is_read = True
+            notif.save(update_fields=["is_read"])
+            logger.info("Notification marked read: user=%s ticket=%s", request.user, ticket_id)
+            return JsonResponse({"success": True, "ticket_id": ticket_id})
+
+        return JsonResponse({"success": False, "info": "Notification not found"})
+
+    except Exception as e:
+        logger.error("Error marking notification read: %s", e, exc_info=True)
+        return JsonResponse({"success": False, "info": "Internal server error"})"""
+
 
 @login_required
 def escalated_tickets_page(request):

@@ -221,12 +221,9 @@ def log_ticket_resolution(sender, instance, created, **kwargs):
         action = f"Ticket resolved: {instance.title}"
         ActivityLog.objects.create(ticket=instance, action=action, user=instance.updated_by)
 
-@receiver(post_save, sender=Ticket)
-def create_ticket_notifications(sender, instance, created, **kwargs):
-    """
-    Ensure notifications are created whenever a ticket is created or updated.
-    """
 
+"""def create_ticket_notifications(sender, instance, created, **kwargs):
+   
     # Case 1: Newly created ticket
     if created:
         # Notify the ticket creator
@@ -250,4 +247,36 @@ def create_ticket_notifications(sender, instance, created, **kwargs):
             UserNotification.objects.get_or_create(
                 user=instance.assigned_to,
                 ticket=instance
+            )"""
+
+@receiver(post_save, sender=Ticket)
+def create_ticket_notifications(sender, instance, created, **kwargs):
+    """
+    Ensure notifications are created whenever a ticket is created or updated.
+    """
+
+    if created:
+        # Notify the ticket creator
+        if instance.created_by:
+            UserNotification.objects.update_or_create(
+                user=instance.created_by,
+                ticket=instance,
+                defaults={"is_read": False}
+            )
+
+        # Notify the assigned user
+        if instance.assigned_to:
+            UserNotification.objects.update_or_create(
+                user=instance.assigned_to,
+                ticket=instance,
+                defaults={"is_read": False}
+            )
+
+    else:
+        # On reassignment, reset notification for the new assignee
+        if instance.assigned_to:
+            UserNotification.objects.update_or_create(
+                user=instance.assigned_to,
+                ticket=instance,
+                defaults={"is_read": False}
             )

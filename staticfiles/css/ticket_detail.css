@@ -130,7 +130,7 @@
 }
 
 .badge-open { background-color: #28a745; color: white; }
-.badge-in_progress { background-color: #ffc107; color: #212529; }
+.badge-in_progress { background-color: #c0392b; color: white; }
 .badge-resolved { background-color: #17a2b8; color: white; }
 .badge-closed { background-color: #6c757d; color: white; }
 
