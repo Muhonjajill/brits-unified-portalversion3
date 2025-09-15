@@ -9,7 +9,7 @@ from .models import ISSUE_MAPPING, ActivityLog, File, FileAccessLog, EscalationH
 from django.http import FileResponse, JsonResponse, HttpResponse
 from .forms import FilePasscodeForm, FileUploadForm, ProblemCategoryForm, TicketForm
 from django.contrib.auth.decorators import login_required, permission_required, user_passes_test
-from django.db.models import Count, Q, Prefetch, F
+from django.db.models import Count, Q, Prefetch, F, Case, When, IntegerField
 from django.utils.timezone import now
 from django.db.models.functions import TruncMonth
 from core.models import FileCategory
@@ -1377,6 +1377,7 @@ def statistics_view(request):
     user = request.user
     user_profile = getattr(user, 'profile', None)
 
+    
     # --- Role-based Filtering ---
     if user.is_superuser or user.groups.filter(name__in=['Director', 'Manager', 'Staff']).exists():
         user_group = "Internal"
@@ -1555,25 +1556,19 @@ def statistics_view(request):
 
     stats = {}
 
-    # 1. Open vs Closed by category
     stats["status_by_category"] = list(
         tickets.values("problem_category__name", "status")
         .annotate(count=Count("id"))
         .order_by("problem_category__name")
     )
 
-    # 2. SLA compliance (your SLA code looks good already)
-
-    # 3. Problem category distribution
+   
     stats["problems_by_category"] = list(
         tickets.values("problem_category__name")
         .annotate(total=Count("id"))
         .order_by("-total")
     )
 
-    # 4. User contributions (keep as-is)
-
-    # 5. Key issues (top 5 categories with most open tickets)
     stats["top_open_issues"] = list(
         tickets.filter(status="Open")
         .values("problem_category__name")
@@ -1582,8 +1577,36 @@ def statistics_view(request):
     )
 
     # SLA Breaches
-    sla_breaches = tickets.filter(resolved_at__isnull=False, due_date__isnull=False, resolved_at__gt=F("due_date")).count()
-    sla_met = tickets.filter(resolved_at__isnull=False, due_date__isnull=False, resolved_at__lte=F("due_date")).count()
+    sla_met = tickets.filter(
+        is_sla_breached=False,
+        status__iexact="closed"
+    ).count()
+
+    sla_breached_escalated = tickets.filter(
+        is_sla_breached=True,
+        is_escalated=True
+    ).count()
+
+    sla_breached_not_escalated = tickets.filter(
+        is_sla_breached=True,
+        is_escalated=False
+    ).count()
+
+    sla_met_before_escalation = tickets.filter(
+        is_sla_breached=False,
+        is_escalated=True,         
+        status__iexact="closed"
+    ).count()
+
+
+    unresolved_tickets = tickets.filter(
+        resolved_at__isnull=True, 
+        due_date__isnull=False, 
+        due_date__lt=timezone.now()
+    )
+
+    sla_escalated = tickets.filter(is_sla_breached=True, is_escalated=True).count()
+    sla_not_escalated = tickets.filter(is_sla_breached=True, is_escalated=False).count()
 
 
     # Problem Categories
@@ -1633,15 +1656,31 @@ def statistics_view(request):
 
 
 
-    print("SLA Met:", sla_met, "SLA Breaches:", sla_breaches)
+   
     print("Unresolved stats:", list(unresolved_stats))
 
+
+
+    resolution_stats = tickets.aggregate(
+        resolved=Count(Case(
+            When(status__iexact="closed", then=1),
+            output_field=IntegerField()
+        )),
+        unresolved=Count(Case(
+            When(Q(status__iexact="open") | Q(status__iexact="in_progress"), then=1),
+            output_field=IntegerField()
+        ))
+    )
+
+   
 
     data_json = json.dumps(stats, cls=DjangoJSONEncoder)
 
     data = {
         'ticketsPerTerminal': [{'branch_name': entry['terminal__branch_name'], 'count': entry['ticket_count']} for entry in tickets_per_terminal],
         'ticketCategories': {'labels': [entry['problem_category__name'] for entry in ticket_categories], 'data': [entry['ticket_count'] for entry in ticket_categories]},
+        "resolvedTickets": resolution_stats["resolved"] or 0,
+        "unresolvedCount": resolution_stats["unresolved"] or 0,
         'ticketStatuses': {'labels': status_labels, 'data': status_counts},
         'days': [day.strftime('%Y-%m-%d') for day in days],
         'weekdays': weekdays,
@@ -1672,11 +1711,16 @@ def statistics_view(request):
         'customers': available_customers,
         'regions': available_regions,
         'data_json': data_json,
-        "slaStats": {
-            "labels": ["Met", "Breached"],
-            "data": [sla_met, sla_breaches],
+         "escalationSLAStats": {  
+            "labels": ["Breached & Escalated",
+               "Breached & Not Escalated",
+               "Met (incl. closed before escalation)"],
+            "data": [
+                sla_breached_escalated,
+                sla_breached_not_escalated,
+                sla_met + sla_met_before_escalation
+            ]
         },
-
         # Problem categories
         "ticketCategories": {
             "labels": [c["problem_category__name"] for c in categories],
@@ -1697,8 +1741,8 @@ def statistics_view(request):
             "data": [r["count"] for r in resolved_by_stats],
         },
         "unresolvedTickets": {
-            "labels": [u.get("assigned_to__username") or "Unassigned" for u in unresolved_stats],
-            "data": [u["count"] for u in unresolved_stats],
+            "labels": [u.get("assigned_to__username") or "Unassigned" for u in unresolved_stats] or ["No Unresolved"],
+            "data": [u["count"] for u in unresolved_stats] or [0],
         },
         "resolvedByAssignee": {
             "labels": [r.get("assigned_to__username") or "Unassigned" for r in resolved_assignee_stats],
@@ -1709,9 +1753,15 @@ def statistics_view(request):
             "data": [r["count"] for r in resolved_by_stats],
         },
 
-        "resolvedTickets": tickets.filter(status__iexact="Closed").count(),
-        "unresolvedCount": tickets.filter(status__in=["Open", "Pending", "New", "In Progress"]).count(),
     }
+
+    print("Resolved:", resolution_stats["resolved"], "Unresolved:", resolution_stats["unresolved"])
+    print("SLA Escalated:", sla_escalated, "SLA Not Escalated:", sla_not_escalated)
+
+    for ticket in tickets:
+        print(f"Ticket {ticket.id}: resolved_at={ticket.resolved_at}, due_date={ticket.due_date}, is_sla_breached={ticket.is_sla_breached}, is_escalated={ticket.is_escalated}")
+
+
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse(data, safe=False)
@@ -2253,12 +2303,7 @@ logger = logging.getLogger(__name__)
 @login_required
 @require_POST
 def mark_notification_read(request, ticket_id):
-    try:
-        data = json.loads(request.body.decode("utf-8") or "{}")
-        notif_type = data.get("type")
-    except json.JSONDecodeError:
-        notif_type = None
-
+    # Fetch notification
     notif = UserNotification.objects.filter(
         user=request.user,
         ticket_id=ticket_id
@@ -2268,12 +2313,14 @@ def mark_notification_read(request, ticket_id):
         if not notif.is_read:
             notif.is_read = True
             notif.save(update_fields=["is_read"])
+
         logger.info("Notification marked read: user=%s ticket=%s", request.user, ticket_id)
-        return JsonResponse({"success": True, "type": notif_type})
+
+        # After marking as read, make sure it's removed from the notifications list on the frontend
+        return JsonResponse({"success": True, "ticket_id": ticket_id})
 
     logger.error("Unexpected: No UserNotification found for user=%s ticket=%s", request.user, ticket_id)
-    return JsonResponse({"success": False, "info": "Notification not found", "type": notif_type})
-"""
+    return JsonResponse({"success": False, "info": "Notification not found"})"""
 
 @login_required
 @require_POST
@@ -2298,22 +2345,6 @@ def mark_notification_read(request, ticket_id):
     return JsonResponse({"success": False, "info": "Notification not found"})
 
 
-"""def mark_notification_read(request, ticket_id):
-    try:
-        # Find the notification for this ticket (regardless of who created it)
-        notif = UserNotification.objects.filter(ticket_id=ticket_id, is_read=False).first()
-
-        if notif:
-            notif.is_read = True
-            notif.save(update_fields=["is_read"])
-            logger.info("Notification marked read: user=%s ticket=%s", request.user, ticket_id)
-            return JsonResponse({"success": True, "ticket_id": ticket_id})
-
-        return JsonResponse({"success": False, "info": "Notification not found"})
-
-    except Exception as e:
-        logger.error("Error marking notification read: %s", e, exc_info=True)
-        return JsonResponse({"success": False, "info": "Internal server error"})"""
 
 
 @login_required

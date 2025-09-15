@@ -4,6 +4,7 @@ from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from core.models import ActivityLog, File, FileAccessLog, Profile, Ticket, TicketComment, UserNotification
 from django.core.exceptions import ObjectDoesNotExist
+import logging
 
 
 @receiver(post_migrate)
@@ -221,33 +222,6 @@ def log_ticket_resolution(sender, instance, created, **kwargs):
         action = f"Ticket resolved: {instance.title}"
         ActivityLog.objects.create(ticket=instance, action=action, user=instance.updated_by)
 
-
-"""def create_ticket_notifications(sender, instance, created, **kwargs):
-   
-    # Case 1: Newly created ticket
-    if created:
-        # Notify the ticket creator
-        if instance.created_by:
-            UserNotification.objects.get_or_create(
-                user=instance.created_by,
-                ticket=instance
-            )
-
-        # Notify the assigned user if any
-        if instance.assigned_to:
-            UserNotification.objects.get_or_create(
-                user=instance.assigned_to,
-                ticket=instance
-            )
-
-    # Case 2: Updates that matter (like reassignment)
-    else:
-        # If reassigned to someone else, make sure they get a notification
-        if instance.assigned_to:
-            UserNotification.objects.get_or_create(
-                user=instance.assigned_to,
-                ticket=instance
-            )"""
 
 @receiver(post_save, sender=Ticket)
 def create_ticket_notifications(sender, instance, created, **kwargs):

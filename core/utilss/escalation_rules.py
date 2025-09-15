@@ -2,9 +2,6 @@
 import pytz
 from django.utils import timezone 
 from datetime import timedelta
-from core.models import Zone, Ticket
-from core.models import EscalationHistory
-
 
 
 #from core.models import EscalationHistory
@@ -83,7 +80,7 @@ MAX_ESCALATION_LEVEL = {
     'high': 'Tier 3',
     'critical': 'Tier 4',
 }
-# Zone & Priority → Escalation thresholds (minutes)
+
 ZONE_PRIORITY_THRESHOLDS = {
     'Zone A': {
         'critical': timedelta(minutes=2),
@@ -207,6 +204,9 @@ def is_within_working_hours():
 
 
 def escalate_ticket(ticket):
+
+    from core.models import Zone, Ticket
+
     now = timezone.now()
     escalation_level = ticket.current_escalation_level or 'Tier 1'
 
@@ -239,33 +239,9 @@ def escalate_ticket(ticket):
     elif last_escalation_time and now >= last_escalation_time + escalation_time:
         _do_escalation(ticket, escalation_level, now)
 
-
-
-"""def _do_escalation(ticket, escalation_level, now):
-    next_level = ESCALATION_FLOW.get(escalation_level)
-    if not next_level:
-        logger.info(f"Ticket {ticket.id} already at highest escalation level ({escalation_level}).")
-        return
-
-    # ✅ FIX: define priority here so it’s available for logging and history
-    priority = (ticket.priority or "low").lower()
-
-    ticket.current_escalation_level = next_level
-    ticket.is_escalated = True
-    ticket.escalated_at = now
-    ticket.save()
-
-    send_escalation_email(ticket, next_level)
-    EscalationHistory.objects.create(
-        ticket=ticket,
-        from_level=escalation_level,
-        to_level=next_level,
-        note=f"Auto-escalated at {priority} priority in {ticket.zone.name}."
-    )
-
-    logger.info(f"🚀 Ticket {ticket.id} escalated from {escalation_level} → {next_level}")"""
-
 def _do_escalation(ticket, escalation_level, now):
+    from core.models import EscalationHistory
+
     priority = (ticket.priority or "low").lower()
     max_level = MAX_ESCALATION_LEVEL.get(priority, "Tier 3")
 
@@ -281,10 +257,16 @@ def _do_escalation(ticket, escalation_level, now):
         logger.info(f"Ticket {ticket.id} already at highest escalation level ({escalation_level}).")
         return
 
+    # 🔹 SLA BREACH CHECK (insert here)
+    if ticket.due_date and not ticket.resolved_at and now > ticket.due_date:
+        ticket.is_sla_breached = True
+        logger.info(f"🚨 SLA breach detected for Ticket {ticket.id}")
+
+    # Existing escalation update
     ticket.current_escalation_level = next_level
     ticket.is_escalated = True
     ticket.escalated_at = now
-    ticket.save()
+    ticket.save(update_fields=["current_escalation_level", "is_sla_breached", "is_escalated", "escalated_at"])
 
     send_escalation_email(ticket, next_level)
     EscalationHistory.objects.create(

@@ -4,6 +4,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from core.priority_rules import determine_priority
+from core.utilss.escalation_rules import ZONE_PRIORITY_THRESHOLDS
 
 
 class EmailOTP(models.Model):
@@ -311,7 +312,7 @@ class Ticket(models.Model):
 
     created_by = models.ForeignKey(User, related_name='created_tickets', on_delete=models.SET_NULL, null=True)
     assigned_to = models.ForeignKey(User, related_name='assigned_tickets', on_delete=models.SET_NULL, null=True, blank=True)
-    assigned_at = models.DateTimeField(null=True, blank=True)  # ⬅️ NEW FIELD
+    assigned_at = models.DateTimeField(null=True, blank=True)  
     responsible = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
@@ -322,6 +323,7 @@ class Ticket(models.Model):
     due_date = models.DateTimeField(null=True, blank=True)
 
     is_escalated = models.BooleanField(default=False)
+    is_sla_breached = models.BooleanField(default=False) 
     escalated_at = models.DateTimeField(null=True, blank=True)
     escalated_by = models.ForeignKey(
         User, null=True, blank=True, related_name='escalated_tickets', on_delete=models.SET_NULL
@@ -356,7 +358,7 @@ class Ticket(models.Model):
     def __str__(self):
         return self.title
     
-    def save(self, *args, **kwargs):
+    """def save(self, *args, **kwargs):
         if self.terminal and not self.zone:
             self.zone = self.terminal.zone
 
@@ -386,7 +388,66 @@ class Ticket(models.Model):
                 self.description
             )
 
+        super().save(*args, **kwargs)"""
+
+    def save(self, *args, **kwargs):
+        if self.terminal and not self.zone:
+            self.zone = self.terminal.zone
+
+        if self.pk: 
+            old_ticket = Ticket.objects.filter(pk=self.pk).first()
+            if old_ticket and old_ticket.assigned_to != self.assigned_to:
+                self.assigned_at = timezone.now()
+        else:  
+            if self.assigned_to and not self.assigned_at:
+                self.assigned_at = timezone.now()
+
+        if not self.due_date:
+            self.due_date = self.calculate_due_date()
+
+        # Escalation guidance
+        if self.problem_category and self.priority:
+            from core.utilss.escalation import get_escalation_guidance
+            guidance = get_escalation_guidance(self.problem_category.name, self.priority)
+            self.escalation_type = guidance['escalation_type']
+            self.escalation_action = guidance['escalation_action']
+
+            if not self.current_escalation_level:
+                self.current_escalation_level = guidance['escalation_tier']
+
+        # Auto-priority determination
+        if not self.priority:
+            self.priority = determine_priority(
+                self.problem_category.name if self.problem_category else "",
+                self.title,
+                self.description
+            )
+
+        # ✅ SLA breach check
+        if self.due_date:
+            if self.is_escalated:
+                self.is_sla_breached = True
+            elif self.resolved_at:
+                self.is_sla_breached = self.resolved_at > self.due_date
+            else:
+                self.is_sla_breached = timezone.now() > self.due_date
+        else:
+            self.is_sla_breached = False
+
+
         super().save(*args, **kwargs)
+
+    def calculate_due_date(self):
+        # Get the zone and priority from the ticket
+        zone_name = self.zone.name if self.zone else 'Zone A'  
+        priority = self.priority.lower() if self.priority else 'medium' 
+
+        threshold = ZONE_PRIORITY_THRESHOLDS.get(zone_name, {}).get(priority, timedelta(minutes=10))
+
+        due_date = timezone.now() + threshold
+        return due_date
+
+
 
 class EscalationHistory(models.Model):
         

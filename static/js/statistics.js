@@ -1,4 +1,5 @@
 $(document).ready(function() {
+    console.log(window.initialData);
     const data = window.initialData;
     const allowAll = window.allowAll;
     // Declare chart instances outside of updateCharts function
@@ -28,15 +29,12 @@ $(document).ready(function() {
         const ctxStatus = document.getElementById('ticketStatusChart').getContext('2d');
         const ctxTerminal = document.getElementById('ticketsPerTerminalChart').getContext('2d');
         const ctxCategory = document.getElementById('ticketsByCategoryChart').getContext('2d');
-        const ctxSLA = document.getElementById('slaComplianceChart').getContext('2d');
         const ctxAssignee = document.getElementById('ticketsByAssigneeChart').getContext('2d');
         const ctxResolver = document.getElementById('ticketsByResolverChart').getContext('2d');
         const ctxUnresolved = document.getElementById('unresolvedTicketsChart').getContext('2d');
         destroyChart(unresolvedChart); 
         destroyChart(assigneeChart); 
 
-       
-        destroyChart(slaComplianceChart);
         
         destroyChart(resolverChart);
 
@@ -49,6 +47,7 @@ $(document).ready(function() {
         const unit = $('#timeUnitFilter').val() || 'day';
 
         renderTicketsTimeChart(unit, data);
+        renderCategoryChart(data);
 
         $('#timeUnitFilter').on('change', function () {
         const unit = $(this).val();
@@ -201,72 +200,227 @@ $(document).ready(function() {
             }
         });
 
-        // Tickets by Category (Radar Chart)
+    
+    function renderCategoryChart(data) {
+        // If an existing chart instance exists, destroy it first
+        if (categoryChart) {
+            categoryChart.destroy();
+        }
+        // Get the canvas context
+        const ctxCategory = document
+            .getElementById('ticketsByCategoryChart')
+            .getContext('2d');
         categoryChart = new Chart(ctxCategory, {
             type: 'radar',
             data: {
-                labels: data.ticketCategories.labels,
-                datasets: [{
-                    label: 'Tickets by Category',
-                    data: data.ticketCategories.data,
-                    backgroundColor: 'rgba(0, 123, 255, 0.3)', 
-                    borderColor: '#007bff',
-                    borderWidth: 2
-                }]
+            labels: data.ticketCategories.labels,
+            datasets: [{
+                label: 'Tickets by Category',
+                data: data.ticketCategories.data,
+                backgroundColor: context => {
+                const { chartArea } = context.chart;
+                return createGradient(
+                    ctxCategory,
+                    chartArea,
+                    'rgba(0, 123, 255, 0.3)',
+                    'rgba(0, 123, 255, 0.1)'
+                );
+                },
+                borderColor: context => {
+                const v = context.dataset.data[context.dataIndex];
+                return v > 10 ? '#ff4500' : '#007bff';
+                },
+                borderWidth: 2,
+                pointBackgroundColor: context => {
+                const v = context.dataset.data[context.dataIndex];
+                return v > 10 ? '#ff4500' : '#007bff';
+                },
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 8,
+                pointHoverBackgroundColor: context => {
+                const v = context.dataset.data[context.dataIndex];
+                return v > 10 ? '#ff6347' : '#007bff';
+                },
+                pointHoverBorderWidth: 2,
+                fill: true
+            }]
             },
             options: {
-                responsive: true,
-                scale: { ticks: { beginAtZero: true } }
+            responsive: true,
+            scale: {
+                ticks: {
+                beginAtZero: true,
+                backdropColor: 'rgba(0, 0, 0, 0.1)',
+                color: '#333',
+                font: { size: 14 }
+                },
+                pointLabels: {
+                color: '#007bff',
+                font: { size: 14, weight: 'bold' }
+                }
+            },
+            animation: {
+                duration: 2000,
+                easing: 'easeOutBounce',
+                onComplete: function(anim) {
+                const chart = anim.chart;
+                const ctx   = chart.ctx;
+                if (!ctx) return;
+                ctx.save();
+                ctx.globalAlpha = 0.5;
+                chart.data.datasets.forEach((ds, idx) => {
+                    ctx.fillStyle = ds.borderColor;
+                    ds.data.forEach((_, i) => {
+                    const pt = chart.getDatasetMeta(idx).data[i];
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                    });
+                });
+                ctx.restore();
+                }
+            },
+            hover: {
+                onHover: (e, active) => {
+                e.native.target.style.cursor = active.length ? 'pointer' : 'default';
+                }
+            },
+            plugins: {
+                tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                titleFont: { size: 14, weight: 'bold' },
+                bodyFont: { size: 12 },
+                padding: 10,
+                cornerRadius: 6,
+                callbacks: {
+                    label: ctx => `${ctx.dataset.label}: ${ctx.formattedValue} tickets`
+                }
+                },
+                legend: {
+                display: true,
+                labels: {
+                    color: '#333',
+                    font: { size: 14, weight: 'bold' }
+                }
+                }
+            }
             }
         });
+        }
+
 
       
 
-        // SLA Chart (Doughnut)
-        slaComplianceChart = new Chart(ctxSLA, {
-            type: 'doughnut',
-            data: {
-                labels: data.slaStats.labels,
-                datasets: [{
-                    label: 'SLA Compliance',
-                    data: data.slaStats.data,
-                    backgroundColor: ['#28a745', '#dc3545'],
-                }]
-            },
-            options: {
-                responsive: true,
-                cutout: '70%', // makes the doughnut hollow
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                let value = context.raw;
-                                let percent = total ? ((value / total) * 100).toFixed(1) : 0;
-                                return `${context.label}: ${value} (${percent}%)`;
-                            }
-                        }
-                    },
-                    datalabels: {
-                        color: '#fff',
-                        formatter: (value, ctx) => {
-                            let total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                            return total ? ((value / total) * 100).toFixed(1) + '%' : '0%';
-                        },
-                        font: {
-                            weight: 'bold',
-                            size: 14
-                        }
-                    }
+       // SLA Chart (Doughnut)
+        const ctxSLAEsc = document.getElementById("slaEscalationChart");
+
+        if (ctxSLAEsc && window.initialData.escalationSLAStats) {
+            const data = window.initialData.escalationSLAStats;
+            const ctx = ctxSLAEsc.getContext("2d");
+
+            // --- Gradients for each slice ---
+            // Softer, modern gradients
+            const gradBreachedEsc = ctx.createLinearGradient(0, 0, 0, 300);
+            gradBreachedEsc.addColorStop(0, "#FF7E67");  // warm coral
+            gradBreachedEsc.addColorStop(1, "#FF3C38");  // soft red
+
+            const gradBreachedNoEsc = ctx.createLinearGradient(0, 0, 0, 300);
+            gradBreachedNoEsc.addColorStop(0, "#6DD5FA"); // aqua blue
+            gradBreachedNoEsc.addColorStop(1, "#2980B9"); // calm teal
+
+            const gradMet = ctx.createLinearGradient(0, 0, 0, 300);
+            gradMet.addColorStop(0, "#A5E1CE");  // soft mint
+            gradMet.addColorStop(1, "#2E8B57");  // deeper sea-gree
+
+            // Custom plugin for center percentage text
+            const centerTextPlugin = {
+                id: "centerText",
+                afterDraw(chart) {
+                    const { ctx, chartArea } = chart;
+                    const dataset = chart.data.datasets[0];
+                    const total = dataset.data.reduce((a, b) => a + b, 0);
+                    const breached = dataset.data[0] ?? 0;
+                    const percent = total ? ((breached / total) * 100).toFixed(1) : 0;
+
+                    ctx.save();
+                    ctx.font = "bold 20px 'Segoe UI', sans-serif";
+                    ctx.fillStyle = "#444";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(`${percent}%`, (chartArea.left + chartArea.right) / 2, (chartArea.top + chartArea.bottom) / 2);
+                    ctx.restore();
                 },
-                animation: { animateRotate: true, animateScale: true, duration: 1200 },
-                hover: { mode: 'nearest', onHover: (e, elements) => e.native.target.style.cursor = elements.length ? 'pointer' : 'default' }
-            },
-            plugins: [ChartDataLabels] 
-        });
+            };
+
+            new Chart(ctxSLAEsc, {
+                type: "doughnut",
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: "SLA Escalation",
+                            data: data.data,
+                            backgroundColor: [gradBreachedEsc, gradBreachedNoEsc, gradMet],
+                            borderColor: "#fff",
+                            borderWidth: 2,
+                            hoverOffset: 12, // reduced for better pointer sync
+                            hitRadius: 4,
+                            shadowColor: "rgba(0,0,0,0.15)",
+                            shadowBlur: 8,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    cutout: "68%",
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1800,
+                        easing: "easeOutElastic",
+                    },
+                    interaction: {
+                        mode: "point",   // precise detection of slices
+                        intersect: true, // only fire when pointer is inside slice
+                    },
+                    plugins: {
+                        legend: {
+                            position: "bottom",
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: "circle",
+                                font: { size: 14, weight: "bold" },
+                                color: "#333",
+                                padding: 14,
+                            },
+                        },
+                        tooltip: {
+                            backgroundColor: "#222",
+                            titleFont: { size: 14, weight: "bold" },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 6,
+                            callbacks: {
+                                label(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const value = context.raw;
+                                    const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${context.label}: ${value} (${percent}%)`;
+                                },
+                            },
+                        },
+                    },
+                },
+                plugins: [centerTextPlugin],
+            });
+        } else {
+            console.error("Failed to load SLA data for chart", window.initialData.escalationSLAStats);
+        }
+
+
+
 
         
         unresolvedChart = new Chart(ctxUnresolved, {
@@ -450,7 +604,9 @@ $(document).ready(function() {
                 if (response) {
                     try {
                         console.log("New Data:", response);
+                        window.initialData = response;
                         updateCharts(response); 
+                        console.log("Resolved:", response.resolvedTickets, "Unresolved:", response.unresolvedCount);
                     } catch (error) {
                         console.error("Error while updating charts:", error);
                     }
