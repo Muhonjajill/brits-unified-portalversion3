@@ -272,11 +272,17 @@ class UserNotification(models.Model):
     user       = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
     ticket     = models.ForeignKey("Ticket", on_delete=models.CASCADE, related_name="notifications")
     is_read    = models.BooleanField(default=False)
+    notification_type = models.CharField(
+        max_length=20,
+        choices=[("new","New"),("escalated","Escalated"),("unassigned","Unassigned")],
+        default="new",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=["user", "ticket"], name="unique_user_ticket_notification")
         ]
+        
     def __str__(self):
         return f"Notification for {self.user.username} - Ticket #{self.ticket.id}"
 

@@ -81,12 +81,13 @@ MAX_ESCALATION_LEVEL = {
     'critical': 'Tier 4',
 }
 
+#ESCALATION TIME AS PER ZONES AND PRIORITIES
 ZONE_PRIORITY_THRESHOLDS = {
     'Zone A': {
         'critical': timedelta(minutes=2),
-        'high': timedelta(minutes=5),
-        'medium': timedelta(minutes=8),
-        'low': timedelta(minutes=10),
+        'high': timedelta(minutes=4),
+        'medium': timedelta(minutes=6),
+        'low': timedelta(minutes=8),
     },
     'Zone B': {
         'critical': timedelta(minutes=6),
@@ -115,6 +116,44 @@ ZONE_PRIORITY_THRESHOLDS = {
 }
 
 
+def send_new_ticket_notification(ticket):
+    """Notify admins/staff when a new ticket is created."""
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        "escalations",
+        {
+            "type": "new_ticket_notification",
+            "ticket": serialize_ticket(ticket),
+        }
+    )
+
+    subject = f"[New Ticket] Ticket #{ticket.id} Created"
+    message = (
+        f"A new ticket has been created.\n\n"
+        f"- Ticket ID: {ticket.id}\n"
+        f"- Title: {ticket.title}\n"
+        f"- Priority: {ticket.priority}\n"
+        f"- Category: {ticket.problem_category}\n"
+        f"- Status: {ticket.status}\n"
+        f"- Created At: {ticket.created_at}\n\n"
+        f"Please review and assign it."
+    )
+
+    # 🔑 Collect all staff/admin emails
+    recipients = list(
+        User.objects.filter(groups__name__in=["Admin","Director","Manager","Staff"])
+        .exclude(email__isnull=True)
+        .values_list("email", flat=True)
+    )
+
+    if not recipients:
+        recipients = [settings.EMAIL_HOST_USER]  # fallback
+
+    try:
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipients)
+        logger.info(f"✅ New ticket email sent for Ticket #{ticket.id} to {recipients}")
+    except Exception as e:
+        logger.error(f"❌ Failed to send new ticket email for Ticket #{ticket.id}: {str(e)}")
 
 
 def send_unassigned_ticket_notification(ticket):

@@ -129,9 +129,11 @@
     .then((data) => renderNotifications(data.tickets || [], data.count))
     .catch((err) => console.error("Error fetching tickets:", err));
 
-function createNotificationItem(ticket) {
+function createNotificationItem(notification) {
   const div = document.createElement("div");
   div.classList.add("notification-item");
+
+  const ticket = notification.ticket;
 
   const isEsc = ticket.notification_type === "escalated" || ticket.is_escalated === true || (ticket.escalated_at && ticket.escalated_at !== null);
   const isUnassigned = ticket.notification_type === "unassigned";
@@ -155,8 +157,8 @@ function createNotificationItem(ticket) {
   div.innerHTML = `
     <a href="/tickets/${ticket.id}/"
        class="dropdown-item"
-       data-ticket-id="${ticket.id}"
-       style="${ticket.is_read ? 'opacity: 0.5;' : ''}">
+       data-notification-id="${notification.notification_id}" 
+       style="${notification.is_read ? 'opacity: 0.5;' : ''}">
       <div>
         #${ticket.id} - ${ticket.title}<br>
         <small>${priorityText} | ${ticket.escalated_at ? ticket.escalated_at : ticket.created_at}</small>
@@ -171,7 +173,7 @@ function createNotificationItem(ticket) {
     const targetUrl = this.getAttribute("href");
 
     try {
-      await markNotificationRead(ticket.id);
+      await markNotificationRead(notification.notification_id);  
     } catch (err) {
       console.error("Mark read failed, still redirecting:", err);
     }
@@ -181,8 +183,8 @@ function createNotificationItem(ticket) {
   return div;
 }
 
-function markNotificationRead(ticketId) {
-  return fetch(`/notifications/mark_read/${ticketId}/`, {
+function markNotificationRead(notificationId) {
+  return fetch(`/notifications/mark_read/${notificationId}/`, {
     method: "POST",
     body: JSON.stringify({ type: "read" }),
     headers: {
@@ -194,7 +196,7 @@ function markNotificationRead(ticketId) {
   .then((data) => {
     if (data.success) {
       // Ensure the notification disappears
-      const notificationItem = document.querySelector(`[data-ticket-id="${ticketId}"]`);
+      const notificationItem = document.querySelector(`[data-notification-id="${notificationId}"]`);
       if (notificationItem) {
         notificationItem.parentElement.removeChild(notificationItem);
       }
@@ -205,6 +207,7 @@ function markNotificationRead(ticketId) {
   })
   .catch((err) => console.error("Error marking read:", err));
 }
+
 
 
 
@@ -245,8 +248,13 @@ function renderNotifications(tickets, totalCount) {
 
 
 
+/*
   // Handle new ticket event
   function handleNewTicket(ticket) {
+
+    const existing = document.querySelector(`[data-ticket-id="${ticket.id}"]`);
+    if (existing) return;   // 👈 Prevent duplicates
+    
     const countEl = document.getElementById("notificationCount");
     const listEl = document.getElementById("notificationsList");
     if (!countEl || !listEl) return;
@@ -263,8 +271,38 @@ function renderNotifications(tickets, totalCount) {
     const current = parseInt(countEl.textContent || "0", 10);
     countEl.textContent = isNaN(current) ? 1 : current + 1;
     countEl.style.display = "inline-block";
-  }
+  }*/
 
+  function handleNewTicket(ticket) {
+  const existing = document.querySelector(`[data-ticket-id="${ticket.id}"]`);
+  if (existing) return;
+
+  const countEl = document.getElementById("notificationCount");
+  const listEl = document.getElementById("notificationsList");
+  if (!countEl || !listEl) return;
+
+  const emptyMsg = document.querySelector(".empty");
+  if (emptyMsg) emptyMsg.remove();
+
+  const notification = {
+    notification_id: `tmp-${ticket.id}`,
+    is_read: false,
+    notification_type: ticket.notification_type || "new",
+    ticket: ticket,
+  };
+
+  listEl.prepend(createNotificationItem(notification));
+
+  const items = listEl.querySelectorAll(".notification-item");
+  if (items.length > 5) listEl.removeChild(items[items.length - 1]);
+
+  const current = parseInt(countEl.textContent || "0", 10);
+  countEl.textContent = isNaN(current) ? 1 : current + 1;
+  countEl.style.display = "inline-block";
+}
+
+
+  /*
   // Handle new unassigned ticket event
   function handleNewUnassignedTicket(ticket) {
     const countEl = document.getElementById("notificationCount");
@@ -283,7 +321,33 @@ function renderNotifications(tickets, totalCount) {
     const current = parseInt(countEl.textContent || "0", 10);
     countEl.textContent = isNaN(current) ? 1 : current + 1;
     countEl.style.display = "inline-block";
-  }
+  }*/
+
+  function handleNewUnassignedTicket(ticket) {
+  const countEl = document.getElementById("notificationCount");
+  const listEl = document.getElementById("notificationsList");
+  if (!countEl || !listEl) return;
+
+  const emptyMsg = document.querySelector(".empty");
+  if (emptyMsg) emptyMsg.remove();
+
+  const notification = {
+    notification_id: `tmp-${ticket.id}`, 
+    is_read: false,
+    notification_type: "unassigned",
+    ticket: ticket,
+  };
+
+  listEl.prepend(createNotificationItem(notification));
+
+  const items = listEl.querySelectorAll(".notification-item");
+  if (items.length > 5) listEl.removeChild(items[items.length - 1]);
+
+  const current = parseInt(countEl.textContent || "0", 10);
+  countEl.textContent = isNaN(current) ? 1 : current + 1;
+  countEl.style.display = "inline-block";
+}
+
 
   // ==== Show Text Notification ====
   function showNotification(message) {

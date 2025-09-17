@@ -3,8 +3,12 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from django.db.models.functions import Coalesce
 from django.db.models import DateTimeField
-from core.uttils.serializers import serialize_ticket
+from core.uttils.serializers import serialize_ticket, serialize_user_notification
 from core.models import Ticket, Customer, Terminal, Profile, UserNotification
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class EscalationConsumer(AsyncWebsocketConsumer):
     group_name = "escalations"
@@ -25,8 +29,7 @@ class EscalationConsumer(AsyncWebsocketConsumer):
             "tickets": tickets,   
             "count": total,
         }))
-    
-    
+
     @database_sync_to_async
     def _get_latest_tickets(self):
         user = self.scope["user"]
@@ -34,13 +37,12 @@ class EscalationConsumer(AsyncWebsocketConsumer):
 
         qs = UserNotification.objects.none()
 
-        # Staff/admins: see all notifications
+        # All queries MUST be scoped to this user
         if user.is_superuser or user.groups.filter(
             name__in=['Admin', 'Director', 'Manager', 'Staff']
         ).exists():
             qs = UserNotification.objects.filter(user=user, is_read=False)
 
-        # Overseer: notifications for their customers
         elif Customer.objects.filter(overseer=user).exists():
             overseer_customers = Customer.objects.filter(overseer=user)
             qs = UserNotification.objects.filter(
@@ -49,7 +51,6 @@ class EscalationConsumer(AsyncWebsocketConsumer):
                 is_read=False
             )
 
-        # Custodian: notifications for their terminal
         elif profile and profile.terminal and profile.terminal.custodian == user:
             qs = UserNotification.objects.filter(
                 ticket__terminal=profile.terminal,
@@ -57,11 +58,20 @@ class EscalationConsumer(AsyncWebsocketConsumer):
                 is_read=False
             )
 
-        notifications = qs.select_related("ticket") \
-                        .order_by("-ticket__created_at")[:5]
+        qs_unread = qs.select_related("ticket").order_by("-ticket__created_at")
 
-        return [serialize_ticket(un.ticket) for un in notifications]
+        # Deduplicate by ticket_id (keep newest)
+        seen = set()
+        top5 = []
+        for un in qs_unread:
+            if un.ticket_id not in seen:
+                seen.add(un.ticket_id)
+                top5.append(un)
+            if len(top5) == 5:
+                break
 
+        logger.info("Notifications for %s: %s", self.scope["user"], list(qs.values("user_id", "ticket_id")))
+        return [serialize_user_notification(un) for un in top5]
 
 
     @database_sync_to_async
@@ -71,13 +81,10 @@ class EscalationConsumer(AsyncWebsocketConsumer):
 
         qs = UserNotification.objects.none()
 
-        # Staff/admins: all unread
         if user.is_superuser or user.groups.filter(
             name__in=['Admin', 'Director', 'Manager', 'Staff']
         ).exists():
             qs = UserNotification.objects.filter(user=user, is_read=False)
-
-        # Overseer: unread for customers they oversee
         elif Customer.objects.filter(overseer=user).exists():
             overseer_customers = Customer.objects.filter(overseer=user)
             qs = UserNotification.objects.filter(
@@ -85,8 +92,6 @@ class EscalationConsumer(AsyncWebsocketConsumer):
                 user=user,
                 is_read=False
             )
-
-        # Custodian: unread for their terminal
         elif profile and profile.terminal and profile.terminal.custodian == user:
             qs = UserNotification.objects.filter(
                 ticket__terminal=profile.terminal,
@@ -94,7 +99,9 @@ class EscalationConsumer(AsyncWebsocketConsumer):
                 is_read=False
             )
 
-        return qs.count()
+        # Return distinct ticket count — matches the UI list
+        return qs.values("ticket_id").distinct().count()
+
 
     async def escalation_update(self, event):
         # On escalation, refresh the list
@@ -122,6 +129,8 @@ class EscalationConsumer(AsyncWebsocketConsumer):
             "type": "escalation_message",
             "message": msg if isinstance(msg, str) else json.dumps(msg),
         }))
+
+        await self.send_latest()
 
 
     async def unassigned_ticket_notification(self, event):

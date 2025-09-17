@@ -4,7 +4,7 @@ from tkinter.font import Font
 from django.shortcuts import render, get_list_or_404, redirect
 from django.core.serializers.json import DjangoJSONEncoder
 from core.signals import assign_director_permissions, assign_manager_permissions, assign_staff_permissions
-from core.uttils.serializers import serialize_ticket
+from core.uttils.serializers import serialize_ticket, serialize_user_notification
 from .models import ISSUE_MAPPING, ActivityLog, File, FileAccessLog, EscalationHistory
 from django.http import FileResponse, JsonResponse, HttpResponse
 from .forms import FilePasscodeForm, FileUploadForm, ProblemCategoryForm, TicketForm
@@ -2248,27 +2248,21 @@ def get_escalated_tickets(request):
         ]
     }
     return JsonResponse(data)
-
-
+"""
 @login_required
 def get_notifications(request):
     profile = getattr(request.user, "profile", None)
     qs = UserNotification.objects.none()
 
-    # Internal staff: see all tickets
     if request.user.is_superuser or request.user.groups.filter(
         name__in=['Admin','Director','Manager','Staff']
     ).exists():
         qs = UserNotification.objects.all()
-
-    # Overseer: see tickets for all terminals under customers they oversee
     elif Customer.objects.filter(overseer=request.user).exists():
         overseer_customers = Customer.objects.filter(overseer=request.user)
         qs = UserNotification.objects.filter(
             ticket__customer__in=overseer_customers
         )
-
-    # Custodian: see tickets for the terminal they are assigned to
     elif profile and profile.terminal:
         custodian_terminal = profile.terminal
         if custodian_terminal.custodian == request.user:
@@ -2276,11 +2270,23 @@ def get_notifications(request):
                 ticket__terminal=custodian_terminal
             )
 
-    # ---- Prepare response ----
     total_unread = qs.filter(is_read=False).count()
-    top5 = qs.filter(is_read=False) \
-         .select_related("ticket", "ticket__customer", "ticket__terminal") \
-         .order_by("-ticket__created_at")[:5]
+
+    # --- Deduplicate by ticket safely ---
+    qs_unread = (
+        qs.filter(is_read=False)
+        .select_related("ticket", "ticket__customer", "ticket__terminal")
+        .order_by("-ticket__created_at")
+    )
+
+    seen = set()
+    top5 = []
+    for un in qs_unread:
+        if un.ticket_id not in seen:
+            seen.add(un.ticket_id)
+            top5.append(un)
+        if len(top5) == 5:
+            break
 
     if not top5:
         return JsonResponse({
@@ -2289,11 +2295,74 @@ def get_notifications(request):
             "message": "No notifications available for your role or assignment."
         })
 
-    payload = [serialize_ticket(un.ticket) for un in top5]
+    payload = [serialize_user_notification(un) for un in top5]
+
+    return JsonResponse({
+        "tickets": payload,
+        "count": total_unread,
+    })"""
+
+@login_required
+def get_notifications(request):
+    profile = getattr(request.user, "profile", None)
+    qs = UserNotification.objects.none()
+
+    # Internal staff: only notifications for this user
+    if request.user.is_superuser or request.user.groups.filter(
+        name__in=['Admin','Director','Manager','Staff']
+    ).exists():
+        qs = UserNotification.objects.filter(user=request.user)
+
+    # Overseer: notifications for their customers (but still only this user)
+    elif Customer.objects.filter(overseer=request.user).exists():
+        overseer_customers = Customer.objects.filter(overseer=request.user)
+        qs = UserNotification.objects.filter(
+            ticket__customer__in=overseer_customers,
+            user=request.user
+        )
+
+    # Custodian: notifications for the terminal they are assigned to (again only this user)
+    elif profile and profile.terminal:
+        custodian_terminal = profile.terminal
+        if custodian_terminal.custodian == request.user:
+            qs = UserNotification.objects.filter(
+                ticket__terminal=custodian_terminal,
+                user=request.user
+            )
+
+    # unread queryset (ordered most recent ticket first)
+    qs_unread = qs.filter(is_read=False) \
+                  .select_related("ticket", "ticket__customer", "ticket__terminal") \
+                  .order_by("-ticket__created_at")
+
+    # total should be distinct tickets count (so the badge matches the visible items)
+    total_unread = qs_unread.values("ticket_id").distinct().count()
+
+    # build top5 deduped by ticket_id (DB-agnostic)
+    seen = set()
+    top5 = []
+    for un in qs_unread:
+        if un.ticket_id not in seen:
+            seen.add(un.ticket_id)
+            top5.append(un)
+        if len(top5) == 5:
+            break
+
+    if not top5:
+        return JsonResponse({
+            "tickets": [],
+            "count": total_unread,
+            "message": "No notifications available for your role or assignment."
+        })
+
+    payload = [serialize_user_notification(un) for un in top5]
+
     return JsonResponse({
         "tickets": payload,
         "count": total_unread,
     })
+
+
 
 import logging
 
@@ -2322,6 +2391,7 @@ def mark_notification_read(request, ticket_id):
     logger.error("Unexpected: No UserNotification found for user=%s ticket=%s", request.user, ticket_id)
     return JsonResponse({"success": False, "info": "Notification not found"})"""
 
+"""
 @login_required
 @require_POST
 def mark_notification_read(request, ticket_id):
@@ -2342,6 +2412,36 @@ def mark_notification_read(request, ticket_id):
         return JsonResponse({"success": True, "ticket_id": ticket_id})
 
     logger.error("Unexpected: No UserNotification found for user=%s ticket=%s", request.user, ticket_id)
+    return JsonResponse({"success": False, "info": "Notification not found"})"""
+
+logger = logging.getLogger(__name__)
+
+@login_required
+@require_POST
+def mark_notification_read(request, notification_id):
+    # Fetch notification by its unique id for the logged-in user
+    notif = UserNotification.objects.filter(
+        user=request.user,
+        id=notification_id
+    ).first()
+
+    if notif:
+        if not notif.is_read:
+            notif.is_read = True
+            notif.save(update_fields=["is_read"])
+
+        logger.info(
+            "Notification marked read: user=%s notification_id=%s ticket=%s",
+            request.user, notification_id, notif.ticket_id
+        )
+
+        # Respond with notification_id so frontend can remove the exact item
+        return JsonResponse({"success": True, "notification_id": notification_id})
+
+    logger.error(
+        "No UserNotification found for user=%s notification_id=%s",
+        request.user, notification_id
+    )
     return JsonResponse({"success": False, "info": "Notification not found"})
 
 

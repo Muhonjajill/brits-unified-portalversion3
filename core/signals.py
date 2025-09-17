@@ -1,11 +1,12 @@
-from django.db.models.signals import post_migrate, post_save
+from django.db.models.signals import post_migrate, post_save, pre_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User, Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from core.models import ActivityLog, File, FileAccessLog, Profile, Ticket, TicketComment, UserNotification
 from django.core.exceptions import ObjectDoesNotExist
 import logging
-
+from django.db import transaction
+from channels.layers import get_channel_layer
 
 @receiver(post_migrate)
 def setup_groups_and_permissions(sender, **kwargs):
@@ -223,12 +224,9 @@ def log_ticket_resolution(sender, instance, created, **kwargs):
         ActivityLog.objects.create(ticket=instance, action=action, user=instance.updated_by)
 
 
-@receiver(post_save, sender=Ticket)
-def create_ticket_notifications(sender, instance, created, **kwargs):
-    """
-    Ensure notifications are created whenever a ticket is created or updated.
-    """
 
+"""def create_ticket_notifications(sender, instance, created, **kwargs):
+   
     if created:
         # Notify the ticket creator
         if instance.created_by:
@@ -253,4 +251,110 @@ def create_ticket_notifications(sender, instance, created, **kwargs):
                 user=instance.assigned_to,
                 ticket=instance,
                 defaults={"is_read": False}
-            )
+            )"""
+
+
+import logging
+logger = logging.getLogger(__name__)
+@receiver(post_save, sender=Ticket)
+def create_ticket_notifications(sender, instance, created, **kwargs):
+
+    # 🔒 Only run the notification logic the first time the ticket is saved
+    if not created:
+        return
+    logger.info(">>> create_ticket_notifications fired for ticket %s", instance.pk)
+    """
+    Create/refresh UserNotification rows whenever a ticket is created or updated,
+    so that all relevant users immediately see it in their notifications.
+    """
+    # --- Build list of users who should receive a notification ---
+    users_to_notify = set()
+
+    # Ticket creator
+    if instance.created_by:
+        users_to_notify.add(instance.created_by)
+
+    # Assigned user
+    if instance.assigned_to:
+        users_to_notify.add(instance.assigned_to)
+
+    # Staff / admin groups
+    staff_users = User.objects.filter(
+        groups__name__in=['Admin', 'Director', 'Manager', 'Staff']
+    ).distinct()
+    users_to_notify.update(staff_users)
+
+    # Overseer of the customer
+    if instance.customer and getattr(instance.customer, "overseer", None):
+        users_to_notify.add(instance.customer.overseer)
+
+    # Custodian of the terminal
+    if instance.terminal and getattr(instance.terminal, "custodian", None):
+        users_to_notify.add(instance.terminal.custodian)
+
+    # --- Create or update a notification row for each user ---
+    for user in users_to_notify:
+        UserNotification.objects.update_or_create(
+            user=user,
+            ticket=instance,
+            defaults={"is_read": False},
+        )            
+
+@receiver(pre_save, sender=Ticket)
+def capture_old_escalation_state(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old = Ticket.objects.get(pk=instance.pk)
+            instance._was_escalated = old.is_escalated
+        except Ticket.DoesNotExist:
+            instance._was_escalated = False
+    else:
+        instance._was_escalated = False
+
+
+@receiver(post_save, sender=Ticket)
+def ticket_escalation_handler(sender, instance, created, **kwargs):
+    if created:
+        return
+
+    if not getattr(instance, "_was_escalated", False) and instance.is_escalated:
+        transaction.on_commit(lambda: create_escalation_notification(instance))
+
+def create_escalation_notification(ticket):
+    target_users = []
+
+    staff_users = User.objects.filter(groups__name__in=["Admin","Director","Manager","Staff"])
+    target_users.extend(staff_users)
+
+    if ticket.customer and ticket.customer.overseer:
+        target_users.append(ticket.customer.overseer)
+
+    if ticket.terminal and ticket.terminal.custodian:
+        target_users.append(ticket.terminal.custodian)
+
+    for user in set(target_users):
+        UserNotification.objects.update_or_create(
+            user=user,
+            ticket=ticket,
+            defaults={"notification_type": "escalated", "is_read": False},
+        )
+
+    # 🔔 Send websocket event
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        "escalations",
+        {
+            "type": "escalation_message",
+            "message": f"Ticket #{ticket.id} has been escalated!",
+            "ticket": serialize_ticket(ticket),
+        }
+    )
+
+def create_unassigned_notification(ticket):
+    target_users = User.objects.filter(groups__name__in=["Admin","Director","Manager","Staff"])
+    for user in target_users:
+        UserNotification.objects.get_or_create(
+            user=user,
+            ticket=ticket,
+            defaults={"notification_type": "unassigned", "is_read": False},
+        )
