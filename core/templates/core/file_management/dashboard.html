@@ -49,6 +49,54 @@
 </section>
 
 <section class="dashboard-section">
+
+  {% if file.access_level == 'restricted' and file.id %}
+          <!-- Modal for passcode -->
+          <div id="passcode-modal-{{ file.id }}" class="passcode-modal">
+            <div class="passcode-modal-content">
+              <form autocomplete="off" onsubmit="return false;">
+                <span class="close" onclick="closePasscodeModal({{ file.id }})">&times;</span>
+                <h3>Enter Passcode to Access File</h3>
+                
+                <!-- Passcode input -->
+                <input type="password" name="passcode" id="passcode-{{ file.id }}" placeholder="Enter Passcode" autocomplete="off" />
+                
+                <!-- Conditional section for file owner actions -->
+                {% if file.uploaded_by == request.user %}
+                  <div class="form-group">
+                    <label for="allowed-actions" class="form-label">Allowed Actions:</label>
+                    <div class="form-check">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="allow_preview_{{ file.id }}" {% if file.allow_preview %}checked{% endif %} class="form-check-input">
+                        Preview
+                      </label>
+                    </div>
+                    <div class="form-check">
+                      <label class="checkbox-label">
+                        <input type="checkbox" id="allow_download_{{ file.id }}" {% if file.allow_download %}checked{% endif %} class="form-check-input">
+                        Download
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="action-buttons">
+                    <button type="button" onclick="updatePasscode({{ file.id }})" class="btn btn-reset-passcode">
+                      Set / Reset Passcode
+                    </button>
+                  </div>
+                {% endif %}
+
+                
+                <!-- Submit button for the passcode -->
+                <button type="button" onclick="checkPasscode({{ file.id }})">Submit</button>
+                
+                <!-- Error message -->
+                <p id="passcode-error-{{ file.id }}" style="color:red; display:none;">Incorrect passcode</p>
+              </form>
+            </div>
+          </div>
+        {% endif %}
+
   <h2 class="section-title">Recently Uploaded</h2>
   <div class="recent-files-grid">
     <div class="recent-file-header">
@@ -89,7 +137,21 @@
         <small>{{ file.upload_date|date:"M d, Y H:i" }}</small>
       </div>
       <div class="file-download">
-        <a href="{{ file.file.url }}" download>⬇ Download</a>
+        <!--<a href="{{ file.file.url }}" download>⬇ Download</a>-->
+         <div>
+            {% if file.id %}
+              <a href="#" onclick="showPasscodeModal({{ file.id }}, '{% url 'preview_file' file.id %}', 'preview'); return false;" class="btn preview-link">Preview</a>
+            {% else %}
+              <span>Preview Unavailable</span>
+            {% endif %}
+          </div>
+          <div>
+              {% if file.id %}
+                    <a href="#" onclick="showPasscodeModal({{ file.id }}, '{% url 'download_file' file.id %}', 'download'); return false;" class="btn download-link">Download</a>
+              {% else %}
+                <span>Download Unavailable</span>
+              {% endif %}
+          </div>
       </div>
     </div>
     {% empty %}
@@ -98,3 +160,124 @@
   </div>
 </section>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+const validatedFiles = {{ validated_files|default:"[]"|safe }};
+let pendingRedirect = null;
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    document.cookie.split(';').forEach(cookie => {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) cookieValue = decodeURIComponent(cookie.slice(name.length + 1));
+    });
+  }
+  return cookieValue;
+}
+
+function showPasscodeModal(fileId, targetUrl, action) {
+  // Ensure the element exists before accessing its value
+  const uploaderElement = document.getElementById(`file-uploaded-by-${fileId}`);
+  if (!uploaderElement) {
+    console.error("Uploader element not found for file ID:", fileId);
+    return false; 
+  }
+
+  const isUploader = uploaderElement.value === '{{ request.user.id }}';
+
+  // Always show the modal to the uploader
+  if (isUploader) {
+    const modal = document.getElementById('passcode-modal-' + fileId);
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden'; 
+    pendingRedirect = { fileId, targetUrl, action };
+    return false;
+  }
+
+  // Check for preview or download permission
+  const allowPreviewCheckbox = document.getElementById(`allow_preview_${fileId}`);
+  const allowDownloadCheckbox = document.getElementById(`allow_download_${fileId}`);
+
+  if (allowPreviewCheckbox && allowDownloadCheckbox) {
+    const allowPreview = allowPreviewCheckbox.checked;
+    const allowDownload = allowDownloadCheckbox.checked;
+
+    if (action === 'preview' && !allowPreview) {
+      alert("This file cannot be previewed.");
+      return false;
+    }
+
+    if (action === 'download' && !allowDownload) {
+      alert("This file cannot be downloaded.");
+      return false;
+    }
+  }
+
+  if (validatedFiles.includes(fileId)) {
+    window.location.href = targetUrl;
+    return false;
+  }
+
+  const modal = document.getElementById('passcode-modal-' + fileId);
+  if (!modal) {
+    window.location.href = targetUrl;
+    return false;
+  }
+
+  modal.classList.add('show');
+  pendingRedirect = { fileId, targetUrl, action };
+  return false;
+}
+
+
+function closePasscodeModal(fileId) {
+  const modal = document.getElementById('passcode-modal-' + fileId);
+  if (modal) modal.classList.remove('show');
+  document.body.style.overflow = '';  
+  pendingRedirect = null;
+}
+
+function checkPasscode(fileId) {
+  const passcode = document.getElementById(`passcode-${fileId}`).value;
+  const errorElement = document.getElementById(`passcode-error-${fileId}`);
+  const csrftoken = getCookie('csrftoken');
+
+  fetch(`/validate-passcode/${fileId}/`, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken': csrftoken },
+    body: new URLSearchParams({ passcode })
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    if(!data.success){ errorElement.style.display='block'; return; }
+    validatedFiles.push(fileId);
+    const { targetUrl, action } = pendingRedirect;
+    closePasscodeModal(fileId);
+    window.location.href = targetUrl;
+  })
+  .catch(err=>{ console.error(err); alert('❌ Failed to validate passcode'); });
+}
+
+function updatePasscode(fileId){
+  const passcode = document.getElementById(`passcode-${fileId}`).value;
+  const allowPreview = document.getElementById(`allow_preview_${fileId}`).checked;
+  const allowDownload = document.getElementById(`allow_download_${fileId}`).checked;
+  const csrftoken = getCookie('csrftoken');
+
+  fetch(`/update-passcode/${fileId}/`, {
+    method:'POST',
+    headers:{ 'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken': csrftoken },
+    body: new URLSearchParams({ passcode, allow_preview: allowPreview, allow_download: allowDownload })
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    if(data.success){ alert('✅ Passcode & permissions updated'); closePasscodeModal(fileId); } 
+    else alert('❌ Failed to update passcode/permissions');
+  })
+  .catch(err=>{ console.error(err); alert('❌ Failed to update passcode'); });
+}
+</script>
+{% endblock %}
+

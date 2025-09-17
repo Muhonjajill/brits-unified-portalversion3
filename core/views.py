@@ -1117,14 +1117,13 @@ def validate_passcode(request, file_id):
 
     print(f"Passcode from frontend: {passcode}, Stored passcode: {file.passcode}")
 
-    # Check if the passcode matches
     if file.passcode == passcode:
-        # Ensure the validated file ID is saved in the session
         validated_files = request.session.get("validated_files", [])
         if file.id not in validated_files:
             validated_files.append(file.id)
             request.session["validated_files"] = validated_files
-            request.session.modified = True  # Force session save to reflect changes
+            request.session.modified = True  
+            request.session.save() 
 
         return JsonResponse({'success': True})
     else:

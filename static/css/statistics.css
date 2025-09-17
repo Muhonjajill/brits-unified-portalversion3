@@ -139,7 +139,7 @@ form.row {
 /* Canvas styling (charts) */
 canvas {
   width: 100% !important;
-  height: 300px !important; /* Consistent height for all charts */
+  /*height: 300px !important; */
   max-height: 400px; /* Optional: max height to prevent overly tall charts */
 }
 
@@ -172,6 +172,37 @@ canvas {
 #ticket-status-breakdown .status-item .value {
   font-weight: 700;
   color: var(--header-color); /* Highlight value */
+}
+
+/* === Equal height for timeline charts === */
+#ticketsTimeChart,
+#ticketStatusChart {
+  height: 350px !important;    /* pick a height you like */
+  max-height: 350px;
+}
+
+/* Keep breakdown text from stretching the chart */
+#ticket-status-breakdown {
+  max-height: 120px;
+  overflow-y: auto;
+  margin-top: 1rem;
+}
+
+/* Stretch cards in the timeline row so heights match */
+.row.mb-5.align-items-stretch > .col-md-6 .card {
+  height: 100%;
+}
+
+/* === Equal height for Assignee, Resolver & Unresolved charts === */
+#ticketsByAssigneeChart,
+#ticketsByResolverChart,
+#unresolvedTicketsChart {
+  height: 280px !important;   /* Force same height as Unresolved */
+  max-height: 280px;
+}
+/* Make all three cards in the row equal height */
+.row.mb-5 > .col-md-4 .card {
+  height: 100%;
 }
 
 /* Export Button */
