@@ -117,6 +117,19 @@ body {
   display: block;
 }
 
+.avatar-initials {
+  width: 40px;
+  height: 40px;
+  background-color: #123692;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 16px;
+}
+
 /* ===============================
    Hamburger (mobile)
    =============================== */

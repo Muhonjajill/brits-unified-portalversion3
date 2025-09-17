@@ -20,7 +20,21 @@
 
   <div class="user-profile" id="userProfile">
     <div class="profile-dropdown">
-      <img src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}https://placehold.co/40x40{% endif %}" alt="User Avatar">
+      {% if user.profile.avatar %}
+        <img src="{{ user.profile.avatar.url }}" alt="User Avatar">
+      {% else %}
+        <div class="avatar-initials">
+          {% with user.get_full_name|default:user.username as full_name %}
+            {% if full_name %}
+              {% with first_initial=full_name|slice:":1" last_initial=full_name|slice:" " %}
+                <span>{{ first_initial|upper }}{{ last_initial|slice:":1"|upper }}</span>
+              {% endwith %}
+            {% else %}
+              <span>{{ user.username|slice:":1"|upper }}</span>
+            {% endif %}
+          {% endwith %}
+        </div>
+      {% endif %}
       <span>{{ user.get_full_name|default:user.username }}</span>
       <i class="fas fa-chevron-down"></i>
     </div>

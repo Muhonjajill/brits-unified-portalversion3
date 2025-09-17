@@ -22,7 +22,11 @@
             {% if user.profile.avatar %}
                 <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="profile-avatar">
             {% else %}
-                <img src="{% static 'icons/default-avatar.png' %}" alt="Default Avatar" class="profile-avatar">
+                <div class="profile-avatar default-avatar">
+                    <span class="avatar-initials">
+                        {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+                    </span>
+                </div>
             {% endif %}
             <div class="profile-info">
                 <h1>{{ user.get_full_name|default:user.username }}</h1>

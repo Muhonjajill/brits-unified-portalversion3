@@ -116,7 +116,7 @@
   height: 36px;
   object-fit: cover;
   border-radius: 50%;
-  border: 2px solid #ddd;
+  border: 2px solid #172d69;
   display: inline-block;
   transition: transform 0.3s ease; 
 }
@@ -336,6 +336,25 @@
 
   .profile-name { display: none; }         
   .nav-right { gap: 0.5rem; padding-right: 0.5rem; }
+
+  /* Profile avatar with initials */
+.profile-avatar.default-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #555;
+    font-weight: bold;
+    border: 2px solid #172d69;
+}
+
+.avatar-initials {
+    text-transform: uppercase;
+}
 
 
   /* ensure dropdowns float above everything */

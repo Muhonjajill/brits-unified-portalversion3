@@ -40,34 +40,6 @@ class CustomUserCreationForm(forms.ModelForm):
             raise ValidationError("A user with that username already exists.")
         return username
 
-    """
-    def save(self, commit=True):
-        # Save the user without committing to the database
-        user = super().save(commit=False)
-        user.set_password(self.cleaned_data['password'])
-        
-        # Commit and save the user
-        if commit:
-            user.save()
-
-        # Get or create the profile
-        profile, created = Profile.objects.get_or_create(user=user)
-        
-        # If the profile is created, set phone_number and id_number
-        if created:
-            print(f"Profile Created: {profile}")
-            profile.phone_number = self.cleaned_data['phone']
-            profile.id_number = self.cleaned_data['id_number']
-            profile.save()
-        else:
-            # If profile exists, just update phone and id number
-            print(f"Updating Profile: {profile}")
-            profile.phone_number = self.cleaned_data['phone']
-            profile.id_number = self.cleaned_data['id_number']
-            profile.save()
-
-        return user
-        """
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])
@@ -130,10 +102,12 @@ class FilePasscodeForm(forms.ModelForm):
 
 class UserUpdateForm(forms.ModelForm):
     email = forms.EmailField()
+    first_name = forms.CharField(max_length=30)  
+    last_name = forms.CharField(max_length=30)  
 
     class Meta:
         model = User
-        fields = ['username', 'email']
+        fields = ['first_name', 'last_name', 'username', 'email']
 
 class ProfileUpdateForm(forms.ModelForm):
     role = forms.CharField(

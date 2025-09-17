@@ -844,7 +844,7 @@ def file_management_dashboard(request):
         'user_name': request.user.username,
         'can_view_logs': can_view_logs, 
     })
-
+"""
 @login_required
 def file_list_view(request, category_name=None):
     user = request.user
@@ -865,8 +865,6 @@ def file_list_view(request, category_name=None):
             })
 
     # Filter by category if provided
-    """if category_name:
-        visible_files = [file for file in visible_files if isinstance(file, dict) and file['file'].category.name.lower() == category_name.lower() or isinstance(file, File) and file.category.name.lower() == category_name.lower()]"""
     if category_name:
         visible_files = [
             file for file in visible_files
@@ -912,6 +910,72 @@ def file_list_view(request, category_name=None):
         'validated_files': validated_files,
         'can_view_logs': can_view_logs,
     })
+"""
+@login_required
+def file_list_view(request, category_name=None):
+    user = request.user
+    files = File.objects.filter(is_deleted=False)
+    validated_files = request.session.get("validated_files", [])
+
+    visible_files = []
+
+    # Iterate over each file to check access rights
+    for file in files:
+        if file.can_user_access(user):
+            visible_files.append(file)
+        else:
+            # If file is restricted and user doesn't have access
+            visible_files.append({
+                'file': file,
+                'requires_passcode': True
+            })
+
+    # Filter by category if provided
+    if category_name:
+        visible_files = [
+            file for file in visible_files
+            if (
+                isinstance(file, dict) 
+                and file['file'].category 
+                and file['file'].category.name.lower() == category_name.lower()
+            )
+            or (
+                isinstance(file, File) 
+                and file.category 
+                and file.category.name.lower() == category_name.lower()
+            )
+        ]
+
+    # Sort files
+    sort_option = request.GET.get('sort')
+    if sort_option == 'recent':
+        visible_files.sort(key=lambda f: f['file'].upload_date if isinstance(f, dict) else f.upload_date, reverse=True)
+    else:
+        visible_files.sort(key=lambda f: f['file'].title if isinstance(f, dict) else f.title)
+
+    # Paginate files
+    paginator = Paginator(visible_files, 10)
+    page = request.GET.get('page')
+    try:
+        paginated_files = paginator.page(page)
+    except PageNotAnInteger:
+        paginated_files = paginator.page(1)
+    except EmptyPage:
+        paginated_files = paginator.page(paginator.num_pages)
+
+    # Fetch categories for the filter dropdown
+    categories = FileCategory.objects.all()
+
+    can_view_logs = request.user.has_perm('core.view_fileaccesslog')
+
+    return render(request, 'core/file_management/file_list.html', {
+        'files': paginated_files,
+        'categories': categories,
+        'active_category': category_name,
+        'validated_files': validated_files,
+        'can_view_logs': can_view_logs,
+    })
+
 
 
 

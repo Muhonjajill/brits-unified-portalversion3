@@ -9,7 +9,7 @@ body {
 .container {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 2.5rem 1.2rem;
+  padding: 2.5rem 2rem;
 }
 
 .page-title {
@@ -97,10 +97,10 @@ body {
 .file-grid-header,
 .file-row {
   display: grid;
-  grid-template-columns: 2.5fr 1fr 1.2fr 1fr 1.1fr 1fr;
-  gap: 1.2rem;
+  grid-template-columns: 3fr 1.5fr 1.5fr 1fr 1fr 1fr;
+  gap: 1.5rem;
   align-items: center;
-  padding: 0.9rem 1rem;
+  padding: 1rem;
   border-top: 1px solid #f1f1f1;
 }
 
@@ -125,6 +125,7 @@ body {
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.04);
   overflow: hidden;
+  padding: 1rem;
 }
 
 .file-row:nth-child(even) {
@@ -142,14 +143,14 @@ body {
 .file-name {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 1rem;
 }
 
 .file-name img {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-  border-radius: 4px;
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
   background-color: #f1f1f1;
 }
 
@@ -538,9 +539,9 @@ body {
   /* 3. Add labels before each value */
   .file-row > div:nth-child(2)::before { content: "Size:"; font-weight:500; }
   .file-row > div:nth-child(3)::before { content: "Access:"; font-weight:500; }
-  .file-row > div:nth-child(4)::before { content: ""; } /* preview button w/o label */
-  .file-row > div:nth-child(5)::before { content: ""; } /* download button */
-  .file-row > div:nth-child(6)::before { content: ""; } /* delete */
+  .file-row > div:nth-child(4)::before { content: ""; } 
+  .file-row > div:nth-child(5)::before { content: ""; } 
+  .file-row > div:nth-child(6)::before { content: ""; } 
 
   /* 4. Adjust title/icon layout */
   .file-name {

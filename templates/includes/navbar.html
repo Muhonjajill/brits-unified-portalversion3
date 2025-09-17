@@ -34,9 +34,18 @@
 
     <div class="user-profile" id="userProfile">
       <div class="profile-trigger">
-          <img src="{% if user.profile.avatar %}{{ user.profile.avatar.url }}{% else %}https://placehold.co/40x40{% endif %}" alt="User Avatar">
-        <span>{{ user.get_full_name|default:user.username }}</span>
-        <i class="fas fa-chevron-down"></i>
+          {% if user.profile.avatar %}
+              <img src="{{ user.profile.avatar.url }}" alt="User Avatar">
+          {% else %}
+              <!-- Display initials if no avatar is set -->
+              <div class="profile-avatar default-avatar">
+                  <span class="avatar-initials">
+                      {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+                  </span>
+              </div>
+          {% endif %}
+          <span>{{ user.get_full_name|default:user.username }}</span>
+          <i class="fas fa-chevron-down"></i>
       </div>
       <div class="dropdown-menu">
         <a href="{% url 'profile_view' %}"><i class="fa-solid fa-user"></i>  Profile</a>
