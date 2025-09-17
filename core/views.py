@@ -1797,7 +1797,7 @@ def statistics_view(request):
         "assigned_region": assigned_region,
         #"allowed_roles": allowed_roles
     })
-
+"""
 @login_required(login_url='login')
 def export_report(request):
     import openpyxl
@@ -1969,7 +1969,171 @@ def export_report(request):
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename="ticket_statistics.xlsx"'
     wb.save(response)
+    return response"""
+
+@login_required(login_url='login')
+def export_report(request):
+    import openpyxl
+    from openpyxl.styles import Font, Border, Side
+    from django.utils import timezone
+    from django.db.models import Count, Case, When, IntegerField, Q
+    from datetime import timedelta
+    from django.http import HttpResponse
+
+    today = timezone.now()
+    user = request.user
+    user_profile = getattr(user, "profile", None)
+
+    # --- Role-based Filtering ---
+    tickets = Ticket.objects.all()
+    user_group = None
+    assigned_customer = assigned_terminal = assigned_region = None
+
+    if user.is_superuser or user.groups.filter(name__in=["Director", "Manager", "Staff"]).exists():
+        user_group = "Internal"
+    elif Customer.objects.filter(overseer=user).exists():
+        user_group = "Overseer"
+        assigned_customer = Customer.objects.filter(overseer=user).first()
+        tickets = tickets.filter(terminal__customer=assigned_customer)
+    elif user_profile and user_profile.terminal and user_profile.terminal.custodian == user:
+        user_group = "Custodian"
+        assigned_terminal = user_profile.terminal
+        assigned_customer = assigned_terminal.customer
+        assigned_region = assigned_terminal.region
+        tickets = tickets.filter(terminal=assigned_terminal)
+    else:
+        tickets = Ticket.objects.none()
+
+    # --- Filters ---
+    tp = request.GET.get("time-period", "all_time")
+    cust = request.GET.get("customer", "all")
+    term = request.GET.get("terminal", "all")
+    reg = request.GET.get("region", "all")
+
+    # Date filter
+    start, end = None, None
+    if tp == "today":
+        start = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+    elif tp == "yesterday":
+        start = (today - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        end = (today - timedelta(days=1)).replace(hour=23, minute=59, second=59, microsecond=999999)
+    elif tp == "lastweek":
+        start = today - timedelta(days=today.weekday() + 7)
+        start = start.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = start + timedelta(days=6, hours=23, minutes=59, seconds=59, microseconds=999999)
+    elif tp == "lastmonth":
+        end = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(microseconds=1)
+        start = end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    elif tp == "lastyear":
+        start = today.replace(year=today.year - 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = today.replace(year=today.year - 1, month=12, day=31, hour=23, minute=59, second=59, microsecond=999999)
+
+    if start and end:
+        tickets = tickets.filter(created_at__range=[start, end])
+
+    if cust not in ["all", "", None]:
+        tickets = tickets.filter(terminal__customer__id=cust)
+    if term not in ["all", "", None]:
+        tickets = tickets.filter(terminal__id=term)
+    if reg not in ["all", "", None]:
+        tickets = tickets.filter(terminal__region__id=reg)
+
+    if not tickets.exists():
+        return HttpResponse("No tickets to export matching your criteria.", status=404)
+
+    # ========== Build all chart datasets ==========
+
+    # Tickets by status
+    status_qs = tickets.values("status").annotate(c=Count("id"))
+    status_labels = [x["status"] for x in status_qs]
+    status_counts = [x["c"] for x in status_qs]
+
+    # Tickets per day / hour / month / year
+    days = [today - timedelta(days=i) for i in range(7)]
+    t_per_day = [tickets.filter(created_at__date=d.date()).count() for d in days]
+
+    hours = [f"{h}-{h+1}" for h in range(24)]
+    t_per_hour = [tickets.filter(created_at__hour=h).count() for h in range(24)]
+
+    months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    t_per_month = [tickets.filter(created_at__month=i+1).count() for i in range(12)]
+
+    years = sorted(set(t.created_at.year for t in tickets))
+    t_per_year = [tickets.filter(created_at__year=y).count() for y in years]
+
+    # Per terminal / category
+    term_qs = tickets.values("terminal__branch_name").annotate(c=Count("id"))
+    term_labels = [x["terminal__branch_name"] for x in term_qs]
+    term_counts = [x["c"] for x in term_qs]
+
+    cat_qs = tickets.values("problem_category__name").annotate(c=Count("id"))
+    cat_labels = [x["problem_category__name"] for x in cat_qs]
+    cat_counts = [x["c"] for x in cat_qs]
+
+    # By creator / assignee / resolver
+    creator_qs = tickets.values("created_by__username").annotate(c=Count("id"))
+    assignee_qs = tickets.values("assigned_to__username").annotate(c=Count("id"))
+    resolver_qs = tickets.filter(status__iexact="Closed").values("resolved_by__username").annotate(c=Count("id"))
+
+    # Unresolved tickets by assignee
+    unresolved_qs = tickets.filter(status__in=["Open","In Progress"]) \
+                           .values("assigned_to__username") \
+                           .annotate(c=Count("id")).order_by("-c")
+    unresolved_labels = [u["assigned_to__username"] or "Unassigned" for u in unresolved_qs]
+    unresolved_counts = [u["c"] for u in unresolved_qs]
+
+    # SLA breach data
+    sla_breached_escalated = tickets.filter(is_sla_breached=True, is_escalated=True).count()
+    sla_breached_not = tickets.filter(is_sla_breached=True, is_escalated=False).count()
+    sla_met = tickets.filter(is_sla_breached=False, status__iexact="closed").count()
+    sla_labels = ["Breached & Escalated", "Breached & Not Escalated", "Met/Closed"]
+    sla_counts = [sla_breached_escalated, sla_breached_not, sla_met]
+
+    # ========== Write to Excel ==========
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Statistics"
+
+    bold = Font(bold=True)
+    border = Border(left=Side(style="thin"), right=Side(style="thin"),
+                    top=Side(style="thin"), bottom=Side(style="thin"))
+
+    def write(title, labels, values, row):
+        ws.cell(row=row, column=1, value=title).font = bold
+        for i, lbl in enumerate(labels):
+            ws.cell(row=row + 1 + i, column=1, value=lbl)
+            ws.cell(row=row + 1 + i, column=2, value=values[i])
+        for r in range(row, row + 1 + len(labels)):
+            for c in (1, 2):
+                ws.cell(row=r, column=c).border = border
+        return row + 2 + len(labels)
+
+    r = 1
+    r = write("Tickets by Status", status_labels, status_counts, r)
+    r = write("Tickets per Terminal", term_labels, term_counts, r)
+    r = write("Tickets per Category", cat_labels, cat_counts, r)
+    r = write("Tickets per Day (7d)", [d.strftime("%Y-%m-%d") for d in days], t_per_day, r)
+    r = write("Tickets per Hour", hours, t_per_hour, r)
+    r = write("Tickets per Month", months, t_per_month, r)
+    r = write("Tickets per Year", years, t_per_year, r)
+    r = write("Tickets by Creator", [x["created_by__username"] for x in creator_qs],
+              [x["c"] for x in creator_qs], r)
+    r = write("Tickets by Assignee", [x["assigned_to__username"] or "Unassigned" for x in assignee_qs],
+              [x["c"] for x in assignee_qs], r)
+    r = write("Tickets by Resolver", [x["resolved_by__username"] or "Unresolved" for x in resolver_qs],
+              [x["c"] for x in resolver_qs], r)
+    r = write("Unresolved Tickets by Assignee", unresolved_labels, unresolved_counts, r)
+    r = write("SLA Breach Stats", sla_labels, sla_counts, r)
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="ticket_statistics.xlsx"'
+    wb.save(response)
     return response
+
 
 
 
