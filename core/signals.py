@@ -7,6 +7,8 @@ from django.core.exceptions import ObjectDoesNotExist
 import logging
 from django.db import transaction
 from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync 
+from core.uttils.serializers import serialize_ticket, serialize_user_notification
 
 @receiver(post_migrate)
 def setup_groups_and_permissions(sender, **kwargs):
