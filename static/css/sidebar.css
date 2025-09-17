@@ -46,11 +46,11 @@ body {
   width: 100%;
   height: 100%;
   background: rgba(0,0,0,0.4);
-  z-index: 1500;
+  z-index: 1000;
   transition: opacity 0.3s ease;
 }
 
-.sidebar-overlay.active {
+.sidebar.active + .sidebar-overlay {
   display: block;
 }
 
@@ -232,17 +232,17 @@ body {
   }
 
   /* Sidebar overlay for mobile */
-  .sidebar-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.4);
-    z-index: 3000;
-    inset: 0;
-  }
+ .sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  z-index: 1500; 
+  inset: 0;
+}
   .sidebar-overlay.active {
     display: block;
   }

@@ -292,7 +292,7 @@
 
 .dropdown-link.logout-btn:hover {
   background-color: #f8f9fa;
-  color: #dc3545; /* Red for logout for visual emphasis */
+  color: #dc3545; 
 }
 
 /* Animation */
