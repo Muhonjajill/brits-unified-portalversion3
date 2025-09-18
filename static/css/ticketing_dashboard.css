@@ -134,11 +134,11 @@ body {
   display: none;
 }
 
-.charts-grid {
+/*.charts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   gap: 1.5rem;
-}
+}*/
 /* CARD HEADER */
 .card-header {
   display: flex;
@@ -194,6 +194,34 @@ canvas.tall-chart { max-height: 400px; }
 
 .charts-row h3 { font-size: 1rem; margin-bottom: 1rem; color: var(--header-color); }
 .charts-row canvas { width: 100% !important; max-height: 320px; }
+
+/* =========================================================
+   CHARTS GRID (Monthly / Time / Region)
+========================================================= */
+.charts-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* mobile-first */
+}
+
+/* Desktop ≥1024px: lock to 3 columns */
+@media (min-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Tablets ≤1024px: 2 columns if space allows */
+@media (max-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+
+/* Phones ≤576px: stack vertically */
+@media (max-width: 576px) {
+  .charts-grid { grid-template-columns: 1fr; }
+}
 
 /* RESPONSIVE BREAKPOINTS */
 @media (max-width: 1024px) {

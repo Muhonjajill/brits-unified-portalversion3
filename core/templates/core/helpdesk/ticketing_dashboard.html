@@ -62,6 +62,14 @@
       <canvas id="timeTrendChart"></canvas>
     </div>
 
+    <!-- Tickets by Region -->
+    <div class="chart-card {% if hide_region %}hidden{% endif %}" id="regionchartOverview">
+      <div class="card-header">
+        <h2><i class="fas fa-map-marker-alt"></i> Tickets by Region</h2>
+      </div>
+      <canvas id="regionChart" class="tall-chart"></canvas>
+    </div>
+
 
     <!-- Distribution Breakdown -->
     <div class="chart-card full-width">
@@ -80,13 +88,7 @@
       </div>
     </div>
 
-    <!-- Tickets by Region -->
-    <div class="chart-card full-width {% if hide_region %}hidden{% endif %}" id="regionchartOverview">
-      <div class="card-header">
-        <h2><i class="fas fa-map-marker-alt"></i> Tickets by Region</h2>
-      </div>
-      <canvas id="regionChart" class="tall-chart"></canvas>
-    </div>
+    
 
     <!-- Tickets by Terminal -->
     <div class="chart-card full-width {% if hide_terminal %}hidden{% endif %}" id="terminalChartOverview">
