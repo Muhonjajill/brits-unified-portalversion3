@@ -1,5 +1,4 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -19,7 +18,7 @@
         <img src="{% static 'icons/logo.png' %}" width="180" height="120" class="logo-animate">
         <h1>Welcome, <span class="highlight">{{ user.get_full_name|default:user.username }}</span></h1>
         <div class="sub-header animate__animated animate__fadeIn animate__delay-1s">
-          <span class="badge">Secure • Transparent • Efficient</span>
+            <span class="badge">Secure • Transparent • Efficient</span>
         </div>
     </header>
     {% if user.is_superuser %}

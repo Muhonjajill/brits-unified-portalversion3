@@ -72,7 +72,8 @@ class FileAccessLog(models.Model):
         return f"{self.accessed_by} {self.action}d {self.file.title} at {self.access_time}"
 
 def user_directory_path(instance, filename):
-    return f'user_{instance.user.id}/{filename}'
+    #return f'user_{instance.user.id}/{filename}'
+    return f'user_{instance.user.pk or "temp"}/{filename}'
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

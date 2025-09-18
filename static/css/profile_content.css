@@ -1,3 +1,4 @@
+/* Reset */
 * {
   margin: 0;
   padding: 0;
@@ -6,22 +7,19 @@
 
 body {
   font-family: "Inter", "Segoe UI", Arial, sans-serif;
-  background: linear-gradient(135deg, #f5f7fa, #e3f2fd);
+  background: linear-gradient(135deg, #e3f2fd, #f5f7fa);
   color: #333;
   min-height: 100vh;
-  padding: 2rem;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
 }
 
-/* Container */
+/* ===== Container ===== */
 .profile-container {
   width: 100%;
-  max-width: 950px;
-  background: #fff;
-  border-radius: 1.25rem;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   animation: fadeIn 0.8s ease-in-out;
 }
 
@@ -31,114 +29,116 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Header Section */
+/* ===== Header ===== */
 .profile-header {
   display: flex;
   align-items: center;
-  background: #123692;
-  padding: 1.5rem;
+  gap: 2rem;
+  padding: 2rem 4rem;
+  background: linear-gradient(135deg, #0d47a1, #1976d2);
   color: #fff;
+  flex-wrap: wrap;
 }
 
 .profile-avatar {
-  width: 110px;
-  height: 110px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
-  border: 3px solid #fff;
-  margin-right: 1.5rem;
-  box-shadow: 0 0 20px rgba(255,255,255,0.4);
+  border: 4px solid #fff;
+  box-shadow: 0 0 25px rgba(0,0,0,0.3);
   object-fit: cover;
   transition: transform 0.3s ease;
 }
 .profile-avatar:hover {
-  transform: scale(1.05);
+  transform: scale(1.07);
+}
+
+.profile-avatar.default-avatar {
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #555;
 }
 
 .profile-info h1 {
-  font-size: 1.6rem;
-  margin-bottom: 0.4rem;
+  font-size: 2rem;
+  margin-bottom: 0.3rem;
 }
 .profile-info p {
-  font-size: 1rem;
+  font-size: 1.1rem;
   opacity: 0.9;
 }
-/* Default avatar styling */
-.profile-avatar.default-avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background-color: #f0f0f0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    color: #555;
-    font-weight: bold;
-}
 
-.avatar-initials {
-    text-transform: uppercase;
-}
-
-/* Details Section */
+/* ===== Details Grid ===== */
 .profile-details {
-  padding: 2rem;
+  flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 2rem;
+  padding: 3rem 4rem;
+  background: #fafbfd;
 }
 
 .details-card {
-  background: #f9fbfd;
+  background: #fff;
   border: 1px solid #e0e0e0;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transition: transform 0.2s ease;
+  border-radius: 14px;
+  padding: 1.8rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .details-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
 }
 
 .details-card h2 {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
+  font-size: 1.3rem;
+  margin-bottom: 1.2rem;
   color: #123692;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .details-card p {
   margin-bottom: 0.8rem;
   font-size: 0.95rem;
+  line-height: 1.4;
 }
 .details-card strong {
   color: #222;
 }
 
-/* Action Buttons */
+/* ===== Action Buttons ===== */
 .profile-actions {
   display: flex;
-  justify-content: space-around;
-  gap: 1rem;
-  padding: 1.5rem;
+  justify-content: flex-end;
+  gap: 1.2rem;
+  padding: 1.8rem 4rem;
   background: #f4f6f8;
   border-top: 1px solid #e0e0e0;
 }
 
 .profile-actions a,
 .profile-actions button {
-  flex: 1;
-  text-align: center;
-  text-decoration: none;
-  padding: 0.9rem 1.2rem;
+  padding: 0.85rem 1.4rem;
   border-radius: 10px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
   border: none;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-/* Individual Action Styles */
+/* Settings Button */
 .profile-actions a.settings {
   background: #e3f2fd;
   color: #123692;
@@ -149,6 +149,7 @@ body {
   color: #fff;
 }
 
+/* Logout Button */
 .profile-actions button.logout {
   background: #ffebee;
   color: #d32f2f;
@@ -159,6 +160,7 @@ body {
   color: #fff;
 }
 
+/* Back Button */
 .profile-actions a.back {
   background: #e8f5e9;
   color: #123692;
@@ -169,19 +171,82 @@ body {
   color: #fff;
 }
 
-/* Responsive */
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
-  .profile-details {
-    grid-template-columns: 1fr;
-  }
-
   .profile-header {
+    padding: 2rem;
     flex-direction: column;
     text-align: center;
   }
 
   .profile-avatar {
-    margin-right: 0;
+    width: 100px;
+    height: 100px;
+  }
+
+  .profile-info h1 {
+    font-size: 1.5rem;
+  }
+
+  .profile-details {
+    padding: 2rem;
+  }
+
+  .profile-actions {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.5rem 2rem;
+  }
+
+  .details-card h2 {
+    font-size: 1.1rem;
+  }
+
+  .details-card p {
+    font-size: 0.9rem;
+  }
+
+  .profile-actions a,
+  .profile-actions button {
+    width: 100%;
     margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+}
+
+/* Smaller screens (max-width: 480px) */
+@media (max-width: 480px) {
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-info h1 {
+    font-size: 1.3rem;
+  }
+
+  .profile-info p {
+    font-size: 1rem;
+  }
+
+  .profile-actions a,
+  .profile-actions button {
+    font-size: 0.9rem;
+  }
+
+  .profile-details {
+    padding: 1.5rem;
+  }
+
+  .details-card {
+    padding: 1.5rem;
+  }
+
+  .details-card h2 {
+    font-size: 1rem;
+  }
+
+  .details-card p {
+    font-size: 0.85rem;
   }
 }

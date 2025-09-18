@@ -5,6 +5,8 @@ from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from .views import SettingsView, manage_file_categories
 from django.contrib.auth.decorators import login_required
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 urlpatterns = [
@@ -134,7 +136,5 @@ urlpatterns = [
 
     path('notifications/', views.get_notifications, name='get_notifications'),
     path("notifications/mark_read/<int:notification_id>/", views.mark_notification_read, name="mark_notification_read"),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

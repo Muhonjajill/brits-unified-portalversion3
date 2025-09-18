@@ -1,9 +1,15 @@
-{% extends "base.html" %}
+{% extends "files_base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/access_denied.css' %}">
+{% endblock %}
+
 {% block title %}Access Denied{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-center align-items-center vh-100">
-  <div class="card shadow-lg text-center p-5" style="max-width: 500px; border-radius: 1rem;">
+  <div class="card shadow-lg text-center p-5">
     <div class="mb-4 text-danger">
       <i class="fas fa-ban fa-4x"></i>
     </div>

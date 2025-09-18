@@ -1,12 +1,12 @@
 :root {
-  --primary-color: #2a3d66; /* Dark blue for professionalism */
-  --secondary-color: #6a11cb; /* Muted purple */
-  --accent-color: #4fa3f7; /* Accent blue */
-  --background-color: #f8f9fa; /* Light background for readability */
-  --text-color: #333333; /* Dark text for contrast */
-  --gray-light: #e9ecef; /* Lighter gray for backgrounds */
-  --shadow: rgba(0, 0, 0, 0.1); /* Soft shadows */
-  --border-radius: 12px; /* Rounded edges for a modern look */
+  --primary-color: #2a3d66; 
+  --secondary-color: #6a11cb; 
+  --accent-color: #4fa3f7; 
+  --background-color: #f8f9fa; 
+  --text-color: #333333; 
+  --gray-light: #e9ecef; 
+  --shadow: rgba(0, 0, 0, 0.1); 
+  --border-radius: 12px; 
   --transition: 0.3s ease;
 }
 
@@ -23,7 +23,7 @@ body, html {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Roboto', sans-serif; /* Modern and professional font */
+  font-family: 'Rubik', sans-serif; 
   background: linear-gradient(135deg, #f7fffe 0%, #ddeaff 100%);
   color: var(--text-color);
 }
@@ -41,7 +41,7 @@ header {
 .logo-animate {
   filter: drop-shadow(0 8px 32px #7f8c8d40);
   animation: floatLogo 4s ease-in-out infinite;
-  max-width: 200px; /* Increased logo size */
+  max-width: 200px; 
   margin-bottom: 1rem;
 }
 

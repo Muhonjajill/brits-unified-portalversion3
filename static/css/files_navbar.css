@@ -31,13 +31,10 @@ body {
 /* ===============================
    Search Bar
    =============================== */
-/* ===============================
-   Fancy Search Bar
-   =============================== */
 .search-bar {
   display: flex;
   align-items: center;
-  background: linear-gradient(90deg, #e3f2fd, #bbdefb);
+  background: linear-gradient(90deg, #b3d4f2, #8fc0e0);
   padding: 8px 12px;
   border-radius: 50px;
   margin: 0 20px;

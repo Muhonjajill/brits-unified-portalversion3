@@ -911,20 +911,24 @@ def file_list_view(request, category_name=None):
         'highlight_file_id': highlight_file_id,
     })
 
-
-
 @login_required
 def search(request):
     query = request.GET.get('q', '')
+
     files = File.objects.filter(title__icontains=query, is_deleted=False)
     categories = FileCategory.objects.filter(name__icontains=query)
-    users = User.objects.filter(username__icontains=query)
-    
+
+    allowed_groups = ['Director', 'Staff', 'Manager']
+    users = User.objects.filter(
+        username__icontains=query,
+        groups__name__in=allowed_groups
+    ).distinct()  
+
     can_view_logs = (
-            request.user.is_superuser or
-            request.user.groups.filter(name='Director').exists() or
-            request.user.groups.filter(name='Manager').exists()
-        )
+        request.user.is_superuser or
+        request.user.groups.filter(name='Director').exists() or
+        request.user.groups.filter(name='Manager').exists()
+    )
 
     context = {
         'query': query,
@@ -1014,7 +1018,17 @@ def download_file(request, file_id):
     return response
 
 def custom_permission_denied(request, exception=None):
-    return render(request, "core/file_management/403.html", {"exception": str(exception)}, status=403)
+    can_view_logs = (
+        request.user.is_superuser or
+        request.user.groups.filter(name='Director').exists() or
+        request.user.groups.filter(name='Manager').exists()
+    )
+    context = {
+        "exception": str(exception),
+        "can_view_logs": can_view_logs
+    }
+    return render(request, "core/file_management/403.html", context, status=403)
+
 
 
 @login_required
@@ -1191,6 +1205,8 @@ class SettingsView(View):
             profile_form.save()
             messages.success(request, "Your settings have been updated.")
             return redirect('settings') 
+
+        print("FILES:", request.FILES)
 
         return render(request, 'accounts/settings.html', {
             'user_form': user_form,
