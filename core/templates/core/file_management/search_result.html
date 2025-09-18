@@ -9,43 +9,94 @@
 
 {% block content %}
 <div class="results-container">
-  <h2 class="results-title">🔍 Search Results for "<span class="query-text">{{ query }}</span>"</h2>
+  <h2 class="results-title">
+    <i class="fas fa-search"></i>
+    Search Results for <span class="query-text">"{{ query }}"</span>
+  </h2>
 
   {% if files %}
-    <div class="results-section">
-      <h3 class="section-title">📁 Files</h3>
-      <ul class="results-list">
-        {% for file in files %}
-          <li class="result-item">{{ file.title }}</li>
-        {% endfor %}
-      </ul>
+    <div class="results-section fade-in">
+      <h3 class="section-title"><i class="fas fa-file-alt"></i> Files</h3>
+
+      <div class="table-wrapper">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Uploaded By</th>
+              <th>Upload Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for file in files %}
+              <tr>
+                <td data-label="Title">{{ file.title }}</td>
+                <td data-label="Category">{{ file.category.name }}</td>
+                <td data-label="Uploaded By">{{ file.uploaded_by.username }}</td>
+                <td data-label="Upload Date">{{ file.upload_date|date:"M d, Y H:i" }}</td>
+                <td data-label="Actions" class="actions">
+                  <a href="{% url 'preview_file' file.id %}" class="btn-action preview">
+                    <i class="fas fa-eye"></i> Preview
+                  </a>
+                  <a href="{% url 'download_file' file.id %}" class="btn-action download">
+                    <i class="fas fa-download"></i> Download
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   {% endif %}
 
   {% if categories %}
-    <div class="results-section">
-      <h3 class="section-title">🗂 Categories</h3>
+    <div class="results-section fade-in">
+      <h3 class="section-title"><i class="fas fa-folder-open"></i> Categories</h3>
       <ul class="results-list">
         {% for cat in categories %}
-          <li class="result-item">{{ cat.name }}</li>
+          <li class="result-item">
+            <div>
+              <i class="fas fa-folder"></i> {{ cat.name }}
+            </div>
+            <span class="badge">{{ cat.file_set.count }} files</span>
+          </li>
         {% endfor %}
       </ul>
     </div>
   {% endif %}
 
   {% if users %}
-    <div class="results-section">
-      <h3 class="section-title">👤 Users</h3>
-      <ul class="results-list">
-        {% for user in users %}
-          <li class="result-item">{{ user.username }}</li>
-        {% endfor %}
-      </ul>
+    <div class="results-section fade-in">
+      <h3 class="section-title"><i class="fas fa-user"></i> Users</h3>
+
+      <div class="table-wrapper">
+        <table class="results-table">
+          <thead>
+            <tr>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Files Uploaded</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+              <tr>
+                <td data-label="Username">{{ user.username }}</td>
+                <td data-label="Email">{{ user.email }}</td>
+                <td data-label="Files Uploaded">{{ user.file_set.count }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   {% endif %}
 
   {% if not files and not categories and not users %}
-    <p class="no-results">No results found for "{{ query }}". Try another search.</p>
+    <p class="no-results">😞 No results found for <strong>{{ query }}</strong>. Try another search.</p>
   {% endif %}
 </div>
 {% endblock %}

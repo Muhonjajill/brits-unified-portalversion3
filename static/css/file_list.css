@@ -325,6 +325,16 @@ body {
   box-shadow: 0 1px 4px rgba(0,0,0,0.08);
   border: 1.5px solid #e0e0e0;
 }
+.highlighted {
+    background: rgba(74, 119, 255, 0.15);
+    border: 2px solid #4a77ff;
+    animation: flash 1.5s ease-in-out;
+}
+
+@keyframes flash {
+    0% { background: rgba(74,119,255,0.4); }
+    100% { background: rgba(74,119,255,0.15); }
+}
 
 /* Tag */
 .tag {

@@ -854,18 +854,17 @@ def file_list_view(request, category_name=None):
 
     visible_files = []
 
-    # Iterate over each file to check access rights
     for file in files:
         if file.can_user_access(user):
             visible_files.append(file)
         else:
-            # If file is restricted and user doesn't have access
             visible_files.append({
                 'file': file,
                 'requires_passcode': True
             })
 
-    # Filter by category if provided
+    highlight_file_id = request.GET.get("file_id")
+
     if category_name:
         visible_files = [
             file for file in visible_files
@@ -909,23 +908,32 @@ def file_list_view(request, category_name=None):
         'active_category': category_name,
         'validated_files': validated_files,
         'can_view_logs': can_view_logs,
+        'highlight_file_id': highlight_file_id,
     })
 
 
 
-
+@login_required
 def search(request):
     query = request.GET.get('q', '')
     files = File.objects.filter(title__icontains=query, is_deleted=False)
     categories = FileCategory.objects.filter(name__icontains=query)
     users = User.objects.filter(username__icontains=query)
+    
+    can_view_logs = (
+            request.user.is_superuser or
+            request.user.groups.filter(name='Director').exists() or
+            request.user.groups.filter(name='Manager').exists()
+        )
 
     context = {
         'query': query,
         'files': files,
         'categories': categories,
         'users': users,
+        'can_view_logs': can_view_logs,
     }
+
     return render(request, 'core/file_management/search_result.html', context)
 
 @login_required
@@ -961,8 +969,14 @@ def preview_file(request, file_id):
     if mime_type in ['application/pdf', 'image/jpeg', 'image/png', 'image/gif']:
         return FileResponse(file.file.open('rb'), content_type=mime_type)
 
+    can_view_logs = (
+        request.user.is_superuser or
+        request.user.groups.filter(name='Director').exists() or
+        request.user.groups.filter(name='Manager').exists()
+    )
+
     # Unsupported type
-    return render(request, 'core/file_management/unsupported_preview.html', {'file': file})
+    return render(request, 'core/file_management/unsupported_preview.html', {'file': file, 'can_view_logs': can_view_logs})
 
 
 
@@ -999,7 +1013,8 @@ def download_file(request, file_id):
     response['Content-Disposition'] = f'attachment; filename="{file.file.name.split("/")[-1]}"'
     return response
 
-
+def custom_permission_denied(request, exception=None):
+    return render(request, "core/file_management/403.html", {"exception": str(exception)}, status=403)
 
 
 @login_required
@@ -1030,38 +1045,50 @@ def file_access_logs(request):
         'can_view_logs': can_view_logs
     })
 
+def user_can_manage_logs(user):
+    return (
+        user.is_superuser or
+        user.groups.filter(name='Director').exists() or
+        user.groups.filter(name='Manager').exists()
+    )
+
 @login_required
 def delete_log(request, log_id):
-    # Check if the user has permission
-    if not request.user.has_perm('core.delete_fileaccesslog'):
-        return redirect('file_access_logs') 
+    if not user_can_manage_logs(request.user):
+        return redirect('file_access_logs')
 
     log = get_object_or_404(FileAccessLog, id=log_id)
     log.delete()
-    return redirect('file_access_logs') 
+    return redirect('file_access_logs')
+
 
 @login_required
 def clear_all_logs(request):
-    # Check if the user has permission
-    if not request.user.has_perm('core.delete_fileaccesslog'):
-        return redirect('file_access_logs')  
+    if not user_can_manage_logs(request.user):
+        return redirect('file_access_logs')
 
-    FileAccessLog.objects.all().delete()  
+    FileAccessLog.objects.all().delete()
     return redirect('file_access_logs')
+
     
 @login_required
 def delete_file(request, file_id):
-    if not request.user.has_perm('core.delete_file'):
-        raise PermissionDenied('You do not have permission to delete this file')
     file = get_object_or_404(File, id=file_id, is_deleted=False)
 
+    if not (
+        request.user == file.uploaded_by
+        or request.user.is_superuser
+        or request.user.has_perm("core.delete_file")
+    ):
+        raise PermissionDenied("You do not have permission to delete this file")
+
     if request.method == "POST":
-        file.is_deleted = True
+        file.is_deleted = True  # soft delete
         file.save()
         messages.success(request, "File deleted successfully.")
-        return redirect('file_list')
-    
-    return redirect('file_list')
+        return redirect("file_list")
+
+    return redirect("file_list")
     
 @login_required
 @permission_required('core.add_file', raise_exception=True)

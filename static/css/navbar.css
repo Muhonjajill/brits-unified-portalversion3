@@ -306,12 +306,12 @@
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #e0e7ff, #c7d2fe); 
+    background-color: #123692;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.1rem;
-    color: #172d69; 
+    color: white; 
     font-weight: 600;
     border: 2px solid #172d69;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); 
@@ -325,10 +325,16 @@
 }
 
 .avatar-initials {
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-size: 1rem;
-    user-select: none;
+  width: 40px;
+  height: 40px;
+  background-color: #123692;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 16px;
 }
 
 @media (min-width: 769px) {
@@ -367,20 +373,6 @@
   .profile-name { display: none; }         
   .nav-right { gap: 0.5rem; padding-right: 0.5rem; }
 
-  /* Profile avatar with initials */
-.profile-avatar.default-avatar {
-    width: 36px;
-    height: 36px;
-    font-size: 1rem; 
-    color: #172d69;   
-    background: linear-gradient(135deg, #e0e7ff, #c7d2fe); 
-    border: 2px solid #172d69;
-  }
-
-.avatar-initials {
-    text-transform: uppercase;
-}
-
 
   /* ensure dropdowns float above everything */
   .dropdown-menu, .notifications-dropdown {
@@ -400,7 +392,7 @@
     font-size: 1.1rem;          
   }
 
-  .profile-trigger span { 
+  .profile-trigger > span { 
     display: none;              
   }
 

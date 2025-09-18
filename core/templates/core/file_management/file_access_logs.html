@@ -29,23 +29,27 @@
         <table>
             <thead>
                 <tr>
-                    <th>File Title</th>
-                    <th>Accessed By</th>
-                    <th>Action</th>
-                    <th>Access Time</th>
-                    <th>Delete Log</th>
+                    <th><i class="fas fa-file-alt"></i>File Title</th>
+                    <th><i class="fas fa-user"></i>Accessed By</th>
+                    <th><i class="fas fa-tasks"></i>Action</th>
+                    <th><i class="fas fa-clock"></i>Access Time</th>
+                    <th><i class="fas fa-trash"></i>Delete Log</th>
                 </tr>
             </thead>
             <tbody>
                 {% for log in page_obj %}
-                    <tr>
-                        <td>{{ log.file.title }}</td>
-                        <td>{{ log.accessed_by.username }}</td>
-                        <td><span class="log-action {% if log.action == 'preview' %}preview{% elif log.action == 'download' %}download{% else %}none{% endif %}">{{ log.get_action_display }}</span></td>
-                        <td>{{ log.access_time|date:"F d, Y H:i" }}</td>
-                        <td>
+                    <tr onclick="window.location.href='{% url 'file_list' %}?file_id={{ log.file.id }}'" style="cursor: pointer;">
+                        <td data-label="File Title">{{ log.file.title }}</td>
+                        <td data-label="Accessed By">{{ log.accessed_by.username }}</td>
+                        <td data-label="Action">
+                            <span class="log-action {% if log.action == 'preview' %}preview{% elif log.action == 'download' %}download{% else %}none{% endif %}">
+                                {{ log.get_action_display }}
+                            </span>
+                        </td>
+                        <td data-label="Access Time">{{ log.access_time|date:"F d, Y H:i" }}</td>
+                        <td data-label="Delete Log">
                             {% if can_view_logs %}
-                                <a href="{% url 'delete_log' log.id %}" class="delete-btn">Delete</a>
+                                <a href="{% url 'delete_log' log.id %}" class="delete-btn" onclick="event.stopPropagation()">Delete</a>
                             {% endif %}
                         </td>
                     </tr>

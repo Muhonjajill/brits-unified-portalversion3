@@ -1,8 +1,10 @@
 $(document).ready(function() {
+    console.log(window.initialData);
     const data = window.initialData;
     const allowAll = window.allowAll;
     // Declare chart instances outside of updateCharts function
-    let dayChart, weekdayChart, hourChart, monthChart, yearChart, statusChart, terminalChart, categoryChart, monthlyChart, slaComplianceChart, creatorChart, assigneeChart, resolverChart, unresolvedChart, ticketsTimeChart;;  
+    let statusChart, terminalChart, categoryChart, monthlyChart, assigneeChart, resolverChart, unresolvedChart, ticketsTimeChart, slaEscalationChart;  
+
 
     // Initialize the chart rendering with the default data
     updateCharts(data);
@@ -25,34 +27,19 @@ $(document).ready(function() {
     }
 
     function updateCharts(data) {
-        const ctxDay = document.getElementById('ticketsPerDayChart').getContext('2d');
-        const ctxWeekday = document.getElementById('ticketsPerWeekdayChart').getContext('2d');
-        //const ctxHour = document.getElementById('ticketsPerHourChart').getContext('2d');
-        const ctxMonth = document.getElementById('ticketsPerMonthChart').getContext('2d');
-        const ctxYear = document.getElementById('ticketsPerYearChart').getContext('2d');
         const ctxStatus = document.getElementById('ticketStatusChart').getContext('2d');
         const ctxTerminal = document.getElementById('ticketsPerTerminalChart').getContext('2d');
         const ctxCategory = document.getElementById('ticketsByCategoryChart').getContext('2d');
-        const ctxMonthly = document.getElementById('monthlyTicketTrendsChart').getContext('2d');
-        const ctxSLA = document.getElementById('slaComplianceChart').getContext('2d');
-        const ctxCreator = document.getElementById('ticketsByCreatorChart').getContext('2d');
         const ctxAssignee = document.getElementById('ticketsByAssigneeChart').getContext('2d');
         const ctxResolver = document.getElementById('ticketsByResolverChart').getContext('2d');
         const ctxUnresolved = document.getElementById('unresolvedTicketsChart').getContext('2d');
         destroyChart(unresolvedChart); 
         destroyChart(assigneeChart); 
 
-        // Destroy old charts if exist
-        destroyChart(slaComplianceChart);
-        destroyChart(creatorChart);
+        
         destroyChart(resolverChart);
 
-        // Destroy the previous charts if they exist
-        destroyChart(dayChart);
-        destroyChart(weekdayChart);
-        //destroyChart(hourChart);
-        destroyChart(monthChart);
-        destroyChart(yearChart);
+    
         destroyChart(statusChart);
         destroyChart(terminalChart);
         destroyChart(categoryChart);
@@ -60,8 +47,8 @@ $(document).ready(function() {
 
         const unit = $('#timeUnitFilter').val() || 'day';
 
-        // After creating the other charts
         renderTicketsTimeChart(unit, data);
+        renderCategoryChart(data);
 
         $('#timeUnitFilter').on('change', function () {
         const unit = $(this).val();
@@ -69,227 +56,89 @@ $(document).ready(function() {
     });
 
 
-    // ✅ Render the Tickets Over Time chart
-        function renderTicketsTimeChart(unit, data) {
-            const ctx = document.getElementById("ticketsTimeChart");
-            if (!ctx) return;
+    function renderTicketsTimeChart(unit, data) {
+        const ctx = document.getElementById("ticketsTimeChart");
+        if (!ctx) return;
 
-            const c = ctx.getContext("2d");
-            destroyChart(ticketsTimeChart);
+        const c = ctx.getContext("2d");
+        destroyChart(ticketsTimeChart);
 
-            let labels = [];
-            let values = [];
+        let labels = [];
+        let values = [];
 
-            if (unit === "day") {
-                labels = data.ticketsPerDay.labels;
-                values = data.ticketsPerDay.data;
-            } else if (unit === "weekday") {
-                labels = data.ticketsPerWeekday.labels;
-                values = data.ticketsPerWeekday.data;
-            } else if (unit === "hour") {
-                labels = data.ticketsPerHour.labels;
-                values = data.ticketsPerHour.data;
-            }
-
-            ticketsTimeChart = new Chart(c, {
-                type: "line",
-                data: {
-                    labels,
-                    datasets: [{
-                        label: "Tickets",
-                        data: values,
-                        borderColor: "#007bff",
-                        backgroundColor: function(context) {
-                            const chart = context.chart;
-                            const { ctx, chartArea } = chart;
-                            if (!chartArea) return null;
-                            return createGradient(ctx, chartArea, "rgba(0,123,255,0.5)", "rgba(0,123,255,0)");
-                        },
-                        fill: true,
-                        tension: 0.3,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } }
-                }
-            });
+        if (unit === "hour") {
+            labels = data.ticketsPerHour.labels;
+            values = data.ticketsPerHour.data;
+        } else if (unit === "day") {
+            labels = data.ticketsPerDay.labels;
+            values = data.ticketsPerDay.data;
+        } else if (unit === "weekday") {
+            labels = data.ticketsPerWeekday.labels;
+            values = data.ticketsPerWeekday.data;
+        } else if (unit === "month") {
+            labels = data.ticketsPerMonth.labels;
+            values = data.ticketsPerMonth.data;
+        } else if (unit === "year") {
+            labels = data.ticketsPerYear.labels;
+            values = data.ticketsPerYear.data;
         }
 
-
-        // Per day chart with gradient animation
-        dayChart = new Chart(ctxDay, {
-            type: 'bar',
+        ticketsTimeChart = new Chart(c, {
+            type: "line",
             data: {
-                labels: data.days,
+                labels,
                 datasets: [{
-                    label: 'Tickets per Day',
-                    data: data.ticketsPerDay,
+                    label: "Tickets",
+                    data: values,
+                    borderColor: "#007bff",
+                    pointBackgroundColor: "#007bff",
+                    borderWidth: 2,
+                    pointRadius: 4,
+                    pointHoverRadius: 8,
                     backgroundColor: function(context) {
-                        const chartArea = context.chart.chartArea;
-                        return createGradient(ctxDay, chartArea, '#007bff', '#00b0ff');
+                        const chart = context.chart;
+                        const { ctx, chartArea } = chart;
+                        if (!chartArea) return null;
+                        return createGradient(ctx, chartArea, "rgba(0,123,255,0.5)", "rgba(0,123,255,0)");
                     },
+                    fill: true,
+                    tension: 0.4,
                 }]
             },
             options: {
                 responsive: true,
-                animation: {
-                    duration: 1000, 
-                    easing: 'easeOutQuart',
-                },
+                interaction: { mode: 'index', intersect: false },
+                animation: { duration: 1500, easing: "easeOutBounce" },
                 plugins: {
+                    legend: { display: true, labels: { color: "#333", font: { size: 14, weight: 'bold' } } },
                     tooltip: {
-                        enabled: true,
-                        backgroundColor: 'rgba(0, 123, 255, 0.8)',
+                        backgroundColor: "rgba(0,0,0,0.7)",
+                        titleFont: { size: 14, weight: "bold" },
+                        bodyFont: { size: 13 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: (ctx) => ` ${ctx.formattedValue} tickets`
+                        }
                     }
                 },
-                events: ['resize', 'afterUpdate'], // Ensure chart area is updated
-                onResize: function(chart) {
-                    chart.update();
+                elements: {
+                    line: { borderJoinStyle: "round", shadowBlur: 8, shadowColor: "rgba(0,0,0,0.15)" },
+                    point: { hoverBorderWidth: 3 }
                 }
             }
         });
+    }
 
-        // Per weekday chart with gradient animation
-        weekdayChart = new Chart(ctxWeekday, {
-            type: 'bar',
-            data: {
-                labels: data.weekdays,
-                datasets: [{
-                    label: 'Tickets per Weekday',
-                    data: data.ticketsPerWeekday,
-                    backgroundColor: function(context) {
-                        const chartArea = context.chart.chartArea;
-                        return createGradient(ctxWeekday, chartArea, '#28a745', '#32e52f');
-                    },
-                }]
-            },
-            options: {
-                responsive: true,
-                animation: {
-                    duration: 1000,
-                    easing: 'easeOutQuart',
-                },
-                plugins: {
-                    tooltip: {
-                        enabled: true,
-                        backgroundColor: 'rgba(40, 167, 69, 0.8)',
-                    }
-                },
-                events: ['resize', 'afterUpdate'],
-                onResize: function(chart) {
-                    chart.update();
-                }
-            }
-        });
-
-        // Per hour chart with gradient animation
-        /*hourChart = new Chart(ctxHour, {
-            type: 'bar',
-            data: {
-                labels: data.hours,
-                datasets: [{
-                    label: 'Tickets per Hour',
-                    data: data.ticketsPerHour,
-                    backgroundColor: function(context) {
-                        const chartArea = context.chart.chartArea;
-                        return createGradient(ctxHour, chartArea, '#ffc107', '#ffcc00');
-                    },
-                }]
-            },
-            options: {
-                responsive: true,
-                animation: {
-                    duration: 1000,
-                    easing: 'easeOutQuart',
-                },
-                plugins: {
-                    tooltip: {
-                        enabled: true,
-                        backgroundColor: 'rgba(255, 193, 7, 0.8)',
-                    }
-                },
-                events: ['resize', 'afterUpdate'],
-                onResize: function(chart) {
-                    chart.update();
-                }
-            }
-        });*/
-
-        // Per month chart with gradient animation
-        monthChart = new Chart(ctxMonth, {
-            type: 'bar',
-            data: {
-                labels: data.months,
-                datasets: [{
-                    label: 'Tickets per Month',
-                    data: data.ticketsPerMonth,
-                    backgroundColor: function(context) {
-                        const chartArea = context.chart.chartArea;
-                        return createGradient(ctxMonth, chartArea, '#dc3545', '#e02f3a');
-                    },
-                }]
-            },
-            options: {
-                responsive: true,
-                animation: {
-                    duration: 1000,
-                    easing: 'easeOutQuart',
-                },
-                plugins: {
-                    tooltip: {
-                        enabled: true,
-                        backgroundColor: 'rgba(220, 53, 69, 0.8)',
-                    }
-                },
-                events: ['resize', 'afterUpdate'],
-                onResize: function(chart) {
-                    chart.update();
-                }
-            }
-        });
-
-        // Per year chart with gradient animation
-        yearChart = new Chart(ctxYear, {
-            type: 'bar',
-            data: {
-                labels: data.years,
-                datasets: [{
-                    label: 'Tickets per Year',
-                    data: data.ticketsPerYear,
-                    backgroundColor: function(context) {
-                        const chartArea = context.chart.chartArea;
-                        return createGradient(ctxYear, chartArea, '#17a2b8', '#20c1d7');
-                    },
-                }]
-            },
-            options: {
-                responsive: true,
-                animation: {
-                    duration: 1000,
-                    easing: 'easeOutQuart',
-                },
-                plugins: {
-                    tooltip: {
-                        enabled: true,
-                        backgroundColor: 'rgba(23, 162, 184, 0.8)',
-                    }
-                },
-                events: ['resize', 'afterUpdate'],
-                onResize: function(chart) {
-                    chart.update();
-                }
-            }
-        });
 
         // Ticket statuses chart (Pie chart) with hover animations
         statusChart = new Chart(ctxStatus, {
             type: 'pie',
             data: {
-                labels: data.ticketStatuses.labels, // Get status labels from data
+                labels: data.ticketStatuses.labels, 
                 datasets: [{
                     label: 'Ticket Statuses',
-                    data: data.ticketStatuses.data, // Get status counts from data
+                    data: data.ticketStatuses.data,
                     backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545'],
                 }]
             },
@@ -298,21 +147,20 @@ $(document).ready(function() {
                 animation: {
                     animateRotate: true,
                     animateScale: true,
-                    duration: 1000,
+                    duration: 1200,
                 },
                 plugins: {
                     tooltip: {
                         enabled: true,
                         backgroundColor: 'rgba(0, 123, 255, 0.8)',
                     },
-                    // Custom Plugin to display the numbers/percentages below the chart
                     datalabels: {
                         display: true,
                         color: '#fff',
                         formatter: (value, context) => {
                             const total = context.chart._metasets[0].data.reduce((acc, val) => acc + val, 0);
-                            const percentage = ((value / total) * 100).toFixed(2);  // Calculate percentage
-                            return `${value} (${percentage}%)`;  // Format as number and percentage
+                            const percentage = ((value / total) * 100).toFixed(2);  
+                            return `${value} (${percentage}%)`;  
                         },
                         font: {
                             weight: 'bold',
@@ -326,7 +174,8 @@ $(document).ready(function() {
                 events: ['resize', 'afterUpdate'],
                 onResize: function(chart) {
                     chart.update();
-                }
+                },
+                hover: { mode: 'nearest', onHover: (e, elements) => e.native.target.style.cursor = elements.length ? 'pointer' : 'default'} 
             }
         });
 
@@ -348,93 +197,232 @@ $(document).ready(function() {
             },
             options: {
                 responsive: true,
-                animation: { duration: 1000, easing: 'easeOutQuart' },
+                animation: { duration: 1200, easing: 'easeOutQuart', delay: (context) => context.dataIndex * 100 },
             }
         });
 
-        // Tickets by Category (Radar Chart)
+    
+    function renderCategoryChart(data) {
+        // If an existing chart instance exists, destroy it first
+        if (categoryChart) {
+            categoryChart.destroy();
+        }
+        // Get the canvas context
+        const ctxCategory = document
+            .getElementById('ticketsByCategoryChart')
+            .getContext('2d');
         categoryChart = new Chart(ctxCategory, {
             type: 'radar',
             data: {
-                labels: data.ticketCategories.labels,
-                datasets: [{
-                    label: 'Tickets by Category',
-                    data: data.ticketCategories.data,
-                    backgroundColor: 'rgba(0, 123, 255, 0.3)', 
-                    borderColor: '#007bff',
-                    borderWidth: 2
-                }]
+            labels: data.ticketCategories.labels,
+            datasets: [{
+                label: 'Tickets by Category',
+                data: data.ticketCategories.data,
+                backgroundColor: context => {
+                const { chartArea } = context.chart;
+                return createGradient(
+                    ctxCategory,
+                    chartArea,
+                    'rgba(0, 123, 255, 0.3)',
+                    'rgba(0, 123, 255, 0.1)'
+                );
+                },
+                borderColor: context => {
+                const v = context.dataset.data[context.dataIndex];
+                return v > 10 ? '#ff4500' : '#007bff';
+                },
+                borderWidth: 2,
+                pointBackgroundColor: context => {
+                const v = context.dataset.data[context.dataIndex];
+                return v > 10 ? '#ff4500' : '#007bff';
+                },
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 8,
+                pointHoverBackgroundColor: context => {
+                const v = context.dataset.data[context.dataIndex];
+                return v > 10 ? '#ff6347' : '#007bff';
+                },
+                pointHoverBorderWidth: 2,
+                fill: true
+            }]
             },
             options: {
-                responsive: true,
-                scale: { ticks: { beginAtZero: true } }
-            }
-        });
-
-        // Monthly Ticket Trends (Line Chart)
-        monthlyChart = new Chart(ctxMonthly, {
-            type: 'line',
-            data: {
-                labels: data.months,
-                datasets: [{
-                    label: 'Monthly Ticket Trends',
-                    data: data.ticketsPerMonth,
-                    fill: true,
-                    backgroundColor: '#007bff',
-                    borderColor: '#0056b3',
-                    borderWidth: 2,
-                }]
-            },
-            options: {
-                responsive: true,
-                animation: { duration: 1000, easing: 'easeOutQuart' },
-                plugins: { tooltip: { backgroundColor: 'rgba(0, 123, 255, 0.8)' } }
-            }
-        });
-
-        // SLA Chart (Doughnut)
-        slaComplianceChart = new Chart(ctxSLA, {
-            type: 'doughnut',
-            data: {
-                labels: data.slaStats.labels,
-                datasets: [{
-                    label: 'SLA Compliance',
-                    data: data.slaStats.data,
-                    backgroundColor: ['#28a745', '#dc3545'],
-                }]
-            },
-            options: {
-                responsive: true,
-                cutout: '70%', // makes the doughnut hollow
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                let value = context.raw;
-                                let percent = total ? ((value / total) * 100).toFixed(1) : 0;
-                                return `${context.label}: ${value} (${percent}%)`;
-                            }
-                        }
-                    },
-                    datalabels: {
-                        color: '#fff',
-                        formatter: (value, ctx) => {
-                            let total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                            return total ? ((value / total) * 100).toFixed(1) + '%' : '0%';
-                        },
-                        font: {
-                            weight: 'bold',
-                            size: 14
-                        }
-                    }
+            responsive: true,
+            scale: {
+                ticks: {
+                beginAtZero: true,
+                backdropColor: 'rgba(0, 0, 0, 0.1)',
+                color: '#333',
+                font: { size: 14 }
+                },
+                pointLabels: {
+                color: '#007bff',
+                font: { size: 14, weight: 'bold' }
                 }
             },
-            plugins: [ChartDataLabels] 
+            animation: {
+                duration: 2000,
+                easing: 'easeOutBounce',
+                onComplete: function(anim) {
+                const chart = anim.chart;
+                const ctx   = chart.ctx;
+                if (!ctx) return;
+                ctx.save();
+                ctx.globalAlpha = 0.5;
+                chart.data.datasets.forEach((ds, idx) => {
+                    ctx.fillStyle = ds.borderColor;
+                    ds.data.forEach((_, i) => {
+                    const pt = chart.getDatasetMeta(idx).data[i];
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
+                    ctx.fill();
+                    });
+                });
+                ctx.restore();
+                }
+            },
+            hover: {
+                onHover: (e, active) => {
+                e.native.target.style.cursor = active.length ? 'pointer' : 'default';
+                }
+            },
+            plugins: {
+                tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                titleFont: { size: 14, weight: 'bold' },
+                bodyFont: { size: 12 },
+                padding: 10,
+                cornerRadius: 6,
+                callbacks: {
+                    label: ctx => `${ctx.dataset.label}: ${ctx.formattedValue} tickets`
+                }
+                },
+                legend: {
+                display: true,
+                labels: {
+                    color: '#333',
+                    font: { size: 14, weight: 'bold' }
+                }
+                }
+            }
+            }
         });
+        }
+
+
+      
+
+       // SLA Chart (Doughnut)
+        const ctxSLAEsc = document.getElementById("slaEscalationChart");
+
+        if (ctxSLAEsc && window.initialData.escalationSLAStats) {
+            destroyChart(slaEscalationChart); 
+            const data = window.initialData.escalationSLAStats;
+            const ctx = ctxSLAEsc.getContext("2d");
+
+            // --- Gradients for each slice ---
+            // Softer, modern gradients
+            const gradBreachedEsc = ctx.createLinearGradient(0, 0, 0, 300);
+            gradBreachedEsc.addColorStop(0, "#FF7E67");  // warm coral
+            gradBreachedEsc.addColorStop(1, "#FF3C38");  // soft red
+
+            const gradBreachedNoEsc = ctx.createLinearGradient(0, 0, 0, 300);
+            gradBreachedNoEsc.addColorStop(0, "#6DD5FA"); // aqua blue
+            gradBreachedNoEsc.addColorStop(1, "#2980B9"); // calm teal
+
+            const gradMet = ctx.createLinearGradient(0, 0, 0, 300);
+            gradMet.addColorStop(0, "#A5E1CE");  // soft mint
+            gradMet.addColorStop(1, "#2E8B57");  // deeper sea-gree
+
+            // Custom plugin for center percentage text
+            const centerTextPlugin = {
+                id: "centerText",
+                afterDraw(chart) {
+                    const { ctx, chartArea } = chart;
+                    const dataset = chart.data.datasets[0];
+                    const total = dataset.data.reduce((a, b) => a + b, 0);
+                    const breached = dataset.data[0] ?? 0;
+                    const percent = total ? ((breached / total) * 100).toFixed(1) : 0;
+
+                    ctx.save();
+                    ctx.font = "bold 20px 'Segoe UI', sans-serif";
+                    ctx.fillStyle = "#444";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(`${percent}%`, (chartArea.left + chartArea.right) / 2, (chartArea.top + chartArea.bottom) / 2);
+                    ctx.restore();
+                },
+            };
+
+            slaEscalationChart = new Chart(ctxSLAEsc, {
+                type: "doughnut",
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: "SLA Escalation",
+                            data: data.data,
+                            backgroundColor: [gradBreachedEsc, gradBreachedNoEsc, gradMet],
+                            borderColor: "#fff",
+                            borderWidth: 2,
+                            hoverOffset: 12,
+                            hitRadius: 4,
+                            shadowColor: "rgba(0,0,0,0.15)",
+                            shadowBlur: 8,
+                        },
+                    ],
+                },
+                options: {
+                    responsive: true,
+                    cutout: "68%",
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1800,
+                        easing: "easeOutElastic",
+                    },
+                    interaction: {
+                        mode: "point",   // precise detection of slices
+                        intersect: true, // only fire when pointer is inside slice
+                    },
+                    plugins: {
+                        legend: {
+                            position: "bottom",
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: "circle",
+                                font: { size: 14, weight: "bold" },
+                                color: "#333",
+                                padding: 14,
+                            },
+                        },
+                        tooltip: {
+                            backgroundColor: "#222",
+                            titleFont: { size: 14, weight: "bold" },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 6,
+                            callbacks: {
+                                label(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const value = context.raw;
+                                    const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${context.label}: ${value} (${percent}%)`;
+                                },
+                            },
+                        },
+                    },
+                },
+                plugins: [centerTextPlugin],
+            });
+        } else {
+            console.error("Failed to load SLA data for chart", window.initialData.escalationSLAStats);
+        }
+
+
+
 
         
         unresolvedChart = new Chart(ctxUnresolved, {
@@ -477,22 +465,9 @@ $(document).ready(function() {
                     }
                 }
             },
+            animation: { animateRotate: true, animateScale: true, duration: 1200 },
+            hover: { mode: 'nearest', onHover: (e, elements) => e.native.target.style.cursor = elements.length ? 'pointer' : 'default' },
             plugins: [ChartDataLabels]
-        });
-
-
-        // Tickets by Creator (Bar)
-        creatorChart = new Chart(ctxCreator, {
-            type: 'bar',
-            data: {
-                labels: data.ticketsByCreator.labels,
-                datasets: [{
-                    label: 'Tickets Created',
-                    data: data.ticketsByCreator.data,
-                    backgroundColor: '#007bff',
-                }]
-            },
-            options: { responsive: true }
         });
 
         assigneeChart = new Chart(ctxAssignee, {
@@ -503,12 +478,11 @@ $(document).ready(function() {
                     label: 'Tickets Assigned',
                     data: data.ticketsByAssignee.data,
                     backgroundColor: data.ticketsByAssignee.labels.map((_, i) => {
-                        // Assign distinct colors from a palette
                         const colors = [
                             '#007bff', '#28a745', '#ffc107', '#dc3545',
                             '#17a2b8', '#6f42c1', '#fd7e14', '#20c997'
                         ];
-                        return colors[i % colors.length]; // cycle through
+                        return colors[i % colors.length]; 
                     }),
                 }]
             },
@@ -518,8 +492,9 @@ $(document).ready(function() {
                     tooltip: { enabled: true }
                 },
                 animation: {
-                    duration: 1000,
-                    easing: 'easeOutQuart'
+                    duration: 1200,
+                    easing: 'easeOutQuart',
+                    delay: (context) => context.dataIndex * 100 
                 }
             }
         });
@@ -536,7 +511,13 @@ $(document).ready(function() {
                     backgroundColor: '#17a2b8',
                 }]
             },
-            options: { responsive: true }
+            options: { responsive: true,
+                animation: {
+                    duration: 1200,
+                    easing: 'easeOutQuart',
+                    delay: (context) => context.dataIndex * 100 
+                }
+             }
         });
 
     }
@@ -590,10 +571,6 @@ $(document).ready(function() {
         populateDropdown("region-filter", data.regions, "id", "name", true, null, "All Regions");
         populateDropdown("terminal-filter", data.terminals, "id", "branch_name", true, null, "All Terminals");
     } else if (userGroup === "Overseer") {
-        //populateDropdown("customer-filter", data.customers, "id", "name", false, data.assignedCustomerId);
-        //populateDropdown("region-filter", data.regions, "id", "name", false, "all", "All Regions");
-       // populateDropdown("terminal-filter", data.terminals, "id", "branch_name", false, "all", "All Terminals");
-
        // Customer is assigned → not changeable
         populateDropdown("customer-filter", data.customers, "id", "name", false, data.assignedCustomerId);
 
@@ -629,7 +606,9 @@ $(document).ready(function() {
                 if (response) {
                     try {
                         console.log("New Data:", response);
+                        window.initialData = response;
                         updateCharts(response); 
+                        console.log("Resolved:", response.resolvedTickets, "Unresolved:", response.unresolvedCount);
                     } catch (error) {
                         console.error("Error while updating charts:", error);
                     }

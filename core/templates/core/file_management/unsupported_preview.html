@@ -11,6 +11,6 @@
 <div class="page-container">
   <h3>⚠️ Preview Not Available</h3>
   <p>This file type cannot be previewed in the browser.</p>
-  <a href="{{ file.file.url }}" download class="btn">⬇ Download File</a>
+  <a href="{% url 'download_file' file.id %}" download class="btn">⬇ Download File</a>
 </div>
 {% endblock %}

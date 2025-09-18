@@ -62,6 +62,23 @@ body {
   font-size: 1rem;
   opacity: 0.9;
 }
+/* Default avatar styling */
+.profile-avatar.default-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #555;
+    font-weight: bold;
+}
+
+.avatar-initials {
+    text-transform: uppercase;
+}
 
 /* Details Section */
 .profile-details {
@@ -144,11 +161,11 @@ body {
 
 .profile-actions a.back {
   background: #e8f5e9;
-  color: #2e7d32;
+  color: #123692;
   border: 1px solid #a5d6a7;
 }
 .profile-actions a.back:hover {
-  background: #2e7d32;
+  background: #1976d2;
   color: #fff;
 }
 

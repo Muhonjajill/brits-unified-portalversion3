@@ -117,18 +117,28 @@
 
         <div>
           {% if file.id %}
-            <a href="#" onclick="showPasscodeModal({{ file.id }}, '{% url 'preview_file' file.id %}', 'preview'); return false;" class="btn preview-link">Preview</a>
+            {% if file.access_level == "restricted" %}
+              <a href="#" onclick="showPasscodeModal({{ file.id }}, '{% url 'preview_file' file.id %}', 'preview'); return false;" class="btn preview-link">Preview</a>
+            {% else %}
+              <a href="{% url 'preview_file' file.id %}" class="btn preview-link">Preview</a>
+            {% endif %}
           {% else %}
             <span>Preview Unavailable</span>
           {% endif %}
         </div>
+
         <div>
-            {% if file.id %}
-                  <a href="#" onclick="showPasscodeModal({{ file.id }}, '{% url 'download_file' file.id %}', 'download'); return false;" class="btn download-link">Download</a>
+          {% if file.id %}
+            {% if file.access_level == "restricted" %}
+              <a href="#" onclick="showPasscodeModal({{ file.id }}, '{% url 'download_file' file.id %}', 'download'); return false;" class="btn download-link">Download</a>
             {% else %}
-              <span>Download Unavailable</span>
+              <a href="{% url 'download_file' file.id %}" class="btn download-link">Download</a>
             {% endif %}
+          {% else %}
+            <span>Download Unavailable</span>
+          {% endif %}
         </div>
+
 
         {% if file.uploaded_by == request.user or request.user.is_superuser %}
         <div>
@@ -279,5 +289,15 @@ function updatePasscode(fileId){
   })
   .catch(err=>{ console.error(err); alert('❌ Failed to update passcode'); });
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    const highlightId = "{{ highlight_file_id }}";
+    if (highlightId) {
+        const el = document.getElementById("file-" + highlightId);
+        if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    }
+});
 </script>
 {% endblock %}

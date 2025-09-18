@@ -8,7 +8,6 @@ from django.contrib.auth.decorators import login_required
 
 
 urlpatterns = [
-    #path('', auth_views.LoginView.as_view(template_name='accounts/login.html'), name='login'),
     path('', views.login_view, name='login'),
     path('verify-otp/', views.verify_otp_view, name='verify_otp'),
 
@@ -135,4 +134,7 @@ urlpatterns = [
 
     path('notifications/', views.get_notifications, name='get_notifications'),
     path("notifications/mark_read/<int:notification_id>/", views.mark_notification_read, name="mark_notification_read"),
-]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
