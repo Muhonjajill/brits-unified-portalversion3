@@ -117,11 +117,31 @@ EMAIL_HOST_PASSWORD = 'vikt ydrj drzv gemz'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 ESCALATION_LEVEL_EMAILS = {
-    'Tier 1': ('jillmuhonja@gmail.com', EMAIL_HOST_USER),
-    'Tier 2': ('godblessodhiambo@gmail.com',EMAIL_HOST_USER),
-    'Tier 3': ('jillyjill762@gmail.com',EMAIL_HOST_USER),
-    'Tier 4': ('godblessodhiambo@gmail.com',EMAIL_HOST_USER),
+    'Tier 1': {
+        'recipients': ['jillmuhonja@gmail.com', 'support1@example.com'],
+        'sender': EMAIL_HOST_USER,
+    },
+    'Tier 2': {
+        'recipients': ['godblessodhiambo@gmail.com', 'support2@example.com'],
+        'sender': EMAIL_HOST_USER,
+    },
+    'Tier 3': {
+        'recipients': ['jillyjill762@gmail.com'],
+        'sender': EMAIL_HOST_USER,
+    },
+    'Tier 4': {
+        'recipients': ['godblessodhiambo@gmail.com', 'backup@example.com'],
+        'sender': EMAIL_HOST_USER,
+    },
+    'General': {
+        'recipients': ['helpdesk@example.com'],
+        'sender': EMAIL_HOST_USER,
+    },
 }
+
+FALLBACK_NEW_TICKET_RECIPIENTS = ["admin@yourdomain.com"]
+
+NEW_TICKET_SENDER = "noreply@yourdomain.com"
 
 LOGGING = {
     "version": 1,
@@ -133,13 +153,12 @@ LOGGING = {
     },
     "root": {
         "handlers": ["console"],
-        "level": "WARNING",  # root logger default
+        "level": "WARNING", 
     },
     "loggers": {
-        # Catch your app logs
-        "core": {   # replace `core` with your app name
+        "core": {  
             "handlers": ["console"],
-            "level": "DEBUG",   # show DEBUG, INFO, WARNING, ERROR
+            "level": "DEBUG",   
             "propagate": False,
         },
     },

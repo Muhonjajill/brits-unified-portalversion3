@@ -13,6 +13,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from core.uttils.serializers import serialize_ticket
 from core.utilss.escalation_constants import ESCALATION_TIME_LIMITS, ESCALATION_FLOW
+from django.contrib.auth.models import User 
 
 
 import logging
@@ -118,6 +119,8 @@ ZONE_PRIORITY_THRESHOLDS = {
 
 def send_new_ticket_notification(ticket):
     """Notify admins/staff when a new ticket is created."""
+
+    # 🔹 Push WebSocket event
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         "escalations",
@@ -139,22 +142,35 @@ def send_new_ticket_notification(ticket):
         f"Please review and assign it."
     )
 
-    # 🔑 Collect all staff/admin emails
+    # 🔹 Collect recipients from groups
     recipients = list(
-        User.objects.filter(groups__name__in=["Admin","Director","Manager","Staff"])
+        User.objects.filter(groups__name__in=["Admin", "Director", "Manager", "Staff"])
         .exclude(email__isnull=True)
         .values_list("email", flat=True)
     )
 
+    # 🔹 If no recipients, try fallback
     if not recipients:
-        recipients = [settings.EMAIL_HOST_USER]  # fallback
+        logger.warning("⚠️ No staff/admin recipients found for new ticket notification.")
+        recipients = getattr(settings, "FALLBACK_NEW_TICKET_RECIPIENTS", [])
+
+    # 🔹 Absolute last fallback
+    if not recipients:
+        recipients = [settings.DEFAULT_FROM_EMAIL]
+        logger.warning(f"⚠️ Using DEFAULT_FROM_EMAIL as recipient: {recipients}")
+
+    # 🔹 Get sender
+    sender = getattr(settings, "NEW_TICKET_SENDER", settings.DEFAULT_FROM_EMAIL)
 
     try:
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipients)
+        logger.info(f"📧 Sending new ticket email for Ticket #{ticket.id}")
+        logger.info(f"   From: {sender}")
+        logger.info(f"   To: {recipients}")
+        send_mail(subject, message, sender, recipients)
         logger.info(f"✅ New ticket email sent for Ticket #{ticket.id} to {recipients}")
     except Exception as e:
         logger.error(f"❌ Failed to send new ticket email for Ticket #{ticket.id}: {str(e)}")
-
+        
 
 def send_unassigned_ticket_notification(ticket):
     now = timezone.now()
@@ -200,9 +216,12 @@ def _trigger_unassigned_alert(ticket, now):
         f"Please assign this ticket as soon as possible."
     )
 
+    recipients = get_escalation_recipients("General")
+    sender = get_sender_for_level("General")
+
     try:
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [settings.EMAIL_HOST_USER])
-        logger.info(f"✅ Unassigned ticket email sent for Ticket #{ticket.id}")
+        send_mail(subject, message, sender, recipients)
+        logger.info(f"✅ Unassigned ticket email sent for Ticket #{ticket.id} to {recipients}")
     except Exception as e:
         logger.error(f"❌ Failed to send unassigned ticket email for Ticket #{ticket.id}: {str(e)}")
 
@@ -211,23 +230,43 @@ def _trigger_unassigned_alert(ticket, now):
 
 
 
-def send_ticket_assignment_notification(ticket):
-    """Send notification to admins or assigned staff to assign the ticket."""
-    message = f"Ticket #{ticket.id} is not assigned yet. Please assign it within 2 hours."
-    subject = "Unassigned Ticket Reminder"
-
-    try:
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [settings.EMAIL_HOST_USER])
-        logger.info(f"Email sent successfully for Ticket #{ticket.id}")
-    except Exception as e:
-        logger.error(f"Failed to send email for Ticket #{ticket.id}: {str(e)}")
-
-    # WebSocket notification
+def send_ticket_assignment_notification(ticket, assigned_user):
+    """Notify user when a ticket has been assigned to them."""
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
-        "ticket_notifications",
-        {"type": "ticket_assignment_notification", "message": message}
+        "escalations",
+        {
+            "type": "ticket_assignment_notification",
+            "ticket": serialize_ticket(ticket),
+            "assigned_to": assigned_user.username,
+        }
     )
+
+    subject = f"[Ticket Assignment] Ticket #{ticket.id} Assigned"
+    message = (
+        f"Ticket #{ticket.id} has been assigned to you.\n\n"
+        f"- Title: {ticket.title}\n"
+        f"- Priority: {ticket.priority}\n"
+        f"- Category: {ticket.problem_category}\n"
+        f"- Status: {ticket.status}\n\n"
+        f"Please review and take action."
+    )
+
+    # Direct notification to the assigned user
+    recipients = [assigned_user.email] if assigned_user.email else []
+
+    # If user has no email, fall back to General tier
+    if not recipients:
+        recipients = get_escalation_recipients("General")
+
+    sender = get_sender_for_level("General")
+
+    try:
+        send_mail(subject, message, sender, recipients)
+        logger.info(f"✅ Assignment email sent for Ticket #{ticket.id} to {recipients}")
+    except Exception as e:
+        logger.error(f"❌ Failed to send assignment email for Ticket #{ticket.id}: {str(e)}")
+
 
 
 
@@ -318,14 +357,19 @@ def _do_escalation(ticket, escalation_level, now):
     logger.info(f"🚀 Ticket {ticket.id} escalated from {escalation_level} → {next_level}")
 
 
-
-
 def get_escalation_recipients(level):
-    
-    emails = settings.ESCALATION_LEVEL_EMAILS.get(level)
-    if emails:
-        return list(emails)  
+    """Return recipient emails for a given escalation tier."""
+    config = settings.ESCALATION_LEVEL_EMAILS.get(level)
+    if config and "recipients" in config:
+        return config["recipients"]
     return [settings.DEFAULT_FROM_EMAIL]
+
+def get_sender_for_level(level):
+    """Return the configured sender email for a tier, or fallback."""
+    config = settings.ESCALATION_LEVEL_EMAILS.get(level)
+    if config and "sender" in config:
+        return config["sender"]
+    return settings.DEFAULT_FROM_EMAIL
 
 def get_email_for_level(level):
     return [settings.ESCALATION_LEVEL_EMAILS.get(level, (None,))[0]]  
@@ -347,5 +391,12 @@ def send_escalation_email(ticket, to_level):
 
     - Blue River Technology Solutions
     """
+
     recipients = get_escalation_recipients(to_level)
-    send_mail(subject, message, None, recipients)
+    sender = get_sender_for_level(to_level)
+
+    try:
+        send_mail(subject, message, sender, recipients)
+        logger.info(f"📧 Escalation email sent for Ticket #{ticket.id} → {to_level} ({recipients})")
+    except Exception as e:
+        logger.error(f"❌ Failed to send escalation email for Ticket #{ticket.id}: {str(e)}")

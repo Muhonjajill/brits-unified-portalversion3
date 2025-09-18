@@ -8,6 +8,12 @@ window.addEventListener('DOMContentLoaded', () => {
     profileTrigger.addEventListener("click", () => {
       dropdownMenu.classList.toggle("show");
     });
+
+    document.addEventListener("click", (e) => {
+    if (!userProfile.contains(e.target)) {
+      dropdownMenu.classList.remove("show");
+    }
+  });
   }
 
 
@@ -184,31 +190,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
 
-    // Function to fetch tickets for the selected period
-    /*function fetchTickets(period) {
-      fetch(`/tickets/${period}/`)  
-          .then(response => {
-              if (!response.ok) {
-                  throw new Error(`HTTP error! status: ${response.status}`);
-              }
-              return response.json();
-          })
-          .then(data => {
-              const ticketList = document.getElementById('ticket-list');
-              ticketList.innerHTML = ''; // Clear current tickets
-              data.tickets.forEach(ticket => {
-                  const ticketElement = document.createElement('div');
-                  ticketElement.classList.add('ticket-item');
-                  ticketElement.innerHTML = `
-                      <h4>${ticket.title}</h4>
-                      <p>Status: ${ticket.status}</p>
-                      <p>Priority: ${ticket.priority}</p>
-                  `;
-                  ticketList.appendChild(ticketElement);
-              });
-          })
-          .catch(error => console.error('Error fetching tickets:', error));
-  }*/
   function fetchTickets(period) {
   fetch(`/tickets/${period}/`)  
       .then(response => {
@@ -219,7 +200,7 @@ window.addEventListener('DOMContentLoaded', () => {
       })
       .then(data => {
           const ticketList = document.getElementById('ticket-list');
-          ticketList.innerHTML = ''; // Clear current tickets
+          ticketList.innerHTML = '';
           data.tickets.forEach(ticket => {
               const ticketElement = document.createElement('div');
               ticketElement.classList.add('ticket-item');

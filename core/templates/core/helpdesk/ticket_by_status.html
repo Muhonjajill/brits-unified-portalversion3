@@ -26,7 +26,7 @@
       {% for ticket in tickets %}
       <tr onclick="window.location='{% url 'ticket_detail' ticket.id %}'" style="cursor:pointer;">
         <td>{{ ticket.id }}</td>
-        <td class="title-cell"><a href="{% url 'ticket_detail' ticket.id %}">{{ ticket.title }}</td>
+        <td class="title-cell">{{ ticket.title }}</td>
         <td>{{ ticket.terminal }}</td>
         <td>{{ ticket.created_at|date:"M d, Y H:i" }}</td>
         <td><span class="status-label status-{{ ticket.status|lower }}">{{ ticket.status|title }}</span></td>

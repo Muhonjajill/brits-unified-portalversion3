@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
 from .views import SettingsView, manage_file_categories
+from django.contrib.auth.decorators import login_required
 
 
 urlpatterns = [
@@ -54,7 +55,7 @@ urlpatterns = [
     path('search/', views.search, name='search'),
 
     path('profile/', views.profile_view, name='profile_view'),
-    path('settings/', SettingsView.as_view(), name='settings'),
+    path('settings/', login_required(SettingsView.as_view()), name='settings'),
 
     path('password_change/', auth_views.PasswordChangeView.as_view(template_name='accounts/password_change.html'), name='password_change'),
     path('password_change/done/', auth_views.PasswordChangeDoneView.as_view(template_name='accounts/password_change_done.html'), name='password_change_done'),

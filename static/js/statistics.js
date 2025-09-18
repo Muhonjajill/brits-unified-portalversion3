@@ -3,7 +3,8 @@ $(document).ready(function() {
     const data = window.initialData;
     const allowAll = window.allowAll;
     // Declare chart instances outside of updateCharts function
-    let dayChart, weekdayChart, hourChart, monthChart, yearChart, statusChart, terminalChart, categoryChart, monthlyChart, slaComplianceChart, creatorChart, assigneeChart, resolverChart, unresolvedChart, ticketsTimeChart;;  
+    let statusChart, terminalChart, categoryChart, monthlyChart, assigneeChart, resolverChart, unresolvedChart, ticketsTimeChart, slaEscalationChart;  
+
 
     // Initialize the chart rendering with the default data
     updateCharts(data);
@@ -317,6 +318,7 @@ $(document).ready(function() {
         const ctxSLAEsc = document.getElementById("slaEscalationChart");
 
         if (ctxSLAEsc && window.initialData.escalationSLAStats) {
+            destroyChart(slaEscalationChart); 
             const data = window.initialData.escalationSLAStats;
             const ctx = ctxSLAEsc.getContext("2d");
 
@@ -354,7 +356,7 @@ $(document).ready(function() {
                 },
             };
 
-            new Chart(ctxSLAEsc, {
+            slaEscalationChart = new Chart(ctxSLAEsc, {
                 type: "doughnut",
                 data: {
                     labels: data.labels,
@@ -365,7 +367,7 @@ $(document).ready(function() {
                             backgroundColor: [gradBreachedEsc, gradBreachedNoEsc, gradMet],
                             borderColor: "#fff",
                             borderWidth: 2,
-                            hoverOffset: 12, // reduced for better pointer sync
+                            hoverOffset: 12,
                             hitRadius: 4,
                             shadowColor: "rgba(0,0,0,0.15)",
                             shadowBlur: 8,

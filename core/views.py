@@ -53,6 +53,7 @@ from django.urls import reverse
 from openpyxl.styles import Border, Side
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync 
+import logging
 
 def in_group(user, group_name):
     return user.is_authenticated and (user.is_superuser or user.groups.filter(name=group_name).exists())
@@ -844,73 +845,7 @@ def file_management_dashboard(request):
         'user_name': request.user.username,
         'can_view_logs': can_view_logs, 
     })
-"""
-@login_required
-def file_list_view(request, category_name=None):
-    user = request.user
-    files = File.objects.filter(is_deleted=False)
-    validated_files = request.session.get("validated_files", [])
 
-    visible_files = []
-
-    # Iterate over each file to check access rights
-    for file in files:
-        if file.can_user_access(user):
-            visible_files.append(file)
-        else:
-            # If file is restricted and user doesn't have access
-            visible_files.append({
-                'file': file,
-                'requires_passcode': True
-            })
-
-    # Filter by category if provided
-    if category_name:
-        visible_files = [
-            file for file in visible_files
-            if (
-                isinstance(file, dict) 
-                and file['file'].category 
-                and file['file'].category.name.lower() == category_name.lower()
-            )
-            or (
-                isinstance(file, File) 
-                and file.category 
-                and file.category.name.lower() == category_name.lower()
-            )
-        ]
-
-
-    # Sort files
-    sort_option = request.GET.get('sort')
-    if sort_option == 'recent':
-        visible_files.sort(key=lambda f: f['file'].upload_date if isinstance(f, dict) else f.upload_date, reverse=True)
-    else:
-        visible_files.sort(key=lambda f: f['file'].title if isinstance(f, dict) else f.title)
-
-    # Paginate files
-    paginator = Paginator(visible_files, 10)
-    page = request.GET.get('page')
-    try:
-        paginated_files = paginator.page(page)
-    except PageNotAnInteger:
-        paginated_files = paginator.page(1)
-    except EmptyPage:
-        paginated_files = paginator.page(paginator.num_pages)
-
-    # Fetch categories for the filter dropdown
-    categories = FileCategory.objects.all()
-
-    can_view_logs = request.user.has_perm('core.view_fileaccesslog')
-
-    return render(request, 'core/file_management/file_list.html', {
-        'files': paginated_files,
-        'categories': categories,
-        'active_category': category_name,
-        'validated_files': validated_files,
-        'can_view_logs': can_view_logs,
-    })
-"""
 @login_required
 def file_list_view(request, category_name=None):
     user = request.user
@@ -1465,8 +1400,11 @@ def statistics_view(request):
     else:
         tickets = Ticket.objects.none()
 
+    hide_sla = user_group in ["Custodian", "Overseer"]
+    hide_assignee = user_group in ["Custodian", "Overseer"]
+    hide_resolver = user_group in ["Custodian", "Overseer"]
+    hide_terminal = user_group == "Custodian"
 
-    print(f"Tickets after initial role-based filtering: {tickets.count()}")
 
     # --- Filters ---
     time_period = request.GET.get('time-period', "all_time")
@@ -1610,12 +1548,6 @@ def statistics_view(request):
         for t in available_terminals
     ]
 
-    print(f"Customer filter: {customer_filter}, Tickets after filter: {tickets.count()}")
-    print(f"Region filter: {region_filter}, Tickets after filter: {tickets.count()}")
-    print(f"Terminal filter: {terminal_filter}, Tickets after filter: {tickets.count()}")
-    print(f"Time filter: {time_period}, Tickets after filter: {tickets.count()}")
-    print("Filters received:", time_period, customer_id, terminal_id, region_id)
-
 
     stats = {}
 
@@ -1714,16 +1646,6 @@ def statistics_view(request):
         for item in unresolved_stats
     ]
 
-    print("Unresolved Stats:", unresolved_stats)
-
-
-
-
-   
-    print("Unresolved stats:", list(unresolved_stats))
-
-
-
     resolution_stats = tickets.aggregate(
         resolved=Count(Case(
             When(status__iexact="closed", then=1),
@@ -1818,9 +1740,6 @@ def statistics_view(request):
 
     }
 
-    print("Resolved:", resolution_stats["resolved"], "Unresolved:", resolution_stats["unresolved"])
-    print("SLA Escalated:", sla_escalated, "SLA Not Escalated:", sla_not_escalated)
-
     for ticket in tickets:
         print(f"Ticket {ticket.id}: resolved_at={ticket.resolved_at}, due_date={ticket.due_date}, is_sla_breached={ticket.is_sla_breached}, is_escalated={ticket.is_escalated}")
 
@@ -1859,181 +1778,12 @@ def statistics_view(request):
         "assigned_customer": assigned_customer,
         "assigned_branch": assigned_terminal,
         "assigned_region": assigned_region,
+        "hide_sla": hide_sla,
+        "hide_assignee": hide_assignee,
+        "hide_resolver": hide_resolver,
+        "hide_terminal": hide_terminal
         #"allowed_roles": allowed_roles
     })
-"""
-@login_required(login_url='login')
-def export_report(request):
-    import openpyxl
-    from openpyxl.styles import Font, Border, Side
-    from django.utils import timezone
-    from datetime import timedelta
-    from django.http import HttpResponse
-    from django.db.models import Count
-
-    today = timezone.now()
-    user = request.user
-    user_profile = getattr(user, 'profile', None)
-
-    # --- Role-based Filtering ---
-    tickets = Ticket.objects.all()
-    user_group = None
-    assigned_customer = None
-    assigned_terminal = None
-    assigned_region = None
-
-    if user.is_superuser or user.groups.filter(name__in=['Director', 'Manager', 'Staff']).exists():
-        user_group = "Internal"
-    elif Customer.objects.filter(overseer=user).exists():
-        user_group = "Overseer"
-        assigned_customer = Customer.objects.filter(overseer=user).first()
-        if assigned_customer:
-            tickets = tickets.filter(customer=assigned_customer)
-        else:
-            tickets = Ticket.objects.none()
-    elif user_profile and user_profile.terminal:
-        if user_profile.terminal.custodian == user:
-            user_group = "Custodian"
-            assigned_terminal = user_profile.terminal
-            assigned_customer = assigned_terminal.customer
-            assigned_region = assigned_terminal.region
-            tickets = tickets.filter(terminal=assigned_terminal)
-        else:
-            tickets = Ticket.objects.none()
-    else:
-        tickets = Ticket.objects.none()
-
-    # --- Filters ---
-    time_period = request.GET.get('time-period', 'all_time')
-    customer_filter = request.GET.get('customer', 'all')
-    terminal_filter = request.GET.get('terminal', 'all')
-    region_filter = request.GET.get('region', 'all')
-
-    # Date filtering
-    start_date, end_date = None, None
-    if time_period != 'all_time':
-        if time_period == 'today':
-            start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_date = today.replace(hour=23, minute=59, second=59, microsecond=999999)
-        elif time_period == 'yesterday':
-            start_date = (today - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-            end_date = (today - timedelta(days=1)).replace(hour=23, minute=59, second=59, microsecond=999999)
-        elif time_period == 'lastweek':
-            start_date = today - timedelta(days=today.weekday() + 7)
-            start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
-            end_date = start_date + timedelta(days=6, hours=23, minutes=59, seconds=59, microseconds=999999)
-        elif time_period == 'lastmonth':
-            end_date = today.replace(day=1, hour=0, minute=0, second=0, microsecond=0) - timedelta(microseconds=1)
-            start_date = end_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        elif time_period == 'lastyear':
-            start_date = today.replace(year=today.year - 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-            end_date = today.replace(year=today.year - 1, month=12, day=31, hour=23, minute=59, second=59, microsecond=999999)
-
-    if start_date and end_date:
-        tickets = tickets.filter(created_at__range=[start_date, end_date])
-
-    # Customer filter
-    if customer_filter not in ['all', '', None]:
-        if user_group in ['Overseer', 'Custodian'] and assigned_customer and str(assigned_customer.id) != customer_filter:
-            tickets = Ticket.objects.none()
-        else:
-            tickets = tickets.filter(terminal__customer__id=customer_filter)
-
-    # Terminal filter
-    if terminal_filter not in ['all', '', None]:
-        if user_group == 'Custodian' and assigned_terminal and str(assigned_terminal.id) != terminal_filter:
-            tickets = Ticket.objects.none()
-        else:
-            tickets = tickets.filter(terminal__id=terminal_filter)
-
-    # Region filter
-    if region_filter not in ['all', '', None]:
-        if user_group == 'Custodian' and assigned_region and str(assigned_region.id) != region_filter:
-            tickets = Ticket.objects.none()
-        else:
-            tickets = tickets.filter(terminal__region__id=region_filter)
-
-    if not tickets.exists():
-        return HttpResponse("No tickets to export matching your criteria.", status=404)
-
-    # --- Prepare Aggregated Data for Graphs ---
-    ticket_statuses = tickets.values('status').annotate(status_count=Count('status'))
-    status_labels = [s['status'] for s in ticket_statuses]
-    status_counts = [s['status_count'] for s in ticket_statuses]
-
-    ticket_categories = tickets.values('problem_category__name').annotate(ticket_count=Count('id'))
-    category_labels = [c['problem_category__name'] for c in ticket_categories]
-    category_counts = [c['ticket_count'] for c in ticket_categories]
-
-    terminals_data = tickets.values('terminal__branch_name').annotate(ticket_count=Count('id'))
-    terminal_labels = [t['terminal__branch_name'] for t in terminals_data]
-    terminal_counts = [t['ticket_count'] for t in terminals_data]
-
-    days = [today - timedelta(days=i) for i in range(7)]
-    tickets_per_day = [tickets.filter(created_at__date=day.date()).count() for day in days]
-
-    hours = [f"{i}-{i+1}" for i in range(24)]
-    tickets_per_hour = [tickets.filter(created_at__hour=i).count() for i in range(24)]
-
-    months = list(range(1, 13))
-    tickets_per_month = [tickets.filter(created_at__month=i).count() for i in months]
-
-    # --- Create Excel Workbook ---
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Tickets & Graph Data"
-
-    bold_font = Font(bold=True)
-    thin_border = Border(left=Side(style='thin'), right=Side(style='thin'),
-                         top=Side(style='thin'), bottom=Side(style='thin'))
-
-    # --- Raw Tickets Sheet ---
-    ws.append(['Ticket ID', 'Customer', 'Terminal', 'Region', 'Created At'])
-    for col in range(1, 6):
-        cell = ws.cell(row=1, column=col)
-        cell.font = bold_font
-        cell.border = thin_border
-
-    for ticket in tickets:
-        ws.append([
-            ticket.id,
-            ticket.terminal.customer.name if ticket.terminal and ticket.terminal.customer else 'No Customer',
-            ticket.terminal.branch_name if ticket.terminal else 'No Terminal',
-            ticket.terminal.region.name if ticket.terminal and ticket.terminal.region else 'No Region',
-            ticket.created_at.replace(tzinfo=None) if ticket.created_at else ''
-        ])
-
-    for row in ws.iter_rows(min_row=1, max_row=ws.max_row, min_col=1, max_col=5):
-        for cell in row:
-            cell.border = thin_border
-
-    # --- Add Graph Data Below ---
-    start_row = ws.max_row + 3
-
-    def write_chart_data(title, labels, counts, start_row):
-        ws.cell(row=start_row, column=1, value=title).font = bold_font
-        for i, label in enumerate(labels):
-            ws.cell(row=start_row + 1 + i, column=1, value=label)
-            ws.cell(row=start_row + 1 + i, column=2, value=counts[i])
-
-        for r in range(start_row, start_row + 1 + len(labels)):
-            for c in range(1, 3):
-                ws.cell(row=r, column=c).border = thin_border
-
-        return start_row + 2 + len(labels)
-
-    row_pointer = start_row
-    row_pointer = write_chart_data("Tickets per Terminal", terminal_labels, terminal_counts, row_pointer)
-    row_pointer = write_chart_data("Tickets per Status", status_labels, status_counts, row_pointer)
-    row_pointer = write_chart_data("Tickets per Category", category_labels, category_counts, row_pointer)
-    row_pointer = write_chart_data("Tickets per Day (Last 7 Days)", [day.strftime('%Y-%m-%d') for day in days], tickets_per_day, row_pointer)
-    row_pointer = write_chart_data("Tickets per Hour", hours, tickets_per_hour, row_pointer)
-    row_pointer = write_chart_data("Tickets per Month", months, tickets_per_month, row_pointer)
-
-    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    response['Content-Disposition'] = 'attachment; filename="ticket_statistics.xlsx"'
-    wb.save(response)
-    return response"""
 
 @login_required(login_url='login')
 def export_report(request):
@@ -2198,9 +1948,6 @@ def export_report(request):
     wb.save(response)
     return response
 
-
-
-
 @login_required(login_url='login')
 def tickets(request):
     query = request.GET.get('search', '')
@@ -2212,12 +1959,10 @@ def tickets(request):
         print(f"Authenticated user: {request.user.username}")
         profile = getattr(request.user, 'profile', None)
 
-        # Internal roles (Superusers and staff see all tickets)
         if request.user.is_superuser or request.user.groups.filter(name__in=['Director', 'Manager', 'Staff']).exists():
             print("User has internal access (superuser/staff)")
             tickets_qs = Ticket.objects.all()
 
-        # Overseer role: filter tickets by customer they oversee
         elif Customer.objects.filter(overseer=request.user).exists():
             customer = Customer.objects.filter(overseer=request.user).first()
             print(f"{request.user.username} is Overseer for {customer.name}")
@@ -2475,59 +2220,6 @@ def get_escalated_tickets(request):
         ]
     }
     return JsonResponse(data)
-"""
-@login_required
-def get_notifications(request):
-    profile = getattr(request.user, "profile", None)
-    qs = UserNotification.objects.none()
-
-    if request.user.is_superuser or request.user.groups.filter(
-        name__in=['Admin','Director','Manager','Staff']
-    ).exists():
-        qs = UserNotification.objects.all()
-    elif Customer.objects.filter(overseer=request.user).exists():
-        overseer_customers = Customer.objects.filter(overseer=request.user)
-        qs = UserNotification.objects.filter(
-            ticket__customer__in=overseer_customers
-        )
-    elif profile and profile.terminal:
-        custodian_terminal = profile.terminal
-        if custodian_terminal.custodian == request.user:
-            qs = UserNotification.objects.filter(
-                ticket__terminal=custodian_terminal
-            )
-
-    total_unread = qs.filter(is_read=False).count()
-
-    # --- Deduplicate by ticket safely ---
-    qs_unread = (
-        qs.filter(is_read=False)
-        .select_related("ticket", "ticket__customer", "ticket__terminal")
-        .order_by("-ticket__created_at")
-    )
-
-    seen = set()
-    top5 = []
-    for un in qs_unread:
-        if un.ticket_id not in seen:
-            seen.add(un.ticket_id)
-            top5.append(un)
-        if len(top5) == 5:
-            break
-
-    if not top5:
-        return JsonResponse({
-            "tickets": [],
-            "count": total_unread,
-            "message": "No notifications available for your role or assignment."
-        })
-
-    payload = [serialize_user_notification(un) for un in top5]
-
-    return JsonResponse({
-        "tickets": payload,
-        "count": total_unread,
-    })"""
 
 @login_required
 def get_notifications(request):
@@ -2588,58 +2280,6 @@ def get_notifications(request):
         "tickets": payload,
         "count": total_unread,
     })
-
-
-
-import logging
-
-logger = logging.getLogger(__name__)
-
-"""
-@login_required
-@require_POST
-def mark_notification_read(request, ticket_id):
-    # Fetch notification
-    notif = UserNotification.objects.filter(
-        user=request.user,
-        ticket_id=ticket_id
-    ).first()
-
-    if notif:
-        if not notif.is_read:
-            notif.is_read = True
-            notif.save(update_fields=["is_read"])
-
-        logger.info("Notification marked read: user=%s ticket=%s", request.user, ticket_id)
-
-        # After marking as read, make sure it's removed from the notifications list on the frontend
-        return JsonResponse({"success": True, "ticket_id": ticket_id})
-
-    logger.error("Unexpected: No UserNotification found for user=%s ticket=%s", request.user, ticket_id)
-    return JsonResponse({"success": False, "info": "Notification not found"})"""
-
-"""
-@login_required
-@require_POST
-def mark_notification_read(request, ticket_id):
-    # Fetch notification
-    notif = UserNotification.objects.filter(
-        user=request.user,
-        ticket_id=ticket_id
-    ).first()
-
-    if notif:
-        if not notif.is_read:
-            notif.is_read = True
-            notif.save(update_fields=["is_read"])
-
-        logger.info("Notification marked read: user=%s ticket=%s", request.user, ticket_id)
-
-        # After marking as read, make sure it's removed from the notifications list on the frontend
-        return JsonResponse({"success": True, "ticket_id": ticket_id})
-
-    logger.error("Unexpected: No UserNotification found for user=%s ticket=%s", request.user, ticket_id)
-    return JsonResponse({"success": False, "info": "Notification not found"})"""
 
 logger = logging.getLogger(__name__)
 
@@ -3215,7 +2855,26 @@ def tickets_by_status(request, status):
 
     print(f"Final tickets count for {status} status: {tickets_qs.count()}")  
 
+    user_group = None
+    if Customer.objects.filter(custodian=request.user).exists():
+        user_group = "Custodian"
+    elif Customer.objects.filter(overseer=request.user).exists():
+        user_group = "Overseer"
+    else:
+        if request.user.groups.filter(name="Director").exists():
+            user_group = "Director"
+        elif request.user.groups.filter(name="Manager").exists():
+            user_group = "Manager"
+        elif request.user.groups.filter(name="Staff").exists():
+            user_group = "Staff"
+        else:
+            user_group = "Customer"
+
+    allowed_roles = ["Director", "Manager", "Staff", "Superuser"]
+
     return render(request, 'core/helpdesk/ticket_by_status.html', {
+        'user_group': user_group,
+        'allowed_roles': allowed_roles,
         'status': status.title().replace('-', ' '),
         'tickets': tickets,
         'paginator': paginator

@@ -96,6 +96,16 @@ body {
   color: var(--active-text);
 }
 
+.sidebar ul li a:hover .icon,
+.sidebar ul li a.active .icon {
+  color: inherit; 
+}
+
+.sub-menu li a:hover .icon,
+.sub-menu li a.active .icon {
+  color: inherit;
+}
+
 .has-submenu > a .toggle-icon {
   margin-left: auto;
   transition: transform 0.3s ease;
@@ -210,17 +220,16 @@ body {
     padding: 1rem;
   }
 
-  /* Adjust sidebar and menu items for mobile */
   .sidebar ul li a {
-    font-size: 1.1rem;  /* Increase font size for easier readability */
+    font-size: 1.1rem;  
     padding: 12px 20px;
   }
 
   .sidebar ul li a .icon {
-    font-size: 1.2rem;  /* Increase icon size */
+    font-size: 1.2rem;  
   }
 
-  /* Ensure submenu items are well-spaced */
+  
   .sub-menu li a {
     padding: 10px 20px 10px 40px;
     gap: 12px;
@@ -228,7 +237,7 @@ body {
 
   /* Mobile menu toggle for submenus */
   .has-submenu > a .toggle-icon {
-    font-size: 1.2rem;  /* Increase chevron size for easier interaction */
+    font-size: 1.2rem;  
   }
 
   /* Sidebar overlay for mobile */

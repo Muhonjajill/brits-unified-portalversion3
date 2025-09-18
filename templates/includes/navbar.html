@@ -256,32 +256,6 @@ function renderNotifications(tickets, totalCount) {
 }
 
 
-
-/*
-  // Handle new ticket event
-  function handleNewTicket(ticket) {
-
-    const existing = document.querySelector(`[data-ticket-id="${ticket.id}"]`);
-    if (existing) return;   // 👈 Prevent duplicates
-    
-    const countEl = document.getElementById("notificationCount");
-    const listEl = document.getElementById("notificationsList");
-    if (!countEl || !listEl) return;
-
-    const emptyMsg = document.querySelector(".empty");
-    if (emptyMsg) emptyMsg.remove();
-
-    ticket.notification_type = ticket.notification_type || "new";
-    listEl.prepend(createNotificationItem(ticket));
-
-    const items = listEl.querySelectorAll(".notification-item");
-    if (items.length > 5) listEl.removeChild(items[items.length - 1]);
-
-    const current = parseInt(countEl.textContent || "0", 10);
-    countEl.textContent = isNaN(current) ? 1 : current + 1;
-    countEl.style.display = "inline-block";
-  }*/
-
   function handleNewTicket(ticket) {
   const existing = document.querySelector(`[data-ticket-id="${ticket.id}"]`);
   if (existing) return;
@@ -309,28 +283,6 @@ function renderNotifications(tickets, totalCount) {
   countEl.textContent = isNaN(current) ? 1 : current + 1;
   countEl.style.display = "inline-block";
 }
-
-
-  /*
-  // Handle new unassigned ticket event
-  function handleNewUnassignedTicket(ticket) {
-    const countEl = document.getElementById("notificationCount");
-    const listEl = document.getElementById("notificationsList");
-    if (!countEl || !listEl) return;
-
-    const emptyMsg = document.querySelector(".empty");
-    if (emptyMsg) emptyMsg.remove();
-
-    ticket.notification_type = "unassigned";
-    listEl.prepend(createNotificationItem(ticket));
-
-    const items = listEl.querySelectorAll(".notification-item");
-    if (items.length > 5) listEl.removeChild(items[items.length - 1]);
-
-    const current = parseInt(countEl.textContent || "0", 10);
-    countEl.textContent = isNaN(current) ? 1 : current + 1;
-    countEl.style.display = "inline-block";
-  }*/
 
   function handleNewUnassignedTicket(ticket) {
   const countEl = document.getElementById("notificationCount");
@@ -378,6 +330,12 @@ function renderNotifications(tickets, totalCount) {
   const menu = document.getElementById("notificationsDropdown");
   if (bell && menu) {
     bell.addEventListener("click", () => menu.classList.toggle("show"));
+
+    document.addEventListener("click", (e) => {
+      if (!bell.contains(e.target)) {
+        menu.classList.remove("show");
+      }
+    });
   }
 </script>
 <script src="{% static 'js/ticketing_dashboard.js' %}"></script>

@@ -120,7 +120,7 @@
 
   <!-- SLA & Category -->
   <div class="row mb-5">
-    <div class="col-md-6">
+    <div class="col-md-6 {% if hide_sla %}hidden{% endif %}">
       <div class="card">
         <div class="card-body">
           <h5 class="card-title text-center">SLA Escalation</h5>
@@ -141,7 +141,7 @@
 
   <!-- Users -->
   <div class="row mb-5 align-items-stretch">
-    <div class="col-md-4">
+    <div class="col-md-4 {% if hide_assignee %}hidden{% endif %}">
       <div class="card chart-card">
         <div class="card-body">
           <h5 class="card-title text-center">Tickets by Assignee</h5>
@@ -150,7 +150,7 @@
       </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-4 {% if hide_resolver %}hidden{% endif %}">
       <div class="card chart-card">
         <div class="card-body">
           <h5 class="card-title text-center">Tickets by Resolver</h5>
@@ -170,7 +170,7 @@
   </div>
 
   <!-- Categories & Terminals -->
-  <div class="row mb-5">
+  <div class="row mb-5 {% if hide_terminal %}hidden{% endif %}">
     <div class="col-md-12">
       <div class="card">
         <div class="card-body">
@@ -183,7 +183,7 @@
 
   <!-- Export -->
   <div class="text-center mt-4">
-    <button id="export-report" class="btn btn-lg btn-primary px-5 py-3 rounded-pill shadow-sm"
+    <button id="export-report" class="btn btn-lg btn-primary px-5 py-3 rounded-pill shadow-sm glow"
       onclick="window.location.href='{% url 'export_report' %}?time-period={{ time_period }}&customer={{ selected_customer }}&terminal={{ selected_terminal }}&region={{ selected_region }}'">
       <i class="fas fa-download"></i> Export Report to Excel
     </button>

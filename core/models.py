@@ -363,38 +363,6 @@ class Ticket(models.Model):
 
     def __str__(self):
         return self.title
-    
-    """def save(self, *args, **kwargs):
-        if self.terminal and not self.zone:
-            self.zone = self.terminal.zone
-
-
-        # Auto-update assigned_at if assigned_to is set and changed
-        if self.pk:  # existing ticket
-            old_ticket = Ticket.objects.filter(pk=self.pk).first()
-            if old_ticket and old_ticket.assigned_to != self.assigned_to:
-                self.assigned_at = timezone.now()
-        else:  # new ticket
-            if self.assigned_to and not self.assigned_at:
-                self.assigned_at = timezone.now()   
-
-        if self.problem_category and self.priority:
-            from core.utilss.escalation import get_escalation_guidance
-            guidance = get_escalation_guidance(self.problem_category.name, self.priority)
-            self.escalation_type = guidance['escalation_type']
-            self.escalation_action = guidance['escalation_action']
-
-            if not self.current_escalation_level:
-                self.current_escalation_level = guidance['escalation_tier']
-
-        if not self.priority:
-            self.priority = determine_priority(
-                self.problem_category.name if self.problem_category else "",
-                self.title,
-                self.description
-            )
-
-        super().save(*args, **kwargs)"""
 
     def save(self, *args, **kwargs):
         if self.terminal and not self.zone:

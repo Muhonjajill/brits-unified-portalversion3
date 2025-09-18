@@ -161,11 +161,11 @@ body {
 
 .profile-actions a.back {
   background: #e8f5e9;
-  color: #2e7d32;
+  color: #123692;
   border: 1px solid #a5d6a7;
 }
 .profile-actions a.back:hover {
-  background: #2e7d32;
+  background: #1976d2;
   color: #fff;
 }
 
