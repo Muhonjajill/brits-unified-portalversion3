@@ -85,7 +85,7 @@ html, body {
 .settings-main {
   flex: 1;
   padding: 2rem;
-  min-height: 100vh;
+  min-height: 100%;
   overflow-y: auto;
   position: relative;
   z-index: 1;
@@ -183,7 +183,7 @@ input, select, textarea {
   }
   .sidebar-header { display: none; }
   .sidebar-nav { flex-direction: row; flex-wrap: wrap; gap: 0.5rem; }
-  .settings-main { padding: 1rem; }
+  .settings-main { padding: 1rem; height: auto;}
   .settings-header h1 { font-size: 1.5rem; }
   .avatar-img { width: 120px; height: 120px; }
   .glass-card { padding: 1rem; margin: 0.5rem 0; }
@@ -222,7 +222,8 @@ input, select, textarea {
   }
 
   .settings-main { 
-    padding: 0.5rem 1rem 3.5rem 1rem; 
+    padding: 0.5rem 1rem 3.5rem 1rem;
+    height: auto; 
   }
 }
 
