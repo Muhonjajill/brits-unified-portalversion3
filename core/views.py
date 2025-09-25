@@ -54,6 +54,9 @@ from openpyxl.styles import Border, Side
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync 
 import logging
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.sites.models import Site
 
 def in_group(user, group_name):
     return user.is_authenticated and (user.is_superuser or user.groups.filter(name=group_name).exists())
@@ -111,6 +114,7 @@ def admin_dashboard(request):
                 customer.save()
                 print(f"Assigned overseer: {overseer.username}")
                 messages.success(request, f"Overseer updated for {customer.name}.")
+                send_role_assigned_email(overseer, 'Customer', request)
             else:
                 messages.warning(request, f"No overseer selected for {customer.name}.")
 
@@ -143,6 +147,7 @@ def admin_dashboard(request):
                 custodian.profile.refresh_from_db()
 
             messages.success(request, f"Custodian {custodian.username} assigned to {terminal.branch_name}.")
+            send_role_assigned_email(custodian, 'Customer', request)
 
         elif action == 'update_role':
             user_id = request.POST.get('user_id')
@@ -177,6 +182,7 @@ def admin_dashboard(request):
 
                     user.save()
                     messages.success(request, f"{user.username}'s role updated to {new_role}.")
+                    send_role_assigned_email(user, new_role, request)
             else:
                 messages.error(request, "User ID or role missing in role update.")
 
@@ -194,6 +200,8 @@ def admin_dashboard(request):
                     customer.overseer = None
                     customer.save()
                     messages.success(request, f"Overseer removed from {customer.name}.")
+                    if removed_overseer:
+                        send_role_removed_email(removed_overseer, 'Overseer', request)
 
             elif target_type == 'custodian':
                 if not terminal_id or not terminal_id.isdigit():
@@ -204,6 +212,8 @@ def admin_dashboard(request):
                     terminal.save()
                     Profile.objects.filter(terminal=terminal).update(terminal=None, customer=None)
                     messages.success(request, f"Custodian removed from terminal {terminal.branch_name}.")
+                    if removed_custodian:
+                        send_role_removed_email(removed_custodian, 'Custodian', request)
 
             elif target_type == 'role':
                 if not user_id or not user_id.isdigit():
@@ -215,6 +225,7 @@ def admin_dashboard(request):
                     user.groups.remove(*groups_to_remove)
                     user.save()
                     messages.success(request, f"Roles removed from user {user.username}.")
+                    send_role_removed_email(user, 'Role', request)
 
 
 
@@ -294,6 +305,80 @@ def admin_dashboard(request):
     }
 
     return render(request, 'accounts/admin_dashboard.html', context)
+
+def send_role_assigned_email(user, new_role, request):
+    subject = f"Your Role Has Been Updated: {new_role}"
+
+    customer_name = None
+    terminal_name = None
+
+    if new_role == 'Overseer':
+        customer = Customer.objects.filter(overseer=user).first()
+        if customer:
+            customer_name = customer.name
+
+    if new_role == 'Custodian':
+        terminal = Terminal.objects.filter(custodian=user).first()
+        if terminal:
+            terminal_name = terminal.branch_name
+
+    try:
+        current_site = Site.objects.get(id=1) 
+    except ObjectDoesNotExist:
+        current_site = None
+
+    if current_site:
+        domain = current_site.domain
+    else:
+        domain = 'localhost'  
+
+    message = render_to_string('email/role_assigned_notification.html', {
+        'user': user,
+        'new_role': new_role,
+        'customer_name': customer_name,
+        'terminal_name': terminal_name,
+        'domain': domain,
+    })
+
+    try:
+        send_mail(
+            subject,
+            message,
+            'admin@blue-river-tech.com',  
+            [user.email],  
+            html_message=message 
+        )
+    except Exception as e:
+        print(f"Error sending email: {e}")  
+        messages.error(request, "There was an error sending the email.") 
+
+def send_role_removed_email(user, role, request):
+    subject = f"Your Role Has Been Removed: {role}"
+
+    if role == 'Overseer':
+        role_message = "You have been removed as the overseer for the customer."
+    elif role == 'Custodian':
+        role_message = "You have been removed as the custodian for the terminal."
+    else:
+        role_message = f"Your role as {role} has been removed."
+
+    try:
+        message = render_to_string('email/role_removed_notification.html', {
+            'user': user,
+            'role_message': role_message,
+        })
+
+        send_mail(
+            subject,
+            message,
+            'admin@blue-river-tech.com',
+            [user.email],
+            html_message=message
+        )
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        messages.error(request, "There was an error sending the email.")
+
 
 @user_passes_test(is_director)
 def manage_file_categories(request):
@@ -431,7 +516,7 @@ class RegistrationForm(forms.ModelForm):
         model = User
         fields = ['username', 'email', 'password']
 
-
+"""
 def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -443,8 +528,36 @@ def register_view(request):
             print(f"Form errors: {form.errors}")
     else:
         form = CustomUserCreationForm()
-    return render(request, 'accounts/register.html', {'form': form})
+    return render(request, 'accounts/register.html', {'form': form})"""
 
+def register_view(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            print(f"User {user.username} created successfully.")
+
+            superuser = User.objects.filter(is_superuser=True).first()  
+            
+            if superuser:
+                subject = 'New User Registration - Assign Role'
+                message = render_to_string('email/new_user_email.html', {'user': user})
+                email = EmailMessage(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [superuser.email],
+                )
+                email.content_subtype = "html"  
+                email.send()
+
+            return redirect('login')
+        else:
+            print(f"Form errors: {form.errors}")
+    else:
+        form = CustomUserCreationForm()
+
+    return render(request, 'accounts/register.html', {'form': form})
 
 
 def login_view(request):

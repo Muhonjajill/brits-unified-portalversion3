@@ -1,0 +1,13 @@
+<!-- templates/emails/new_user_email.html -->
+<html>
+<head>
+    <title>New User Registration</title>
+</head>
+<body>
+    <h2>A new user has registered:</h2>
+    <p><strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+    <p><strong>Username:</strong> {{ user.username }}</p>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p>Please assign a role to the user so they can log in.</p>
+</body>
+</html>

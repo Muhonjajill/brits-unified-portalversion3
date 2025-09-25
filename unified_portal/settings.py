@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'django.contrib.sites',
     "crispy_forms",
     'core.apps.CoreConfig',
     'widget_tweaks',
@@ -109,8 +110,8 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'pre_dashboards'
 LOGOUT_REDIRECT_URL = 'login'
 
-#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'           
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True

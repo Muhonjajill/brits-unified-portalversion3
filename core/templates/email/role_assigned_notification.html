@@ -1,0 +1,25 @@
+<html>
+<head>
+    <title>Your Role Has Been Updated</title>
+</head>
+<body>
+    <h2>Hello {{ user.first_name }} {{ user.last_name }},</h2>
+    <p>We are pleased to inform you that your role has been updated to <strong>{{ new_role }}</strong>.</p>
+    
+    <p>Here are your updated details:</p>
+    <ul>
+        <li><strong>Username:</strong> {{ user.username }}</li>
+        <li><strong>Email:</strong> {{ user.email }}</li>
+        <li><strong>Role:</strong> {{ new_role }}</li>
+        {% if customer_name %}
+        <li><strong>Customer Assigned:</strong> {{ customer_name }}</li>
+        {% endif %}
+        {% if terminal_name %}
+        <li><strong>Terminal Assigned:</strong> {{ terminal_name }}</li>
+        {% endif %}
+    </ul>
+    
+    <p>If you have any questions or need assistance, please contact the system administrator.</p>
+    <p>Best regards,<br>The Blue River Technology Solutions Team</p>
+</body>
+</html>

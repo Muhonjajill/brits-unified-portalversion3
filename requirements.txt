@@ -8,6 +8,7 @@ billiard==4.2.1
 celery==5.5.3
 cffi==1.17.1
 channels==4.3.1
+channels_redis==4.3.0
 click==8.2.1
 click-didyoumean==0.3.1
 click-plugins==1.1.1.2
@@ -23,6 +24,7 @@ hyperlink==21.0.0
 idna==3.10
 incremental==24.7.2
 kombu==5.5.4
+msgpack==1.1.1
 numpy==2.3.2
 openpyxl==3.1.5
 packaging==25.0
