@@ -85,34 +85,28 @@ MAX_ESCALATION_LEVEL = {
 #ESCALATION TIME AS PER ZONES AND PRIORITIES
 ZONE_PRIORITY_THRESHOLDS = {
     'Zone A': {
-        'critical': timedelta(minutes=2),
-        'high': timedelta(minutes=4),
-        'medium': timedelta(minutes=6),
-        'low': timedelta(minutes=8),
+        'critical': timedelta(hours=2),
+        'high': timedelta(hours=4),
+        'medium': timedelta(hours=4),
+        'low': timedelta(hours=6),
     },
     'Zone B': {
-        'critical': timedelta(minutes=6),
-        'high': timedelta(minutes=7),
-        'medium': timedelta(minutes=9),
-        'low': timedelta(minutes=10),
+        'critical': timedelta(hours=4),
+        'high': timedelta(hours=6),
+        'medium': timedelta(hours=6),
+        'low': timedelta(hours=8),
     },
     'Zone C': {
-        'critical': timedelta(minutes=8),
-        'high': timedelta(minutes=9),
-        'medium': timedelta(minutes=11),
-        'low': timedelta(minutes=12),
+        'critical': timedelta(hours=6),
+        'high': timedelta(hours=14),
+        'medium': timedelta(hours=14),
+        'low': timedelta(hours=24),
     },
     'Zone D': {
-        'critical': timedelta(minutes=10),
-        'high': timedelta(minutes=11),
-        'medium': timedelta(minutes=13),
-        'low': timedelta(minutes=14),
-    },
-    'Zone E': {
-        'critical': timedelta(minutes=12),
-        'high': timedelta(minutes=13),
-        'medium': timedelta(minutes=15),
-        'low': timedelta(minutes=16),
+        'critical': timedelta(hours=6),
+        'high': timedelta(hours=30),
+        'medium': timedelta(hours=30),
+        'low': timedelta(hours=48),
     },
 }
 
@@ -176,10 +170,10 @@ def send_unassigned_ticket_notification(ticket):
     now = timezone.now()
 
     PRIORITY_THRESHOLDS = {
-        'low': timedelta(minutes=8),
-        'medium': timedelta(minutes=6),
-        'high': timedelta(minutes=4),
-        'critical': timedelta(minutes=2),
+        'low': timedelta(hours=2),
+        'medium': timedelta(hours=1.5),
+        'high': timedelta(hours=1),
+        'critical': timedelta(hours=0.5),
     }
 
     priority = (ticket.priority or "low").lower()
