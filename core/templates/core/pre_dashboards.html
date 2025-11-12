@@ -14,33 +14,35 @@
     <div class="blob blob1"></div>
     <div class="blob blob2"></div>
     <div class="blob blob3"></div>
-    <header class="animate__animated animate__fadeInDown">
-        <img src="{% static 'icons/logo.png' %}" width="180" height="120" class="logo-animate">
-        <h1>Welcome, <span class="highlight">{{ user.get_full_name|default:user.username }}</span></h1>
-        <div class="sub-header animate__animated animate__fadeIn animate__delay-1s">
-            <span class="badge">Secure • Transparent • Efficient</span>
-        </div>
-    </header>
-    {% if user.is_superuser %}
-        <a href="{% url 'admin_dashboard' %}" class="admin-btn animate__animated animate__zoomInDown">Go to Admin Dashboard</a>
-    {% endif %}
-    <main class="cards-container">
-        {% if not is_overseer_or_custodian %}
-        <div class="card card-effect animate__animated animate__fadeInUp" id="fileManagementCard" tabindex="0">
-            <span class="card-icon pulse"><i class="fa-solid fa-folder-open"></i></span>
-            <h2 class="card-title gradient-text">File Management System</h2>
-            <p class="card-description">Upload, access, categorize, and share files.</p>
-            <div class="card-footer">Fast and secure cloud storage</div>
-        </div>
+    <div class="center-wrapper">
+        <header class="animate__animated animate__fadeInDown">
+            <img src="{% static 'icons/logo.png' %}" width="180" height="120" class="logo-animate">
+            <h1>Welcome, <span class="highlight">{{ user.get_full_name|default:user.username }}</span></h1>
+            <div class="sub-header animate__animated animate__fadeIn animate__delay-1s">
+                <span class="badge">Secure • Transparent • Efficient</span>
+            </div>
+        </header>
+        {% if user.is_superuser %}
+            <a href="{% url 'admin_dashboard' %}" class="admin-btn animate__animated animate__zoomInDown">Go to Admin Dashboard</a>
         {% endif %}
-        
-        <div class="card card-effect animate__animated animate__fadeInUp animate__delay-1s" id="ticketingSystemCard" tabindex="0">
-            <span class="card-icon wobble"><i class="fa-solid fa-ticket"></i></span>
-            <h2 class="card-title gradient-text">Ticketing System</h2>
-            <p class="card-description">Raise issues, track support tickets, communicate with support.</p>
-            <div class="card-footer">24/7 support & real-time tracking</div>
-        </div>
-    </main>
+        <main class="cards-container">
+            {% if not is_overseer_or_custodian %}
+            <div class="card card-effect animate__animated animate__fadeInUp" id="fileManagementCard" tabindex="0">
+                <span class="card-icon pulse"><i class="fa-solid fa-folder-open"></i></span>
+                <h2 class="card-title gradient-text">File Management System</h2>
+                <p class="card-description">Upload, access, categorize, and share files.</p>
+                <div class="card-footer">Fast and secure cloud storage</div>
+            </div>
+            {% endif %}
+            
+            <div class="card card-effect animate__animated animate__fadeInUp animate__delay-1s" id="ticketingSystemCard" tabindex="0">
+                <span class="card-icon wobble"><i class="fa-solid fa-ticket"></i></span>
+                <h2 class="card-title gradient-text">Ticketing System</h2>
+                <p class="card-description">Raise issues, track support tickets, communicate with support.</p>
+                <div class="card-footer">24/7 support & real-time tracking</div>
+            </div>
+        </main>
+    <div>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const ticketingCard = document.getElementById('ticketingSystemCard');

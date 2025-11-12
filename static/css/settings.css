@@ -9,11 +9,12 @@
 
 html, body {
   width: 100%;
-  min-height: 100%;
+  height: auto;
   font-family: 'Roboto', Arial, sans-serif;
   background: linear-gradient(135deg, #eef2f7, #dbeafe);
   overflow-x: hidden;
-  position: relative;
+  margin: 0;
+  padding: 0;
 }
 
 /* ===== Background Shapes ===== */
@@ -23,9 +24,13 @@ html, body {
   filter: blur(120px);
   opacity: 0.35;
   z-index: 0;
+  pointer-events: none;
 }
-.shape1 { width: 380px; height: 380px; background: #60a5fa; top: -100px; left: -80px; }
-.shape2 { width: 420px; height: 420px; background: #a78bfa; bottom: -120px; right: -100px; }
+
+/* Prevent shapes from overflowing the body */
+.shape1 { width: 380px; height: 380px; background: #60a5fa; top: -50px; left: -50px; }
+.shape2 { width: 420px; height: 420px; background: #a78bfa; bottom: -50px; right: -50px; }
+
 
 /* ===== Settings Page ===== */
 .settings-page {
@@ -34,6 +39,8 @@ html, body {
   min-height: 100vh;
   z-index: 1;
   flex-direction: row;
+  overflow: hidden;
+  position: relative;
 }
 
 /* ===== Sidebar ===== */
@@ -222,8 +229,7 @@ input, select, textarea {
   }
 
   .settings-main { 
-    padding: 0.5rem 1rem 3.5rem 1rem;
-    height: auto; 
+      padding: 0.5rem 1rem calc(3.2rem + 0.5rem) 1rem;
   }
 }
 

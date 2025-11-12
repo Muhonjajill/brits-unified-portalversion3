@@ -7,7 +7,7 @@ from .views import SettingsView, manage_file_categories
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.conf.urls.static import static
-
+from .views import CustomPasswordResetView
 
 urlpatterns = [
     path('', views.login_view, name='login'),
@@ -15,9 +15,7 @@ urlpatterns = [
 
     path('register/', views.register_view, name='register'),
 
-        
-    path('password-reset/', auth_views.PasswordResetView.as_view(
-        template_name='accounts/password_reset_form.html'), name='password_reset'),
+    path('password-reset/', CustomPasswordResetView.as_view(), name='password_reset'),
 
     
     path('password-reset/done/', auth_views.PasswordResetDoneView.as_view(

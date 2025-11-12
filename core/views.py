@@ -57,6 +57,8 @@ import logging
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.sites.models import Site
+from django.contrib.auth.views import PasswordResetView
+from django.conf import settings
 
 def in_group(user, group_name):
     return user.is_authenticated and (user.is_superuser or user.groups.filter(name=group_name).exists())
@@ -72,6 +74,18 @@ def is_director_or_manager(user):
     
 def is_staff(user):
     return in_group(user, 'Staff')
+
+class CustomPasswordResetView(PasswordResetView):
+    email_template_name = 'accounts/password_reset_email.html'
+    subject_template_name = 'accounts/password_reset_subject.txt'
+    template_name = 'accounts/password_reset_form.html'
+
+    def get_email_context(self, **kwargs):
+        context = super().get_email_context(**kwargs)
+        context['site_name'] = getattr(settings, 'SITE_NAME', 'My Site')
+        context['domain'] = getattr(settings, 'SITE_DOMAIN', 'localhost:8000')
+        context['protocol'] = getattr(settings, 'SITE_PROTOCOL', 'http')
+        return context
 
 @login_required(login_url='login')    
 def admin_dashboard(request):
@@ -900,7 +914,7 @@ def file_management_dashboard(request):
     # Count file extensions
     ext_counter = Counter()
     for f in files:
-        ext = os.path.splitext(f.file.name)[1].lower()  # Get file extension
+        ext = os.path.splitext(f.file.name)[1].lower()  
         ext_counter[ext] += 1
 
     # File types data with counts

@@ -102,7 +102,11 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+SITE_ID = 1
 
+SITE_NAME = 'Unified Portal'
+SITE_DOMAIN = '127.0.0.1:8000'
+SITE_PROTOCOL = 'http'
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 

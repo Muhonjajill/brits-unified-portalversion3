@@ -12,7 +12,7 @@ ul, ol { list-style-type: none; }
 :root {
   --primary-color: #2a3d66;  
   --secondary-color: #6a11cb;  
-  --accent-color: #4fa3f7;  
+  --accent-color: #073692;  
   --background-color: #f8f9fa;  
   --text-color: #333333;  
   --gray-light: #e9ecef;  
@@ -81,36 +81,60 @@ body {
   flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 2rem;
+  justify-content: space-evenly;
 }
 
 .kpi-card {
-  flex: 1 1 calc(25% - 1rem);
-  min-width: 220px;
-  background: linear-gradient(135deg, var(--kpi-card-bg), color-mix(in srgb, var(--kpi-card-bg) 80%, black));
-  color: var(--kpi-card-text);
+  flex: 1 1 280px;
+  max-width: 320px;
+  background: var(--card-background);
+  color: var(--text-color);
   border-radius: var(--border-radius);
+  border: 1px solid var(--gray-light);
   display: flex;
   align-items: center;
-  padding: 1.2rem;
-  box-shadow: 0 6px 18px var(--shadow);
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
   transition: all var(--transition);
 }
 
-.kpi-card .icon { margin-right: 1rem; font-size: 1.8rem; }
-.kpi-card .details h3 { font-size: 1rem; font-weight: 600; text-transform: uppercase; }
-.kpi-card .details p { font-size: 1.6rem; font-weight: 700; }
+.kpi-card .icon {
+  margin-right: 1rem;
+  font-size: 2rem;
+  color: var(--accent-color);
+  transform: scale(1.1);
+  color: var(--accent-color);
+}
+
+.kpi-card .details h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--header-color);
+  margin-bottom: 0.3rem;
+}
+
+.kpi-card .details p {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
 
 .kpi-card:hover {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 16px 48px rgba(0,0,0,0.25);
-  border: 1px solid var(--accent-color);
+  transform: translateY(-6px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  border-color: var(--accent-color);
 }
 
 /* GRADIENT THEMES */
-.gradient-1 { background: linear-gradient(135deg, #4fa3f7, #2a3d66); }
-.gradient-2 { background: linear-gradient(135deg, #2a3d66, #6a11cb); }
-.gradient-3 { background: linear-gradient(135deg, #6a11cb, #4fa3f7); }
-.gradient-4 { background: linear-gradient(135deg, #2a3d66, #f7971e); }
+.gradient-1,
+.gradient-2,
+.gradient-3,
+.gradient-4 {
+  background: var(--card-background);
+  color: var(--header-color);
+  border: 1px solid var(--gray-light);
+}
 
 .chart-card {
   background: var(--card-background);
