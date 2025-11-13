@@ -974,6 +974,36 @@ def file_management_dashboard(request):
     })
 
 @login_required
+def file_list_by_type_view(request, ext):
+    user = request.user
+    files = File.objects.filter(is_deleted=False)
+
+    # Filter by extension
+    if ext != 'other':
+        files = [f for f in files if os.path.splitext(f.file.name)[1].lower() == ext]
+    else:
+        known_exts = ['.pdf', '.docx', '.jpg', '.jpeg', '.png', '.xlsx', '.ppt', '.pptx', '.csv', '.txt', '.xml']
+        files = [f for f in files if os.path.splitext(f.file.name)[1].lower() not in known_exts]
+
+    # Filter files by access permissions
+    visible_files = []
+    for f in files:
+        if f.access_level == 'public' or user.is_superuser:
+            visible_files.append(f)
+        elif f.access_level == 'restricted' and f.authorized_users.filter(id=user.id).exists():
+            visible_files.append(f)
+        elif f.access_level == 'confidential' and (f.uploaded_by == user or user.is_superuser):
+            visible_files.append(f)
+
+    can_view_logs = request.user.has_perm('core.view_fileaccesslog')
+
+    return render(request, 'core/file_management/file_list.html', {
+        'files': visible_files,
+        'file_type': ext,
+        'can_view_logs': can_view_logs,
+    })
+
+@login_required
 def file_list_view(request, category_name=None):
     user = request.user
     files = File.objects.filter(is_deleted=False)

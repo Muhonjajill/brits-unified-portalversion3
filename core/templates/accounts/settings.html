@@ -44,21 +44,23 @@
       <form method="POST" enctype="multipart/form-data" class="settings-form">
         {% csrf_token %}
 
-        <fieldset class="form-section glass-card">
-          <legend><i class="fas fa-user"></i> User Information</legend>
-          {{ user_form.as_p }}
-        </fieldset>
+        <div class="form-row">
+          <fieldset class="form-section glass-card">
+            <legend><i class="fas fa-user"></i> User Information</legend>
+            {{ user_form.as_p }}
+          </fieldset>
 
-        <fieldset class="form-section glass-card">
-          <legend><i class="fas fa-image"></i> Profile Picture</legend>
-          {% if user.profile.avatar %}
-            <div class="avatar-container">
-              <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="avatar-img zoom-in">
-              <p class="avatar-caption">Current Profile Photo</p>
-            </div>
-          {% endif %}
-          {{ profile_form.as_p }}
-        </fieldset>
+          <fieldset class="form-section glass-card">
+            <legend><i class="fas fa-image"></i> Profile Picture</legend>
+            {% if user.profile.avatar %}
+              <div class="avatar-container">
+                <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="avatar-img zoom-in">
+                <p class="avatar-caption">Current Profile Photo</p>
+              </div>
+            {% endif %}
+            {{ profile_form.as_p }}
+          </fieldset>
+        </div>
 
         <button type="submit" class="btn-primary">
           <i class="fas fa-save"></i> Update Settings

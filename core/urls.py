@@ -61,6 +61,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
 
     path('files/', views.file_list_view, name='file_list'),
+    path('files/type/<str:ext>/', views.file_list_by_type_view, name='file_list_by_type'),
     path('files/category/<str:category_name>/', views.file_list_view, name="file_list_by_category"),
     path('files/upload/', views.upload_file_view, name='upload_file'),
     path('files/preview/<int:file_id>/', views.preview_file, name='preview_file'),

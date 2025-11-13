@@ -35,7 +35,7 @@ body {
   align-items: center;
   gap: 2rem;
   padding: 2rem 4rem;
-  background: linear-gradient(135deg, #0d47a1, #1976d2);
+  background: linear-gradient(135deg, #0d47a1, #073692);
   color: #fff;
   flex-wrap: wrap;
 }
@@ -96,7 +96,7 @@ body {
 }
 
 .details-card h2 {
-  font-size: 1.3rem;
+  font-size: 1.45rem;
   margin-bottom: 1.2rem;
   color: #123692;
   display: flex;
@@ -106,8 +106,8 @@ body {
 
 .details-card p {
   margin-bottom: 0.8rem;
-  font-size: 0.95rem;
-  line-height: 1.4;
+  font-size: 1.05rem;
+  line-height: 1.6;
 }
 .details-card strong {
   color: #222;
@@ -167,8 +167,13 @@ body {
   border: 1px solid #a5d6a7;
 }
 .profile-actions a.back:hover {
-  background: #1976d2;
+  background: #073692;
   color: #fff;
+}
+
+.details-card h2,
+.details-card p {
+  text-align: center;
 }
 
 /* ===== Responsive ===== */
@@ -199,11 +204,11 @@ body {
   }
 
   .details-card h2 {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
   }
 
   .details-card p {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
   }
 
   .profile-actions a,
@@ -243,10 +248,10 @@ body {
   }
 
   .details-card h2 {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
 
   .details-card p {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
 }

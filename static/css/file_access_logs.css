@@ -19,7 +19,7 @@
 .logs-header h2 {
     font-size: 36px;
     font-weight: 900;
-    background: linear-gradient(90deg, #123692, #4a77ff, #00c6ff);
+    background: linear-gradient(90deg, #123692, #073692);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -55,7 +55,7 @@
 }
 
 .search-bar input[type="text"]:focus {
-    border-color: #4a77ff;
+    border-color: #073692;
     box-shadow: 0 0 10px rgba(74, 119, 255, 0.4);
     outline: none;
 }
@@ -172,7 +172,7 @@ tr:hover {
 }
 
 .pagination a {
-    background: linear-gradient(90deg, #123692, #4a77ff, #00c6ff);
+    background: linear-gradient(90deg, #123692, #073692);
     background-size: 200% auto;
     color: white;
     padding: 8px 16px;

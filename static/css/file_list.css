@@ -312,7 +312,7 @@ body {
 
 /* Animate title on hover */
 .file-row:hover .file-title {
-  color: #2563eb;
+  color: #073692;
   transition: color 0.2s;
 }
 
@@ -327,7 +327,7 @@ body {
 }
 .highlighted {
     background: rgba(74, 119, 255, 0.15);
-    border: 2px solid #4a77ff;
+    border: 2px solid #073692;
     animation: flash 1.5s ease-in-out;
 }
 
@@ -418,7 +418,7 @@ body {
 }
 
 .passcode-modal button:hover {
-  background-color: #0056b3;
+  background-color: #073692;
 }
 
 .passcode-modal .close {
@@ -496,7 +496,7 @@ body {
 }
 
 .btn-reset-passcode {
-  background-color: #007bff;
+  background-color: #073692;
   color: white;
   padding: 15px 15px;
   font-size: 1rem;
@@ -507,7 +507,7 @@ body {
 }
 
 .btn-reset-passcode:hover {
-  background-color: #0056b3;
+  background-color: #123692;
 }
 
 .btn-reset-passcode:focus {

@@ -12,14 +12,14 @@
   <h2 class="section-title">File Types</h2>
   <div class="file-types-grid">
     {% for type in file_types %}
-    <div class="file-type-card">
+      <a href="{% url 'file_list_by_type' type.ext %}" class="file-type-card">
       <div class="folder-icon-wrapper">
         <img src="{% static 'icons/folder-yellow.png' %}" alt="Folder background" class="folder-bg">
         <img src="{% static 'icons/'|add:type.icon|add:'.png' %}" alt="{{ type.type }}" class="file-icon-overlay">
       </div>
       <h3 class="file-label">{{ type.type }}</h3>
       <p class="count">{{ type.count }} file{{ type.count|pluralize }}</p>
-    </div>
+      </a>
     {% endfor %}
   </div>
 </section>
