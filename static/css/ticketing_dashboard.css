@@ -144,6 +144,7 @@ body {
   box-shadow: 0 6px 18px var(--shadow);
   transition: all var(--transition);
   flex: 1 1 320px;
+  overflow: hidden;
 }
 
 .chart-card:hover {
@@ -183,7 +184,7 @@ body {
 /* CHART CANVAS */
 canvas { width: 100% !important; height: auto !important; max-height: 350px; }
 canvas.tall-chart { max-height: 400px; }
-.chart-card.full-width canvas { margin-top: 1rem; width: 110% !important;}
+.chart-card.full-width canvas { margin-top: 1rem; width: 100% !important; max-width: 100%; display: block;}
 
 /* KPI CARDS FIX */
 .kpi-card, .kpi-card * { text-decoration: none !important; }
@@ -245,6 +246,12 @@ canvas.tall-chart { max-height: 400px; }
 /* Phones ≤576px: stack vertically */
 @media (max-width: 576px) {
   .charts-grid { grid-template-columns: 1fr; }
+  canvas {
+      height: 220px;  
+    }
+  canvas.tall-chart {
+      height: 260px;
+  }
 }
 
 /* RESPONSIVE BREAKPOINTS */

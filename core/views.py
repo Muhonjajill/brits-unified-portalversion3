@@ -530,20 +530,6 @@ class RegistrationForm(forms.ModelForm):
         model = User
         fields = ['username', 'email', 'password']
 
-"""
-def register_view(request):
-    if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            print(f"User {user.username} created successfully.")
-            return redirect('login')
-        else:
-            print(f"Form errors: {form.errors}")
-    else:
-        form = CustomUserCreationForm()
-    return render(request, 'accounts/register.html', {'form': form})"""
-
 def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -603,169 +589,189 @@ def login_view(request):
                     <html>
                     <head>
                         <style>
-                        @import url('https://fonts.googleapis.com/css?family=Rubik:400,700&display=swap');
-                        body {{
-                            font-family: 'Rubik', 'Helvetica Neue', Arial, sans-serif;
-                            margin: 0;
-                            padding: 0;
-                            background: linear-gradient(120deg, #1e3c72 0%, #2a5298 100%);
-                            min-height: 100vh;
-                        }}
-                        .email-container {{
-                            max-width: 600px;
-                            margin: 60px auto;
-                            background: #fff;
-                            border-radius: 16px;
-                            box-shadow: 0 8px 32px 0 rgba(44,62,80,0.12);
-                            overflow: hidden;
-                            padding: 0 0 40px 0;
-                            animation: fadeIn 1s;
-                        }}
-                        .header-bar {{
-                            width: 100%;
-                            height: 52px;
-                            background: linear-gradient(90deg,#3498db 30%, #e74c3c 80%);
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                        }}
-                        .logo {{
-                            height: 100%;
-                            margin: 16px auto 8px auto;
-                            display: block;
-                            filter: drop-shadow(0 2px 8px rgba(52,152,219,0.12));
-                        }}
-                        h2 {{
-                            text-align: center;
-                            color: #1e3c72;
-                            font-size: 30px;
-                            font-weight: 700;
-                            margin: 16px 0 0 0;
-                            letter-spacing: 1px;
-                        }}
-                        .accent-divider {{
-                            width: 56px;
-                            height: 4px;
-                            background: linear-gradient(90deg, #3498db, #e74c3c);
-                            border-radius: 2px;
-                            margin: 18px auto 24px auto;
-                        }}
-                        p {{
-                            color: #34495e;
-                            font-size: 17px;
-                            margin: 20px 0;
-                            text-align: center;
-                        }}
-                        .otp-container {{
-                            background: linear-gradient(96deg, #e74c3c 60%, #3498db);
-                            margin: 35px auto 25px auto;
-                            padding: 30px 20px;
-                            border-radius: 12px;
-                            max-width: 250px;
-                            box-shadow: 0 6px 16px 0 rgba(231,76,60,0.08);
-                            text-align: center;
-                            border: 0.5px solid #f2f2f2;
-                            position: relative;
-                            animation: fadeIn 2s;
-                        }}
-                        .otp-glow {{
-                            font-size: 36px;
-                            font-weight: bold;
-                            letter-spacing: 4px;
-                            padding: 14px 34px;
-                            background: #fff2f0;
-                            color: #e74c3c;
-                            border-radius: 10px;
-                            margin: 20px 0 12px 0;
-                            box-shadow: 0 0 25px 7px rgba(231,76,60,0.09);
-                            position: relative;
-                            animation: shimmer 2.5s linear infinite;
-                        }}
-                        @keyframes shimmer {{
-                            0% {{ box-shadow: 0 0 20px 4px #fffCC2; }}
-                            50% {{ box-shadow: 0 0 38px 7px #ffeabf; }}
-                            100% {{ box-shadow: 0 0 20px 4px #fffCC2; }}
-                        }}
-                        .otp-expiry {{
-                            color: #fff;
-                            font-size: 15px;
-                            margin-top: 18px;
-                            font-style: italic;
-                        }}
-                        .cta-button {{
-                            margin: 35px auto 0 auto;
-                            display: block;
-                            width: max-content;
-                            background: linear-gradient(90deg, #3498db, #9b59b6);
-                            color: #fff !important;
-                            font-size: 20px;
-                            text-decoration: none;
-                            padding: 18px 38px;
-                            border-radius: 8px;
-                            font-weight: 700;
-                            letter-spacing: 1px;
-                            box-shadow: 0 4px 12px 0 rgba(41,128,185,0.14);
-                            transition: background 0.25s, transform 0.2s;
-                        }}
-                        .cta-button:hover {{
-                            background: #2a70b8;
-                            transform: scale(1.06);
-                        }}
-                        .footer {{
-                            margin-top: 60px;
-                            font-size: 14px;
-                            color: #98a4b3;
-                            text-align: center;
-                            padding: 32px 14px 0 14px;
-                        }}
-                        .footer strong {{ color: #34495e; }}
-                        .footer a {{
-                            color: #2980b9;
-                            text-decoration: none;
-                            transition: color 0.25s;
-                        }}
-                        .footer a:hover {{ color: #e74c3c; }}
-                        @keyframes fadeIn {{
-                            from {{ opacity: 0;transform: translateY(40px); }}
-                            to {{ opacity: 1;transform: translateY(0);  }}
-                        }}
-                        @media only screen and (max-width: 600px) {{
-                            .email-container {{ padding: 0 0 20px 0; border-radius: 0; margin: 0; }}
-                            .otp-glow {{ font-size: 26px; padding: 10px 10px; }}
-                            .otp-container {{ padding: 15px 5px; }}
-                        }}
+                            /* ------------------ GLOBAL STYLES ------------------ */
+                            @import url('https://fonts.googleapis.com/css?family=Rubik:400,700&display=swap');
+
+                            body {{
+                                font-family: 'Rubik', 'Helvetica Neue', Arial, sans-serif;
+                                margin: 0;
+                                padding: 0;
+                                background: linear-gradient(120deg, #073692 0%, #e74c3c 100%);
+                                min-height: 100vh;
+                            }}
+
+                            .email-container {{
+                                max-width: 600px;
+                                margin: 60px auto;
+                                background: #ffffff;
+                                border-radius: 16px;
+                                box-shadow: 0 8px 32px rgba(44,62,80,0.12);
+                                overflow: hidden;
+                                padding-bottom: 40px;
+                                animation: fadeIn 1s ease;
+                            }}
+
+                            /* ------------------ HEADER ------------------ */
+                            .header-bar {{
+                                height: 52px;
+                                background: linear-gradient(90deg, #073692 30%, #e74c3c 80%);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                            }}
+
+                            .logo {{
+                                display: block;
+                                height: 100%;
+                                margin: 16px auto 8px;
+                                filter: drop-shadow(0 2px 8px rgba(52,152,219,0.12));
+                            }}
+
+                            /* ------------------ TYPOGRAPHY ------------------ */
+                            h2 {{
+                                text-align: center;
+                                color: #073692;
+                                font-size: 30px;
+                                font-weight: 700;
+                                margin-top: 16px;
+                                letter-spacing: 1px;
+                            }}
+
+                            p {{
+                                color: #34495e;
+                                font-size: 17px;
+                                text-align: center;
+                                margin: 20px 0;
+                            }}
+
+                            .accent-divider {{
+                                width: 56px;
+                                height: 4px;
+                                background: linear-gradient(90deg, #073692, #e74c3c);
+                                border-radius: 2px;
+                                margin: 18px auto 24px;
+                            }}
+
+                            /* ------------------ OTP BOX ------------------ */
+                            .otp-container {{
+                                background: linear-gradient(96deg, #073692 60%, #e74c3c);
+                                max-width: 250px;
+                                margin: 35px auto 25px;
+                                padding: 30px 20px;
+                                border-radius: 12px;
+                                border: 1px solid #f2f2f2;
+                                box-shadow: 0 6px 16px rgba(231,76,60,0.08);
+                                animation: fadeIn 2s ease;
+                                text-align: center;
+                            }}
+
+                            .otp-glow {{
+                                background: #f4f6f9;
+                                color: #e74c3c;
+                                font-size: 36px;
+                                font-weight: bold;
+                                letter-spacing: 4px;
+                                padding: 14px 34px;
+                                margin: 20px 0 12px;
+                                border-radius: 10px;
+                                box-shadow: 0 0 25px 7px rgba(231,76,60,0.09);
+                                animation: shimmer 2.5s linear infinite;
+                            }}
+
+                            .otp-expiry {{
+                                color: #ffffff;
+                                font-size: 15px;
+                                margin-top: 18px;
+                                font-style: italic;
+                            }}
+
+                            /* ------------------ FOOTER ------------------ */
+                            .footer {{
+                                margin-top: 60px;
+                                font-size: 14px;
+                                color: #98a4b3;
+                                text-align: center;
+                                padding: 32px 14px 0;
+                            }}
+
+                            .footer strong {{
+                                color: #34495e;
+                            }}
+
+                            .footer a {{
+                                color: #073692;
+                                text-decoration: none;
+                            }}
+
+                            .footer a:hover {{
+                                color: #e74c3c;
+                            }}
+
+                            /* ------------------ ANIMATIONS ------------------ */
+                            @keyframes shimmer {{
+                                0%   {{ box-shadow: 0 0 20px 4px #fffCC2; }}
+                                50%  {{ box-shadow: 0 0 38px 7px #ffeabf; }}
+                                100% {{ box-shadow: 0 0 20px 4px #fffCC2; }}
+                            }}
+
+                            @keyframes fadeIn {{
+                                from {{ opacity: 0; transform: translateY(40px); }}
+                                to   {{ opacity: 1; transform: translateY(0); }}
+                            }}
+
+                            /* ------------------ RESPONSIVENESS ------------------ */
+                            @media (max-width: 600px) {{
+                                .email-container {{
+                                    margin: 0;
+                                    border-radius: 0;
+                                    padding-bottom: 20px;
+                                }}
+
+                                .otp-glow {{
+                                    font-size: 26px;
+                                    padding: 10px;
+                                }}
+
+                                .otp-container {{
+                                    padding: 15px 5px;
+                                }}
+                            }}
                         </style>
                     </head>
+
                     <body>
                         <div class="email-container">
-                        <div class="header-bar"></div>
-                        <img src="cid:logo" alt="BRITS Logo" class="logo" />
-                        <h2>Hi {user.username},</h2>
-                        <div class="accent-divider"></div>
-                        <p>
-                            We received a login request for your account.<br>
-                            Please use the One-Time Password (OTP) below to complete your login.
-                        </p>
-                        <div class="otp-container">
-                            <div class="otp-glow">{otp}</div>
-                            <div class="otp-expiry">Your code expires in <strong>5 minutes</strong>.</div>
-                        </div>
-                        <p>
-                            For your security, do not share this OTP code with anyone.<br>
-                            If you did not make this request, please <a href="https://yourapp.com/security">secure your account</a>.
-                        </p>
-                        <a href="https://yourapp.com/security" class="cta-button">
-                            Review Account Activity
-                        </a>
-                        <div class="footer">
-                            Best regards,<br>
-                            <strong>Blue River Technology Solutions</strong><br>
-                            <span style="font-size:12px;">✉️ This inbox is not monitored for replies</span>
-                        </div>
+                            <div class="header-bar"></div>
+
+                            <img src="cid:logo" alt="BRITS Logo" class="logo" />
+
+                            <h2>Hi {user.username},</h2>
+                            <div class="accent-divider"></div>
+
+                            <p>
+                                We received a login request for your account.<br>
+                                Please use the One-Time Password (OTP) below to complete your login.
+                            </p>
+
+                            <div class="otp-container">
+                                <div class="otp-glow">{otp}</div>
+                                <div class="otp-expiry">Your code expires in <strong>5 minutes</strong>.</div>
+                            </div>
+
+                            <p>
+                                For your security, do not share this OTP with anyone.<br>
+                                If you did not make this request, you can safely ignore this email.
+                            </p>
+
+                            <div class="footer">
+                                Best regards,<br>
+                                <strong>Blue River Technology Solutions</strong><br>
+                                <span style="font-size:12px;">✉️ This inbox is not monitored for replies.</span>
+                            </div>
                         </div>
                     </body>
                     </html>
-                """
+                    """
                 text_content = strip_tags(html_content)
 
                 # Create the email object
@@ -778,13 +784,13 @@ def login_view(request):
                 email.attach_alternative(html_content, "text/html")
 
                 # Attach the logo as an inline image using MIMEImage
-                """
+                
                 with open('static/icons/logo.png', 'rb') as logo_file:
                     logo_data = logo_file.read()
                     logo = MIMEImage(logo_data, name='logo.png')
                     logo.add_header('Content-ID', '<logo>')  
 
-                    email.attach(logo) """
+                    email.attach(logo) 
                 
                 print("Generated otp:", otp)
 

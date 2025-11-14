@@ -8,10 +8,12 @@
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   height: 100vh;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   background: #f4f6f9;
+  overflow-y: auto;
 }
 
 /* Layout wrapper */
@@ -19,7 +21,8 @@ body {
   display: flex;
   width: 90%;
   max-width: 950px;
-  height: 600px;
+  min-height: 600px;
+  height: auto;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
   overflow: hidden;
@@ -226,10 +229,15 @@ body {
 
 /* Mobile Responsiveness */
 @media screen and (max-width: 768px) {
+  body {
+    padding: 10px 0;
+    align-items: flex-start;
+  }
   /* Adjust the layout of the login form */
   .login-wrapper {
     flex-direction: column;
     height: auto;
+    min-height: auto;
   }
 
   .login-wrapper .left-panel,
