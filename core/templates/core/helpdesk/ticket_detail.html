@@ -13,7 +13,7 @@
 
     <div class="ticket-header d-flex justify-content-between align-items-center flex-wrap">
         <h2><i class="fas fa-info-circle"></i> Ticket 0{{ ticket.id }} - {{ ticket.title }}</h2>
-        {% if user_group in allowed_roles %}
+        {% if user_group in allowed_roles or request.user.is_superuser %}
         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editTicketModal">✏️ Edit Ticket</button>
         <a href="{% url 'ticket_activity_log' ticket.id %}" class="btn view-log-btn">View Activity Log</a>
         {% endif %}
@@ -74,7 +74,7 @@
 
     <div class="mt-4">
 
-          {% if user_group in allowed_roles %}
+          {% if user_group in allowed_roles or request.user.is_superuser %}
           <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#resolveTicketModal">
             ✅ Resolve Ticket
           </button>
