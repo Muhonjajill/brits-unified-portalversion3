@@ -161,6 +161,7 @@ ISSUE_MAPPING = {
         "Broken part",
         "Note jams pathway",
         "Note jams Escrow",
+        "Other",
     ],
     "Software Related": [
         "Out of Service",
@@ -174,28 +175,34 @@ ISSUE_MAPPING = {
         "E journal not uploading",
         "Template Update",
         "Firmware update",
+        "Other",
     ],
     "Cash Reconciliation": [
         "Excess cash",
         "Cash shortage",
+        "Other",
     ],
     "Power and Network": [
         "System off",
         "System Offline",
         "Faulty UPS/No clean Power",
+        "Other",
     ],
     "De-/Installation /Maintenance": [
         "Relocation",
         "Configuration",
         "Quarterly PM",
         "Re-imaging of the terminal",
+        "Other",
     ],
     "Safe": [
         "Lock/Key jam",
         "Door jam",
+        "Other",
     ],
     "SLA Related": [
         "General Complaint",
+        "Other",
     ],
 }
 

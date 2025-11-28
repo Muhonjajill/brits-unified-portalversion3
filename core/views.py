@@ -3379,11 +3379,13 @@ def terminals(request):
                 print("Form is not valid")
                 print("Form errors:", form.errors) 
         # Handle CSV upload for terminals
-        elif 'upload_file' in request.POST:
+        elif request.FILES.get('file'):
             upload_form = TerminalUploadForm(request.POST, request.FILES)
             if upload_form.is_valid():
                 file = upload_form.cleaned_data['file']
                 try:
+                    ext = file.name.split('.')[-1].lower()
+                    
                     if file.name.endswith('.csv'):
                         df = pd.read_csv(file)
                     else:
@@ -3391,15 +3393,34 @@ def terminals(request):
 
                     # Process each row and create terminal objects
                     for _, row in df.iterrows():
-                        Terminal.objects.create(
-                            customer=Customer.objects.get(name=row['customer']),
-                            branch_name=row['branch_name'],
-                            cdm_name=row['cdm_name'],
-                            serial_number=row['serial_number'],
-                            region=Region.objects.get(name=row['region']),
-                            model=row['model'],
-                            zone=Zone.objects.get(name=row['zone']),
-                        )
+                        try:
+                            
+                            customer_name = str(row["customer"]).strip()
+                            branch_name = str(row["branch_name"]).strip()
+                            cdm_name = str(row["cdm_name"]).strip()
+                            serial_number = str(row["serial_number"]).strip()
+                            region_name = str(row["region"]).strip()
+                            model = str(row["model"]).strip()
+                            zone_name = str(row["zone"]).strip()
+
+                            customer = Customer.objects.get(name__iexact=customer_name)
+                            region = Region.objects.get(name__iexact=region_name)
+                            zone = Zone.objects.get(name__iexact=zone_name)
+
+                            Terminal.objects.create(
+                                customer=customer,
+                                branch_name=branch_name,
+                                cdm_name=cdm_name,
+                                serial_number=serial_number,
+                                region=region,
+                                model=model,
+                                zone=zone,
+                            )
+
+                        except Exception as e:
+                            print(f"❌ Error on row: {row}")
+                            print(f"Reason: {e}")
+                            continue
                     messages.success(request, "Terminals imported successfully.")
                 except Exception as e:
                     messages.error(request, f"Error importing file: {e}")
