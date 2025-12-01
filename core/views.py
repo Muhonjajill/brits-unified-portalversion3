@@ -59,6 +59,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.sites.models import Site
 from django.contrib.auth.views import PasswordResetView
 from django.conf import settings
+from django.urls import reverse
 
 def in_group(user, group_name):
     return user.is_authenticated and (user.is_superuser or user.groups.filter(name=group_name).exists())
@@ -778,14 +779,14 @@ def login_view(request):
                 email = EmailMultiAlternatives(
                     subject,
                     text_content,
-                    'no-reply@yourapp.com',
+                    settings.DEFAULT_FROM_EMAIL,
                     [user.email],
                 )
                 email.attach_alternative(html_content, "text/html")
 
                 # Attach the logo as an inline image using MIMEImage
                 
-                with open('static/icons/logo.png', 'rb') as logo_file:
+                with open(str(settings.BASE_DIR / "static/icons/logo.png"), "rb") as logo_file:
                     logo_data = logo_file.read()
                     logo = MIMEImage(logo_data, name='logo.png')
                     logo.add_header('Content-ID', '<logo>')  
@@ -2362,6 +2363,11 @@ def escalate_ticket(request, ticket_id):
                 {"type": "escalation.update"}  
             )
             
+            ticket_url = (
+                f"{settings.SITE_PROTOCOL}://{settings.SITE_DOMAIN}"
+                f"{reverse('ticket_detail', args=[ticket.id])}"
+            )
+
             send_mail(
                 subject=f"Ticket #{ticket.id} Escalated to {ticket.current_escalation_level}",
                 message=f"""
@@ -2372,10 +2378,10 @@ def escalate_ticket(request, ticket_id):
                 Reason: {ticket.escalation_reason}
                 
 
-                View Ticket: http://127.0.0.1:8000/tickets/{ticket.id}
+                View Ticket: {ticket_url}
 
                 """,
-                from_email="godblessodhiambo@gmail.com",
+                from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=get_email_for_level(next_level),  
                 fail_silently=False,
             )

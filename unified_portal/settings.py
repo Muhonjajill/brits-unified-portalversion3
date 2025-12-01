@@ -114,13 +114,21 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'pre_dashboards'
 LOGOUT_REDIRECT_URL = 'login'
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'           
+#EMAIL_HOST = 'smtp.gmail.com'           
+#EMAIL_PORT = 587
+#EMAIL_USE_TLS = True
+#EMAIL_HOST_USER = 'godblessodhiambo@gmail.com'
+#EMAIL_HOST_PASSWORD = 'vikt ydrj drzv gemz' 
+#DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.zoho.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'godblessodhiambo@gmail.com'
-EMAIL_HOST_PASSWORD = 'vikt ydrj drzv gemz' 
+EMAIL_HOST_USER = 'brts.support@blueriverafrica.net'
+EMAIL_HOST_PASSWORD = '8E@77fHhG6729tPFVzaS'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 ESCALATION_LEVEL_EMAILS = {
