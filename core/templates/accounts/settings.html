@@ -16,11 +16,11 @@
   />
 </head>
 <body>
+  <div class="settings-page">
   <!-- Decorative Background Shapes -->
   <div class="bg-shape shape1"></div>
   <div class="bg-shape shape2"></div>
 
-  <div class="settings-page">
     <!-- Sidebar -->
     <aside class="settings-sidebar">
       <div class="sidebar-header">
@@ -29,7 +29,7 @@
       </div>
       <nav class="sidebar-nav">
             <a href="#" {% if request.path == '/settings/' %}class="active"{% endif %}><i class="fas fa-cog"></i> Settings</a>
-            <a href="{% url 'profile_view' %}" {% if request.path == '/profile/' %}class="active"{% endif %}><i class="fas fa-user"></i> Profile Overview</a>
+            <a href="{% url 'profile_view' %}" {% if request.path == '/profile/' %}class="active"{% endif %}><i class="fas fa-user"></i> Profile</a>
             <a href="{% url 'password_reset' %}" {% if request.path == '/password_reset/' %}class="active"{% endif %}><i class="fas fa-lock"></i> Change Password</a>
         </nav>
     </aside>

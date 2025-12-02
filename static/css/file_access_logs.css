@@ -236,4 +236,48 @@ tr:hover {
         width: 100%;
         text-align: center;
     }
+    table thead {
+        display: none;
+    }
+
+    table, tbody, tr {
+        display: block;
+        width: 100%;
+    }
+
+    tr {
+        background: #fff;
+        margin-bottom: 12px;
+        border-radius: 12px;
+        padding: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
+        padding: 10px 5px;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+    }
+
+    td:last-child {
+        border-bottom: none;
+    }
+
+    /* Add the labels from data-label */
+    td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #123692;
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+
+    /* Fix delete button alignment */
+    .delete-btn {
+        margin-left: 10px;
+    }
 }
