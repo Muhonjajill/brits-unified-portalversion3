@@ -8,12 +8,13 @@ body {
 
 /* Tickets Container */
 .tickets-container {
+    width: 100%;
+    max-width: 100%;
     background-color: #ffffff;
     padding: 2.5rem; /* Increased padding */
     border-radius: 12px; /* Softer corners */
     box-shadow: 0 4px 20px rgba(0,0,0,0.08); /* More pronounced, softer shadow */
     margin: 3rem auto; /* More vertical margin */
-    max-width: 900px; /* Slightly narrower for focus */
     border: 1px solid #e0e6ed; /* Subtle border */
 }
 

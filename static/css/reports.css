@@ -5,8 +5,9 @@ body {
 }
 
 .page-container {
-  max-width: 1200px; /* Increased max-width for better use of space */
-  margin: 50px auto; /* Centered with auto margins */
+  max-width: 100%; 
+  width: 100%;
+  margin: 50px auto; 
   padding: 30px;
   background-color: #ffffff;
   border-radius: 12px;

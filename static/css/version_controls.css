@@ -1,15 +1,14 @@
 /* General Container Styles */
-#body{
-   margin-top: 100px;
-}
 .page-container {
   background: #ffffff;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  margin-top: 2rem;
+  margin-top: 4rem;
   color: #212529;
   animation: fadeIn 0.5s ease-in-out;
+  max-width: 100%;
+  width: 100%;
 }
 
 .page-container h2 {
@@ -229,56 +228,6 @@
   border-color: #172d69;
 }
 
-/* Mobile Responsiveness */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 1rem; /* Reduce padding for smaller screens */
-  }
-
-  .version-form {
-    flex-direction: column; /* Stack form fields vertically */
-    gap: 1rem;
-  }
-
-  .version-form .form-group {
-    flex: 1 1 100%; /* Allow form fields to use full width */
-  }
-
-  .form-buttons .btn {
-    width: 100%; /* Make buttons full-width */
-    padding: 12px; /* Increase padding for buttons on small screens */
-  }
-
-  .version-table th,
-  .version-table td {
-    font-size: 0.85rem; /* Smaller font size for table cells */
-    padding: 10px 12px; /* Adjust table padding */
-  }
-
-  .filters-row {
-    flex-direction: column; /* Stack filter fields vertically */
-    gap: 1rem; /* Add space between filters */
-  }
-
-  .modal-content {
-    padding: 1rem; /* Reduce padding in modals */
-  }
-
-  .modal-footer .btn {
-    width: 100%; /* Make footer buttons full-width */
-  }
-
-  /* Additional Mobile Adjustments */
-  .modal-header {
-    justify-content: space-between; /* Make modal header more responsive */
-  }
-
-  .version-table {
-    font-size: 0.85rem; /* Smaller font for mobile */
-    overflow-x: auto; /* Allow horizontal scrolling on small screens */
-  }
-}
-
 /* Animations */
 @keyframes fadeIn {
   from {
@@ -308,5 +257,107 @@
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+/* --- EXTRA MOBILE RESPONSIVENESS FIXES --- */
+
+@media (max-width: 768px) {
+  
+  /* Reduce page container padding */
+  .page-container {
+    padding: 0.75rem !important;
+    margin-top: 4rem;
+  }
+
+  /* Make header text smaller */
+  .page-container h2 {
+    font-size: 1.35rem !important;
+    flex-wrap: wrap;
+  }
+
+  /* Filters row — full width */
+  .filters-row {
+    flex-direction: column !important;
+    width: 100%;
+    gap: 0.75rem !important;
+  }
+
+  .filters-row div {
+    width: 100% !important;
+  }
+
+  .filter-select {
+    width: 100% !important;
+  }
+
+  /* Form layout inside modal */
+  .modal-body .form-group {
+    width: 100% !important;
+  }
+
+  .modal-dialog {
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .modal-content {
+    border-radius: 8px !important;
+  }
+
+  /* Bootstrap modal-lg override for mobile */
+  .modal-lg {
+    max-width: 100% !important;
+  }
+
+  /* Buttons become full width */
+  .modal-footer .btn,
+  .form-buttons .btn,
+  .btn {
+    width: 100% !important;
+    margin: 0.25rem 0;
+  }
+
+  /* Table wrapper scroll */
+  #versionTableContainer {
+    overflow-x: auto !important;
+  }
+
+  .version-table {
+    min-width: 700px; /* prevent cell squashing */
+  }
+
+  /* Resize table text */
+  .version-table th,
+  .version-table td {
+    font-size: 0.8rem !important;
+    padding: 8px 10px !important;
+  }
+
+  /* Reduce animation for performance */
+  * {
+    animation-duration: 0.4s !important;
+  }
+}
+
+/* Ultra-small screens (below 480px) */
+@media (max-width: 480px) {
+  .page-container {
+    padding: 0.5rem !important;
+  }
+
+  .page-container h2 {
+    font-size: 1.1rem !important;
+  }
+
+  .filter-select {
+    font-size: 0.9rem !important;
+    padding: 10px !important;
+  }
+
+  .version-table th,
+  .version-table td {
+    font-size: 0.75rem !important;
   }
 }

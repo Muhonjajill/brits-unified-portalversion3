@@ -52,7 +52,7 @@
                     <li><a href="{% url 'regions' %}" class="{% if '/master-data/regions/' in request.path %}active{% endif %}"><i class="fas fa-globe-americas icon"></i> Regions</a></li>
                     <li><a href="{% url 'terminals' %}" class="{% if '/master-data/terminals/' in request.path %}active{% endif %}"><i class="fas fa-building icon"></i> Terminals</a></li>
                     <li><a href="{% url 'units' %}" class="{% if '/master-data/units/' in request.path %}active{% endif %}"><i class="fas fa-cube icon"></i> Units</a></li>
-                    <!--<li><a href="{% url 'system_users' %}" class="{% if '/master-data/system_users/' in request.path %}active{% endif %}"><i class="fas fa-user-friends icon"></i> Users</a></li>-->
+                    <li><a href="{% url 'system_users' %}" class="{% if '/master-data/system_users/' in request.path %}active{% endif %}"><i class="fas fa-user-friends icon"></i> Users</a></li>
                     <li><a href="{% url 'zones' %}" class="{% if '/master-data/zones/' in request.path %}active{% endif %}"><i class="fas fa-map-marker-alt icon"></i> Zones</a></li>
                 </ul>
             </li>

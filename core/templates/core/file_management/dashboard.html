@@ -79,7 +79,7 @@
           <img src="{% static 'icons/csv.png' %}" alt="CSV File Icon" class="file-icon-img">
         {% elif file.extension == '.xml' %}
           <img src="{% static 'icons/xml.png' %}" alt="XML File Icon" class="file-icon-img">
-        {% elif file.extension == '.ppt' %}
+        {% elif file.extension in '.ppt,.pptx' %}
           <img src="{% static 'icons/ppt.png' %}" alt="PPT File Icon" class="file-icon-img">
         {% else %}
           <img src="{% static 'icons/file.png' %}" alt="Default File Icon" class="file-icon-img">

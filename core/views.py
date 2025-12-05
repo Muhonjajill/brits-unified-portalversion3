@@ -1073,6 +1073,7 @@ def file_list_view(request, category_name=None):
         'validated_files': validated_files,
         'can_view_logs': can_view_logs,
         'highlight_file_id': highlight_file_id,
+        'recent': sort_option == 'recent',
     })
 
 @login_required
