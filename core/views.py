@@ -2400,8 +2400,8 @@ def escalate_ticket(request, ticket_id):
     })
 
 def get_email_for_level(level):
-    # This function fetches emails based on escalation level from settings.
-    return settings.ESCALATION_LEVEL_EMAILS.get(level, [])
+    config = settings.ESCALATION_LEVEL_EMAILS.get(level, {})
+    return config.get("recipients", [])
 
 def notify_group(level, ticket):
     email_recipient = get_email_for_level(level)  
@@ -3534,6 +3534,7 @@ def delete_terminal(request, terminal_id):
     messages.success(request, "Terminal removed successfully.")
     return redirect('terminals')
 
+@login_required(login_url='login')
 def units(request):
     if request.method == 'POST':
         name = request.POST.get('name')
