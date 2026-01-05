@@ -231,6 +231,6 @@ from celery.schedules import crontab
 CELERY_BEAT_SCHEDULE = {
     "auto_escalation_every_minute": {
         "task": "core.tasks.run_auto_escalation",
-        "schedule": 60.0,  
+        "schedule": 1200.0,  
     },
 }
