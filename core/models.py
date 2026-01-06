@@ -5,6 +5,7 @@ from datetime import timedelta
 
 from core.priority_rules import determine_priority
 from core.utilss.escalation_rules import ZONE_PRIORITY_THRESHOLDS
+from encrypted_model_fields.fields import EncryptedCharField
 
 
 class EmailOTP(models.Model):
@@ -78,8 +79,8 @@ def user_directory_path(instance, filename):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     avatar = models.ImageField(upload_to=user_directory_path, blank=True, null=True)
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
-    id_number = models.CharField(max_length=20, blank=True, null=True)
+    phone_number = EncryptedCharField(max_length=15, blank=True, null=True)  
+    id_number = EncryptedCharField(max_length=20, blank=True, null=True) 
     customer = models.ForeignKey('Customer', on_delete=models.CASCADE, null=True, blank=True)
     terminal = models.ForeignKey('Terminal', on_delete=models.SET_NULL, null=True, blank=True)
 
@@ -126,7 +127,7 @@ class Terminal(models.Model):
 
 class SystemUser(models.Model):
     username = models.CharField(max_length=100, unique=True)
-    email = models.EmailField()
+    email = models.EmailField(max_length=50, unique=True)
     role = models.CharField(max_length=50)
     phone_number = models.CharField(max_length=15, blank=True, null=True) 
 

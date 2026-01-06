@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+from decouple import config
+
 from pathlib import Path
 import os
 
@@ -22,6 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-@efxx!0)&^7n-8d=j0rfy_+u3d&u8xr_r+41=1xa&32ej$z%js"
+FIELD_ENCRYPTION_KEY = config('FIELD_ENCRYPTION_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -95,7 +98,7 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'unified_portal_db',
+        'NAME': 'auth_db',
         'USER': 'postgres',
         'PASSWORD': 'goddie',
         'HOST': 'localhost',
@@ -107,6 +110,12 @@ SITE_ID = 1
 SITE_NAME = 'Unified Portal'
 SITE_DOMAIN = 'files.blueriverafrica.net/'
 SITE_PROTOCOL = 'https'
+
+#if DEBUG:
+#    SITE_URL = 'http://127.0.0.1:8000'  
+#else:
+SITE_URL = f'{SITE_PROTOCOL}://{SITE_DOMAIN.rstrip("/")}'  
+
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 
@@ -115,12 +124,16 @@ LOGIN_REDIRECT_URL = 'pre_dashboards'
 LOGOUT_REDIRECT_URL = 'login'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.zoho.com'
+#EMAIL_HOST = 'smtp.zoho.com'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'brts.support@blueriverafrica.net'
-EMAIL_HOST_PASSWORD = '8E@77fHhG6729tPFVzaS'
+#EMAIL_HOST_USER = 'brts.support@blueriverafrica.net'
+#EMAIL_HOST_PASSWORD = '8E@77fHhG6729tPFVzaS'
+EMAIL_HOST_USER = 'godblessodhiambo@gmail.com'
+EMAIL_HOST_PASSWORD = 'vikt ydrj drzv gemz'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 
 ESCALATION_LEVEL_EMAILS = {
     'Tier 1': {
@@ -213,8 +226,6 @@ MEDIA_URL = '/media/'
 #MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -231,6 +242,7 @@ from celery.schedules import crontab
 CELERY_BEAT_SCHEDULE = {
     "auto_escalation_every_minute": {
         "task": "core.tasks.run_auto_escalation",
-        "schedule": 1200.0,  
+        #"schedule": 1200.0,  
+        "schedule": 60.0,  
     },
 }

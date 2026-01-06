@@ -359,7 +359,7 @@ def send_role_assigned_email(user, new_role, request):
         send_mail(
             subject,
             message,
-            'admin@blue-river-tech.com',  
+            settings.DEFAULT_FROM_EMAIL,  
             [user.email],  
             html_message=message 
         )
@@ -386,7 +386,7 @@ def send_role_removed_email(user, role, request):
         send_mail(
             subject,
             message,
-            'admin@blue-river-tech.com',
+            settings.DEFAULT_FROM_EMAIL,
             [user.email],
             html_message=message
         )
@@ -3829,7 +3829,7 @@ def export_tickets_to_excel(tickets, customer_name=None, terminal_name=None, pro
 
     # Define headers
     headers = [
-        'Customer', 'Terminal', 'Problem Category', 'title', 'Description', 'Status',
+        'Customer', 'Terminal', 'Problem Category', 'Issue Type', 'Description', 'Status',
         'Assigned To', 'Resolved By', 'Resolution', 'Created At', 'Updated At',
         'Resolved At', 'Comments'
     ]
@@ -3854,8 +3854,8 @@ def export_tickets_to_excel(tickets, customer_name=None, terminal_name=None, pro
             ticket.customer.name if ticket.customer else "",
             ticket.terminal.branch_name if ticket.terminal else "",
             str(ticket.problem_category) if ticket.problem_category else "",
-            ticket.description or "",
             ticket.title or "",
+            ticket.description or "",
             ticket.status or "",
             str(ticket.assigned_to) if ticket.assigned_to else "",
             str(ticket.resolved_by) if hasattr(ticket, 'resolved_by') and ticket.resolved_by else "",

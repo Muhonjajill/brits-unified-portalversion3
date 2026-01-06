@@ -1,0 +1,272 @@
+# Django .gitignore
+
+# ===========================
+# Environment & Secrets
+# ===========================
+.env
+.env.local
+.env.*.local
+*.env
+env/
+venv/
+ENV/
+myenv/
+.venv/
+
+# ===========================
+# Django
+# ===========================
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Django media files (uploaded user content)
+media/
+# Uncomment below if you want to ignore all media files
+# media/*
+
+# Django static files (after collectstatic)
+staticfiles/
+static_root/
+static/
+
+# ===========================
+# Python
+# ===========================
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ===========================
+# Testing
+# ===========================
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+htmlcov/
+
+# ===========================
+# IDE & Editors
+# ===========================
+# PyCharm
+.idea/
+*.iml
+*.iws
+.idea_modules/
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# ===========================
+# OS Files
+# ===========================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ===========================
+# Database
+# ===========================
+*.sqlite3
+*.db
+*.sql
+*.dump
+
+# PostgreSQL
+*.pgsql
+
+# MySQL
+*.mysql
+
+# ===========================
+# Backup Files
+# ===========================
+*.bak
+*.backup
+*.orig
+*.save
+*~
+*.swp
+*.tmp
+
+# ===========================
+# Logs & Debug
+# ===========================
+*.log
+logs/
+debug.log
+error.log
+
+# ===========================
+# Security & Keys
+# ===========================
+# Encryption keys
+*.key
+*.pem
+*.cert
+*.crt
+*.p12
+
+# SSH keys
+id_rsa
+id_rsa.pub
+*.ppk
+
+# ===========================
+# Sensitive Data
+# ===========================
+# User uploads (if they contain sensitive data)
+# uploads/
+
+# Reports with sensitive info
+# reports/
+
+# Backups
+backups/
+*.backup
+backup_*/
+
+# ===========================
+# Migrations (optional)
+# ===========================
+# Uncomment if you want to ignore migrations
+# But usually you should commit them
+# **/migrations/*.py
+# !**/migrations/__init__.py
+
+# ===========================
+# Node modules (if using frontend tools)
+# ===========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# ===========================
+# Compiled files
+# ===========================
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# ===========================
+# Celery
+# ===========================
+celerybeat-schedule
+celerybeat.pid
+
+# ===========================
+# Documentation
+# ===========================
+docs/_build/
+site/
+
+# ===========================
+# Jupyter Notebook
+# ===========================
+.ipynb_checkpoints
+
+# ===========================
+# pyenv
+# ===========================
+.python-version
+
+# ===========================
+# Spyder
+# ===========================
+.spyderproject
+.spyproject
+
+# ===========================
+# Rope
+# ===========================
+.ropeproject
+
+# ===========================
+# mypy
+# ===========================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ===========================
+# Pyre type checker
+# ===========================
+.pyre/
+
+# ===========================
+# pytype static type analyzer
+# ===========================
+.pytype/
+
+# ===========================
+# Cython debug symbols
+# ===========================
+cython_debug/
+

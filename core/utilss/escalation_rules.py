@@ -111,8 +111,7 @@ ZONE_PRIORITY_THRESHOLDS = {
 }
 
 
-def send_new_ticket_notification(ticket):
-    """Notify admins/staff when a new ticket is created."""
+"""def send_new_ticket_notification(ticket):
 
     # 🔹 Push WebSocket event
     channel_layer = get_channel_layer()
@@ -161,9 +160,89 @@ def send_new_ticket_notification(ticket):
         logger.info(f"   From: {sender}")
         logger.info(f"   To: {recipients}")
         send_mail(subject, message, sender, recipients)
-        logger.info(f"✅ New ticket email sent for Ticket #{ticket.id} to {recipients}")
+        logger.info(f"New ticket email sent for Ticket #{ticket.id} to {recipients}")
     except Exception as e:
-        logger.error(f"❌ Failed to send new ticket email for Ticket #{ticket.id}: {str(e)}")
+        logger.error(f"Failed to send new ticket email for Ticket #{ticket.id}: {str(e)}")"""
+
+def send_new_ticket_notification(ticket):
+    """Notify admins/staff when a new ticket is created."""
+    from django.urls import reverse
+    from django.core.mail import EmailMultiAlternatives
+    
+    # WebSocket notification
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        "escalations",
+        {
+            "type": "new_ticket_notification",
+            "ticket": serialize_ticket(ticket),
+        }
+    )
+
+    ticket_url = f"{settings.SITE_URL}{reverse('ticket_detail', kwargs={'ticket_id': ticket.id})}"
+    
+    subject = f"[New Ticket] Ticket #{ticket.id} Created"
+    
+    text_message = (
+        f"A new ticket has been created.\n\n"
+        f"- Ticket ID: {ticket.id}\n"
+        f"- Title: {ticket.title}\n"
+        f"- Priority: {ticket.priority}\n"
+        f"- Category: {ticket.problem_category}\n"
+        f"- Status: {ticket.status}\n"
+        f"- Created At: {ticket.created_at}\n\n"
+        f"Please review and assign it.\n\n"
+        f"View ticket: {ticket_url}"
+    )
+    
+    html_message = f"""
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 20px; margin-bottom: 20px;">
+            <h2 style="color: #155724; margin-top: 0;">✨ New Ticket Created</h2>
+        </div>
+        
+        <div style="background-color: #ffffff; padding: 20px; border: 1px solid #dee2e6; border-radius: 5px;">
+            <table style="width: 100%;">
+                <tr><td style="padding: 8px 0; font-weight: bold;">Ticket ID:</td><td>#{ticket.id}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Title:</td><td>{ticket.title}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Priority:</td><td>{ticket.priority}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Category:</td><td>{ticket.problem_category}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Status:</td><td>{ticket.status}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Created:</td><td>{ticket.created_at.strftime('%Y-%m-%d %H:%M')}</td></tr>
+            </table>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{ticket_url}" 
+               style="display: inline-block; background-color: #28a745; color: white; padding: 12px 30px; 
+                      text-decoration: none; border-radius: 5px; font-weight: bold;">
+                📋 View & Assign Ticket
+            </a>
+        </div>
+    </body>
+    </html>
+    """
+
+    recipients = list(
+        User.objects.filter(groups__name__in=["Admin", "Director", "Manager", "Staff"])
+        .exclude(email__isnull=True)
+        .values_list("email", flat=True)
+    )
+
+    if not recipients:
+        recipients = [settings.DEFAULT_FROM_EMAIL]
+
+    sender = getattr(settings, "NEW_TICKET_SENDER", settings.DEFAULT_FROM_EMAIL)
+
+    try:
+        email = EmailMultiAlternatives(subject, text_message, sender, recipients)
+        email.attach_alternative(html_message, "text/html")
+        email.send()
+        logger.info(f"✅ New ticket email sent for Ticket #{ticket.id}")
+    except Exception as e:
+        logger.error(f"❌ Failed to send new ticket email: {str(e)}")
         
 
 def send_unassigned_ticket_notification(ticket):
@@ -182,17 +261,14 @@ def send_unassigned_ticket_notification(ticket):
     if not ticket.assigned_to:
         elapsed = now - ticket.created_at
 
-        # 🔹 FIRST ROUND — if ticket just passed threshold and no notification sent yet
         if not ticket.last_unassigned_notification and elapsed >= threshold:
             _trigger_unassigned_alert(ticket, now)
 
-        # 🔹 SUBSEQUENT ROUNDS — check repeat intervals
         elif ticket.last_unassigned_notification and now >= ticket.last_unassigned_notification + threshold:
             _trigger_unassigned_alert(ticket, now)
 
 
-def _trigger_unassigned_alert(ticket, now):
-    """Send WebSocket + Email alert for unassigned ticket."""
+"""def _trigger_unassigned_alert(ticket, now):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         "escalations",
@@ -215,13 +291,131 @@ def _trigger_unassigned_alert(ticket, now):
 
     try:
         send_mail(subject, message, sender, recipients)
-        logger.info(f"✅ Unassigned ticket email sent for Ticket #{ticket.id} to {recipients}")
+        logger.info(f"Unassigned ticket email sent for Ticket #{ticket.id} to {recipients}")
     except Exception as e:
-        logger.error(f"❌ Failed to send unassigned ticket email for Ticket #{ticket.id}: {str(e)}")
+        logger.error(f"Failed to send unassigned ticket email for Ticket #{ticket.id}: {str(e)}")
+
+    ticket.last_unassigned_notification = now
+    ticket.save(update_fields=["last_unassigned_notification"])"""
+
+def _trigger_unassigned_alert(ticket, now):
+    """Send WebSocket + Email alert for unassigned ticket."""
+    from django.urls import reverse
+    from django.contrib.sites.shortcuts import get_current_site
+    from django.core.mail import EmailMultiAlternatives
+    
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        "escalations",
+        {
+            "type": "unassigned_ticket_notification",
+            "ticket": serialize_ticket(ticket),
+        }
+    )
+
+    ticket_url = f"{settings.SITE_URL}{reverse('ticket_detail', kwargs={'ticket_id': ticket.id})}"
+    
+    subject = f"[Unassigned Ticket] Ticket #{ticket.id} ({ticket.priority.capitalize()} Priority)"
+    
+    text_message = (
+        f"Ticket #{ticket.id} ({ticket.priority.capitalize()} priority) is still unassigned.\n\n"
+        f"- Created At: {ticket.created_at}\n"
+        f"- Current Status: {ticket.status}\n\n"
+        f"Please assign this ticket as soon as possible.\n\n"
+        f"View ticket: {ticket_url}"
+    )
+    
+    html_message = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background-color: #f8f9fa; border-left: 4px solid #dc3545; padding: 20px; margin-bottom: 20px;">
+            <h2 style="color: #dc3545; margin-top: 0;">⚠️ Unassigned Ticket Alert</h2>
+            <p style="font-size: 16px; margin-bottom: 10px;">
+                <strong>Ticket #{ticket.id}</strong> ({ticket.priority.capitalize()} priority) is still unassigned.
+            </p>
+        </div>
+        
+        <div style="background-color: #ffffff; padding: 20px; border: 1px solid #dee2e6; border-radius: 5px; margin-bottom: 20px;">
+            <h3 style="margin-top: 0; color: #495057;">Ticket Details</h3>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; font-weight: bold; width: 40%;">Ticket ID:</td>
+                    <td style="padding: 8px 0;">#{ticket.id}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: bold;">Title:</td>
+                    <td style="padding: 8px 0;">{ticket.title}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: bold;">Priority:</td>
+                    <td style="padding: 8px 0;">
+                        <span style="background-color: {'#dc3545' if ticket.priority == 'critical' else '#ffc107' if ticket.priority == 'high' else '#17a2b8'}; 
+                                     color: white; padding: 2px 8px; border-radius: 3px; font-size: 12px;">
+                            {ticket.priority.upper()}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: bold;">Status:</td>
+                    <td style="padding: 8px 0;">{ticket.status}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: bold;">Created At:</td>
+                    <td style="padding: 8px 0;">{ticket.created_at.strftime('%Y-%m-%d %H:%M')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: bold;">Category:</td>
+                    <td style="padding: 8px 0;">{ticket.problem_category if ticket.problem_category else 'N/A'}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{ticket_url}" 
+               style="display: inline-block; background-color: #007bff; color: white; padding: 12px 30px; 
+                      text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+                📋 View Ticket Details
+            </a>
+        </div>
+        
+        <div style="background-color: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin-top: 20px;">
+            <p style="margin: 0; color: #856404;">
+                <strong>⏰ Action Required:</strong> Please assign this ticket as soon as possible to ensure timely resolution.
+            </p>
+        </div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
+            <p>This is an automated notification from the Blue River Technology Solutions Ticketing System.</p>
+            <p>If you have any questions, please contact your system administrator.</p>
+        </div>
+    </body>
+    </html>
+    """
+
+    recipients = get_escalation_recipients("General")
+    sender = get_sender_for_level("General")
+
+    try:
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=text_message,
+            from_email=sender,
+            to=recipients
+        )
+        email.attach_alternative(html_message, "text/html")
+        email.send()
+        
+        logger.info(f"Unassigned ticket email sent for Ticket #{ticket.id} to {recipients}")
+    except Exception as e:
+        logger.error(f"Failed to send unassigned ticket email for Ticket #{ticket.id}: {str(e)}")
 
     ticket.last_unassigned_notification = now
     ticket.save(update_fields=["last_unassigned_notification"])
-
 
 
 def send_ticket_assignment_notification(ticket, assigned_user):

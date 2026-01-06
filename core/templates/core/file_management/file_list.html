@@ -48,6 +48,7 @@
 
   <div class="file-grid animate-fadein">
     {% for file in files %}
+    {% if file.access_level != 'confidential' or file.uploaded_by == request.user or request.user.is_superuser %}
       <div class="file-row">
         <div class="file-name">
           <input type="hidden" id="file-uploaded-by-{{ file.id }}" value="{{ file.uploaded_by.id }}">
@@ -161,6 +162,7 @@
         <div><span style="color:#999; font-size:0.8rem;">Not allowed</span></div>
         {% endif %}
       </div>
+      {% endif %}
     {% empty %}
       <div class="file-row empty">No files available.</div>
     {% endfor %}

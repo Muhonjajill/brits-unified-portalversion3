@@ -159,12 +159,12 @@ class TicketForm(forms.ModelForm):
     problem_category = forms.ModelChoiceField(
         queryset=ProblemCategory.objects.all(),
         empty_label="Select Category",
-        required=False,
+        required=True,
         widget=forms.Select(attrs={"class": "form-control"})
     )
     title = forms.ChoiceField(
         choices=[("", "Select Issue")],
-        required=False,
+        required=True,
         widget=forms.Select(attrs={"class": "form-control"})
     )
     custom_created_at = forms.DateTimeField(
