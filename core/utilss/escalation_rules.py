@@ -1,7 +1,7 @@
 #escalation_rules.py
 import pytz
 from django.utils import timezone 
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 
 #from core.models import EscalationHistory
@@ -14,7 +14,6 @@ from channels.layers import get_channel_layer
 from core.uttils.serializers import serialize_ticket
 from core.utilss.escalation_constants import ESCALATION_TIME_LIMITS, ESCALATION_FLOW
 from django.contrib.auth.models import User 
-
 
 import logging
 
@@ -110,66 +109,79 @@ ZONE_PRIORITY_THRESHOLDS = {
     },
 }
 
+def calculate_business_hours_elapsed(start_time, end_time):
+    """
+    Calculate the elapsed time between two timestamps, 
+    counting only working hours (Mon-Fri, 9am-5pm).
+    """
+    nairobi_tz = pytz.timezone("Africa/Nairobi")
+    
+    
+    if start_time.tzinfo is None:
+        start_time = nairobi_tz.localize(start_time)
+    else:
+        start_time = start_time.astimezone(nairobi_tz)
+        
+    if end_time.tzinfo is None:
+        end_time = nairobi_tz.localize(end_time)
+    else:
+        end_time = end_time.astimezone(nairobi_tz)
+    
+    elapsed = timedelta()
+    current = start_time
+    
+    while current < end_time:
+        
+        if current.weekday() >= 5:  
+            
+            days_ahead = 7 - current.weekday()  
+            current = current.replace(hour=9, minute=0, second=0, microsecond=0)
+            current += timedelta(days=days_ahead)
+            continue
+            
+        if current.hour < 9:
+            
+            current = current.replace(hour=9, minute=0, second=0, microsecond=0)
+            continue
+            
+        if current.hour >= 17:
+            
+            current = current.replace(hour=9, minute=0, second=0, microsecond=0)
+            current += timedelta(days=1)
+            continue
+        
+        
+        work_end = current.replace(hour=17, minute=0, second=0, microsecond=0)
+        
+        if end_time <= work_end:
+            
+            elapsed += (end_time - current)
+            break
+        else:
+            
+            elapsed += (work_end - current)
+            
+            current = current.replace(hour=9, minute=0, second=0, microsecond=0)
+            current += timedelta(days=1)
+    
+    return elapsed
 
-"""def send_new_ticket_notification(ticket):
 
-    # 🔹 Push WebSocket event
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        "escalations",
-        {
-            "type": "new_ticket_notification",
-            "ticket": serialize_ticket(ticket),
-        }
-    )
-
-    subject = f"[New Ticket] Ticket #{ticket.id} Created"
-    message = (
-        f"A new ticket has been created.\n\n"
-        f"- Ticket ID: {ticket.id}\n"
-        f"- Title: {ticket.title}\n"
-        f"- Priority: {ticket.priority}\n"
-        f"- Category: {ticket.problem_category}\n"
-        f"- Status: {ticket.status}\n"
-        f"- Created At: {ticket.created_at}\n\n"
-        f"Please review and assign it."
-    )
-
-    # 🔹 Collect recipients from groups
-    recipients = list(
-        User.objects.filter(groups__name__in=["Admin", "Director", "Manager", "Staff"])
-        .exclude(email__isnull=True)
-        .values_list("email", flat=True)
-    )
-
-    # 🔹 If no recipients, try fallback
-    if not recipients:
-        logger.warning("⚠️ No staff/admin recipients found for new ticket notification.")
-        recipients = getattr(settings, "FALLBACK_NEW_TICKET_RECIPIENTS", [])
-
-    # 🔹 Absolute last fallback
-    if not recipients:
-        recipients = [settings.DEFAULT_FROM_EMAIL]
-        logger.warning(f"⚠️ Using DEFAULT_FROM_EMAIL as recipient: {recipients}")
-
-    # 🔹 Get sender
-    sender = getattr(settings, "NEW_TICKET_SENDER", settings.DEFAULT_FROM_EMAIL)
-
-    try:
-        logger.info(f"📧 Sending new ticket email for Ticket #{ticket.id}")
-        logger.info(f"   From: {sender}")
-        logger.info(f"   To: {recipients}")
-        send_mail(subject, message, sender, recipients)
-        logger.info(f"New ticket email sent for Ticket #{ticket.id} to {recipients}")
-    except Exception as e:
-        logger.error(f"Failed to send new ticket email for Ticket #{ticket.id}: {str(e)}")"""
+def is_within_working_hours():
+    """Check if current time is within working hours."""
+    nairobi_tz = pytz.timezone("Africa/Nairobi")
+    now = timezone.now().astimezone(nairobi_tz)
+    
+    weekday = now.weekday()
+    hour = now.hour
+    
+    return weekday < 5 and 9 <= hour < 17  
 
 def send_new_ticket_notification(ticket):
     """Notify admins/staff when a new ticket is created."""
     from django.urls import reverse
     from django.core.mail import EmailMultiAlternatives
     
-    # WebSocket notification
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         "escalations",
@@ -181,16 +193,22 @@ def send_new_ticket_notification(ticket):
 
     ticket_url = f"{settings.SITE_URL}{reverse('ticket_detail', kwargs={'ticket_id': ticket.id})}"
     
+    # Get creator name
+    created_by_name = ticket.created_by.get_full_name() if ticket.created_by else "Unknown"
+    if not created_by_name or created_by_name.strip() == "":
+        created_by_name = ticket.created_by.username if ticket.created_by else "Unknown"
+    
     subject = f"[New Ticket] Ticket #{ticket.id} Created"
     
     text_message = (
         f"A new ticket has been created.\n\n"
         f"- Ticket ID: {ticket.id}\n"
         f"- Title: {ticket.title}\n"
+        f"- Created By: {created_by_name}\n"
         f"- Priority: {ticket.priority}\n"
         f"- Category: {ticket.problem_category}\n"
         f"- Status: {ticket.status}\n"
-        f"- Created At: {ticket.created_at}\n\n"
+        f"- Created At: {ticket.created_at.strftime('%Y-%m-%d %H:%M')}\n\n"
         f"Please review and assign it.\n\n"
         f"View ticket: {ticket_url}"
     )
@@ -207,7 +225,8 @@ def send_new_ticket_notification(ticket):
             <table style="width: 100%;">
                 <tr><td style="padding: 8px 0; font-weight: bold;">Ticket ID:</td><td>#{ticket.id}</td></tr>
                 <tr><td style="padding: 8px 0; font-weight: bold;">Title:</td><td>{ticket.title}</td></tr>
-                <tr><td style="padding: 8px 0; font-weight: bold;">Priority:</td><td>{ticket.priority}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Created By:</td><td>{created_by_name}</td></tr>
+                <tr><td style="padding: 8px 0; font-weight: bold;">Priority:</td><td><span style="background-color: {'#dc3545' if ticket.priority == 'critical' else '#ffc107' if ticket.priority == 'high' else '#17a2b8' if ticket.priority == 'medium' else '#28a745'}; color: white; padding: 2px 8px; border-radius: 3px; font-size: 12px;">{ticket.priority.upper()}</span></td></tr>
                 <tr><td style="padding: 8px 0; font-weight: bold;">Category:</td><td>{ticket.problem_category}</td></tr>
                 <tr><td style="padding: 8px 0; font-weight: bold;">Status:</td><td>{ticket.status}</td></tr>
                 <tr><td style="padding: 8px 0; font-weight: bold;">Created:</td><td>{ticket.created_at.strftime('%Y-%m-%d %H:%M')}</td></tr>
@@ -220,6 +239,10 @@ def send_new_ticket_notification(ticket):
                       text-decoration: none; border-radius: 5px; font-weight: bold;">
                 📋 View & Assign Ticket
             </a>
+        </div>
+        
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #dee2e6; font-size: 12px; color: #6c757d;">
+            <p style="margin: 0;">This is an automated notification from Blue River Technology Solutions Ticketing System.</p>
         </div>
     </body>
     </html>
@@ -259,44 +282,20 @@ def send_unassigned_ticket_notification(ticket):
     threshold = PRIORITY_THRESHOLDS.get(priority, timedelta(minutes=8))
 
     if not ticket.assigned_to:
-        elapsed = now - ticket.created_at
+        
+        elapsed = calculate_business_hours_elapsed(ticket.created_at, now)
 
         if not ticket.last_unassigned_notification and elapsed >= threshold:
             _trigger_unassigned_alert(ticket, now)
 
-        elif ticket.last_unassigned_notification and now >= ticket.last_unassigned_notification + threshold:
-            _trigger_unassigned_alert(ticket, now)
+        elif ticket.last_unassigned_notification:
+            
+            elapsed_since_last = calculate_business_hours_elapsed(
+                ticket.last_unassigned_notification, now
+            )
+            if elapsed_since_last >= threshold:
+                _trigger_unassigned_alert(ticket, now)
 
-
-"""def _trigger_unassigned_alert(ticket, now):
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        "escalations",
-        {
-            "type": "unassigned_ticket_notification",
-            "ticket": serialize_ticket(ticket),
-        }
-    )
-
-    subject = f"[Unassigned Ticket] Ticket #{ticket.id} ({ticket.priority.capitalize()} Priority)"
-    message = (
-        f"Ticket #{ticket.id} ({ticket.priority.capitalize()} priority) is still unassigned.\n\n"
-        f"- Created At: {ticket.created_at}\n"
-        f"- Current Status: {ticket.status}\n\n"
-        f"Please assign this ticket as soon as possible."
-    )
-
-    recipients = get_escalation_recipients("General")
-    sender = get_sender_for_level("General")
-
-    try:
-        send_mail(subject, message, sender, recipients)
-        logger.info(f"Unassigned ticket email sent for Ticket #{ticket.id} to {recipients}")
-    except Exception as e:
-        logger.error(f"Failed to send unassigned ticket email for Ticket #{ticket.id}: {str(e)}")
-
-    ticket.last_unassigned_notification = now
-    ticket.save(update_fields=["last_unassigned_notification"])"""
 
 def _trigger_unassigned_alert(ticket, now):
     """Send WebSocket + Email alert for unassigned ticket."""
@@ -456,21 +455,7 @@ def send_ticket_assignment_notification(ticket, assigned_user):
         logger.error(f"❌ Failed to send assignment email for Ticket #{ticket.id}: {str(e)}")
 
 
-
-
-def is_within_working_hours():
-    nairobi_tz = pytz.timezone("Africa/Nairobi")
-    now = timezone.now().astimezone(nairobi_tz)
-
-    weekday = now.weekday()
-    hour = now.hour
-
-    return weekday < 5 and 9 <= hour <= 17
-
-
-
 def escalate_ticket(ticket):
-
     from core.models import Zone, Ticket
 
     now = timezone.now()
@@ -484,7 +469,6 @@ def escalate_ticket(ticket):
         logger.info(f"⏸ Escalation skipped for Ticket {ticket.id} (outside working hours).")
         return
 
-    # 🚫 Do not escalate unassigned tickets
     if not ticket.assigned_to or not ticket.assigned_at:
         logger.info(f"⏸ Escalation skipped for Ticket {ticket.id} (not yet assigned).")
         return
@@ -497,13 +481,17 @@ def escalate_ticket(ticket):
 
     last_escalation_time = ticket.escalated_at
 
-    # 🔹 FIRST ROUND — only after assigned_at
-    if not last_escalation_time and now >= ticket.assigned_at + escalation_time:
-        _do_escalation(ticket, escalation_level, now)
+    if not last_escalation_time:
+        business_hours_elapsed = calculate_business_hours_elapsed(ticket.assigned_at, now)
+        if business_hours_elapsed >= escalation_time:
+            _do_escalation(ticket, escalation_level, now)
+            logger.info(f"📊 Business hours elapsed: {business_hours_elapsed}, Threshold: {escalation_time}")
 
-    # 🔹 SUBSEQUENT ROUNDS
-    elif last_escalation_time and now >= last_escalation_time + escalation_time:
-        _do_escalation(ticket, escalation_level, now)
+    elif last_escalation_time:
+        business_hours_elapsed = calculate_business_hours_elapsed(last_escalation_time, now)
+        if business_hours_elapsed >= escalation_time:
+            _do_escalation(ticket, escalation_level, now)
+            logger.info(f"📊 Business hours elapsed: {business_hours_elapsed}, Threshold: {escalation_time}")
 
 def _do_escalation(ticket, escalation_level, now):
     from core.models import EscalationHistory
@@ -511,7 +499,6 @@ def _do_escalation(ticket, escalation_level, now):
     priority = (ticket.priority or "low").lower()
     max_level = MAX_ESCALATION_LEVEL.get(priority, "Tier 3")
 
-    # 🚫 Stop escalation if already at or beyond max allowed level
     if escalation_level == max_level:
         logger.info(
             f"⏹ Ticket {ticket.id} ({priority}) reached its max escalation level ({max_level})."
@@ -523,12 +510,10 @@ def _do_escalation(ticket, escalation_level, now):
         logger.info(f"Ticket {ticket.id} already at highest escalation level ({escalation_level}).")
         return
 
-    # 🔹 SLA BREACH CHECK (insert here)
     if ticket.due_date and not ticket.resolved_at and now > ticket.due_date:
         ticket.is_sla_breached = True
         logger.info(f"🚨 SLA breach detected for Ticket {ticket.id}")
 
-    # Existing escalation update
     ticket.current_escalation_level = next_level
     ticket.is_escalated = True
     ticket.escalated_at = now

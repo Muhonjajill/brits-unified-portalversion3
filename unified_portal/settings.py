@@ -27,7 +27,7 @@ SECRET_KEY = "django-insecure-@efxx!0)&^7n-8d=j0rfy_+u3d&u8xr_r+41=1xa&32ej$z%js
 FIELD_ENCRYPTION_KEY = config('FIELD_ENCRYPTION_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
@@ -158,9 +158,9 @@ ESCALATION_LEVEL_EMAILS = {
     },
 }
 
-FALLBACK_NEW_TICKET_RECIPIENTS = ["admin@yourdomain.com"]
+FALLBACK_NEW_TICKET_RECIPIENTS = ["godblessodhiambo@gmail.com"]
 
-NEW_TICKET_SENDER = "noreply@yourdomain.com"
+NEW_TICKET_SENDER = "godblessodhiambo@gmail.com"
 
 LOGGING = {
     "version": 1,
@@ -235,7 +235,7 @@ CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://127.0.0.1:6379/1")
 CELERY_TIMEZONE = "Africa/Nairobi"
 CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_ALWAYS_EAGER = True 
+CELERY_TASK_ALWAYS_EAGER = False
 
 from celery.schedules import crontab
 

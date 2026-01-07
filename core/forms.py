@@ -61,11 +61,6 @@ class CustomUserCreationForm(forms.ModelForm):
             profile.save()
 
         return user
-
-
-
-
-
     
 class FileUploadForm(forms.ModelForm):
     class Meta:

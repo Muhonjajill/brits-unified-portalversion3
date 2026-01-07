@@ -10,6 +10,13 @@ from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync 
 from core.uttils.serializers import serialize_ticket, serialize_user_notification
 
+from django.db.models.signals import post_save, pre_save
+from django.dispatch import receiver
+from django.db import transaction
+from core.utilss.escalation_rules import send_new_ticket_notification
+
+logger = logging.getLogger(__name__)
+
 @receiver(post_migrate)
 def setup_groups_and_permissions(sender, **kwargs):
     """
@@ -18,7 +25,6 @@ def setup_groups_and_permissions(sender, **kwargs):
     file_content_type = ContentType.objects.get_for_model(File)
 
     try:
-        # File permissions (Django already creates add/change/delete/view by default)
         view_file = Permission.objects.get(codename='view_file')
         change_file = Permission.objects.get(codename='change_file')
         delete_file = Permission.objects.get(codename='delete_file')
@@ -30,7 +36,6 @@ def setup_groups_and_permissions(sender, **kwargs):
             content_type=file_content_type
         )
 
-        # User permissions
         view_user = Permission.objects.get(codename='view_user')
         change_user = Permission.objects.get(codename='change_user')
         delete_user = Permission.objects.get(codename='delete_user')
@@ -38,13 +43,11 @@ def setup_groups_and_permissions(sender, **kwargs):
     except ObjectDoesNotExist:
         return
 
-    # Groups
     director_group, _ = Group.objects.get_or_create(name='Director')
     manager_group, _ = Group.objects.get_or_create(name='Manager')
     staff_group, _ = Group.objects.get_or_create(name='Staff')
     customer_group, _ = Group.objects.get_or_create(name='Customer')
 
-    # Assign permissions
     director_group.permissions.set([
         view_file, change_file, delete_file, add_file, can_edit_file_perm,
         view_user, change_user, delete_user
@@ -62,7 +65,6 @@ def setup_groups_and_permissions(sender, **kwargs):
 
     customer_group.permissions.set([view_file, view_user])
 
-    # ✅ Instead of creating manually, fetch the already existing one
     file_access_log_permission = Permission.objects.get(
         codename='view_fileaccesslog',
         content_type=ContentType.objects.get_for_model(FileAccessLog)
@@ -71,12 +73,8 @@ def setup_groups_and_permissions(sender, **kwargs):
     director_group.permissions.add(file_access_log_permission)
     manager_group.permissions.add(file_access_log_permission)
 
-    # Assign to superusers
     for user in User.objects.filter(is_superuser=True):
         user.user_permissions.add(file_access_log_permission)
-
-
-
 
 @receiver(post_save, sender=User)
 def assign_permissions_based_on_group(sender, instance, created, **kwargs):
@@ -221,86 +219,51 @@ def log_ticket_comment(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Ticket)
 def log_ticket_resolution(sender, instance, created, **kwargs):
-    if instance.status == 'Resolved':  # You can check your ticket status values
+    if instance.status == 'Resolved':  
         action = f"Ticket resolved: {instance.title}"
         ActivityLog.objects.create(ticket=instance, action=action, user=instance.updated_by)
 
-
-
-"""def create_ticket_notifications(sender, instance, created, **kwargs):
-   
-    if created:
-        # Notify the ticket creator
-        if instance.created_by:
-            UserNotification.objects.update_or_create(
-                user=instance.created_by,
-                ticket=instance,
-                defaults={"is_read": False}
-            )
-
-        # Notify the assigned user
-        if instance.assigned_to:
-            UserNotification.objects.update_or_create(
-                user=instance.assigned_to,
-                ticket=instance,
-                defaults={"is_read": False}
-            )
-
-    else:
-        # On reassignment, reset notification for the new assignee
-        if instance.assigned_to:
-            UserNotification.objects.update_or_create(
-                user=instance.assigned_to,
-                ticket=instance,
-                defaults={"is_read": False}
-            )"""
-
-
-import logging
-logger = logging.getLogger(__name__)
 @receiver(post_save, sender=Ticket)
 def create_ticket_notifications(sender, instance, created, **kwargs):
-
-    # 🔒 Only run the notification logic the first time the ticket is saved
+    """
+    Create/refresh UserNotification rows and send notifications
+    whenever a ticket is created.
+    """
     if not created:
         return
-    logger.info(">>> create_ticket_notifications fired for ticket %s", instance.pk)
-    """
-    Create/refresh UserNotification rows whenever a ticket is created or updated,
-    so that all relevant users immediately see it in their notifications.
-    """
-    # --- Build list of users who should receive a notification ---
+    
+    logger.info(f">>> create_ticket_notifications fired for ticket {instance.pk}")
+    
     users_to_notify = set()
 
-    # Ticket creator
     if instance.created_by:
         users_to_notify.add(instance.created_by)
 
-    # Assigned user
     if instance.assigned_to:
         users_to_notify.add(instance.assigned_to)
 
-    # Staff / admin groups
     staff_users = User.objects.filter(
         groups__name__in=['Admin', 'Director', 'Manager', 'Staff']
     ).distinct()
     users_to_notify.update(staff_users)
 
-    # Overseer of the customer
     if instance.customer and getattr(instance.customer, "overseer", None):
         users_to_notify.add(instance.customer.overseer)
 
-    # Custodian of the terminal
     if instance.terminal and getattr(instance.terminal, "custodian", None):
         users_to_notify.add(instance.terminal.custodian)
 
-    # --- Create or update a notification row for each user ---
     for user in users_to_notify:
         UserNotification.objects.update_or_create(
             user=user,
             ticket=instance,
-            defaults={"is_read": False},
-        )            
+            defaults={"is_read": False, "notification_type": "new"},
+        )
+    
+    transaction.on_commit(lambda: send_new_ticket_notification(instance))
+    
+    logger.info(f"✅ Notifications created for {len(users_to_notify)} users for Ticket #{instance.pk}")
+
 
 @receiver(pre_save, sender=Ticket)
 def capture_old_escalation_state(sender, instance, **kwargs):

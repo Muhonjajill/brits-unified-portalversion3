@@ -983,29 +983,35 @@ def file_management_dashboard(request):
 @login_required
 def file_list_by_type_view(request, ext):
     user = request.user
-    files = File.objects.filter(is_deleted=False)
 
-    # Filter by extension
-    if ext != 'other':
-        files = [f for f in files if os.path.splitext(f.file.name)[1].lower() == ext]
+    if user.is_superuser:
+        files = File.objects.filter(is_deleted=False)
     else:
-        known_exts = ['.pdf', '.docx', '.jpg', '.jpeg', '.png', '.xlsx', '.ppt', '.pptx', '.csv', '.txt', '.xml']
-        files = [f for f in files if os.path.splitext(f.file.name)[1].lower() not in known_exts]
+        files = File.objects.filter(
+            is_deleted=False
+        ).filter(
+            Q(access_level__in=['public', 'restricted']) |
+            Q(access_level='confidential', uploaded_by=user)
+        )
 
-    # Filter files by access permissions
-    visible_files = []
-    for f in files:
-        if f.access_level == 'public' or user.is_superuser:
-            visible_files.append(f)
-        elif f.access_level == 'restricted' and f.authorized_users.filter(id=user.id).exists():
-            visible_files.append(f)
-        elif f.access_level == 'confidential' and (f.uploaded_by == user or user.is_superuser):
-            visible_files.append(f)
+    if ext != 'other':
+        files = files.filter(file__iendswith=ext)
+    else:
+        known_exts = [
+            '.pdf', '.docx', '.jpg', '.jpeg', '.png',
+            '.xlsx', '.ppt', '.pptx', '.csv', '.txt', '.xml'
+        ]
+
+        exclude_q = Q()
+        for e in known_exts:
+            exclude_q |= Q(file__iendswith=e)
+
+        files = files.exclude(exclude_q)
 
     can_view_logs = request.user.has_perm('core.view_fileaccesslog')
 
     return render(request, 'core/file_management/file_list.html', {
-        'files': visible_files,
+        'files': files,
         'file_type': ext,
         'can_view_logs': can_view_logs,
     })
@@ -1013,47 +1019,30 @@ def file_list_by_type_view(request, ext):
 @login_required
 def file_list_view(request, category_name=None):
     user = request.user
-    files = File.objects.filter(is_deleted=False)
     validated_files = request.session.get("validated_files", [])
 
-    visible_files = []
-
-    for file in files:
-        if file.can_user_access(user):
-            visible_files.append(file)
-        else:
-            visible_files.append({
-                'file': file,
-                'requires_passcode': True
-            })
-
-    highlight_file_id = request.GET.get("file_id")
+    if user.is_superuser:
+        files = File.objects.filter(is_deleted=False)
+    else:
+        files = File.objects.filter(
+            is_deleted=False
+        ).filter(
+            Q(access_level__in=['public', 'restricted']) |
+            Q(access_level='confidential', uploaded_by=user)
+        )
 
     if category_name:
-        visible_files = [
-            file for file in visible_files
-            if (
-                isinstance(file, dict) 
-                and file['file'].category 
-                and file['file'].category.name.lower() == category_name.lower()
-            )
-            or (
-                isinstance(file, File) 
-                and file.category 
-                and file.category.name.lower() == category_name.lower()
-            )
-        ]
+        files = files.filter(category__name__iexact=category_name)
 
-    # Sort files
     sort_option = request.GET.get('sort')
     if sort_option == 'recent':
-        visible_files.sort(key=lambda f: f['file'].upload_date if isinstance(f, dict) else f.upload_date, reverse=True)
+        files = files.order_by('-upload_date')
     else:
-        visible_files.sort(key=lambda f: f['file'].title if isinstance(f, dict) else f.title)
+        files = files.order_by('title')
 
-    # Paginate files
-    paginator = Paginator(visible_files, 10)
+    paginator = Paginator(files, 10)
     page = request.GET.get('page')
+
     try:
         paginated_files = paginator.page(page)
     except PageNotAnInteger:
@@ -1061,9 +1050,8 @@ def file_list_view(request, category_name=None):
     except EmptyPage:
         paginated_files = paginator.page(paginator.num_pages)
 
-    # Fetch categories for the filter dropdown
     categories = FileCategory.objects.all()
-
+    highlight_file_id = request.GET.get("file_id")
     can_view_logs = request.user.has_perm('core.view_fileaccesslog')
 
     return render(request, 'core/file_management/file_list.html', {

@@ -299,7 +299,6 @@ class Ticket(models.Model):
     STATUS_CHOICES = [
         ('open', 'Open'),
         ('in_progress', 'In Progress'),
-        ('closed', 'Closed'),
     ]
     PRIORITY_CHOICES = [
         ('low', 'Low'),
