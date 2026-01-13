@@ -61,6 +61,8 @@ from django.contrib.auth.views import PasswordResetView
 from django.conf import settings
 from django.urls import reverse
 
+from django.views.decorators.http import require_http_methods
+
 def in_group(user, group_name):
     return user.is_authenticated and (user.is_superuser or user.groups.filter(name=group_name).exists())
     
@@ -913,6 +915,7 @@ def delete_user(request, user_id):
     messages.success(request, 'User deleted successfully!')
     return redirect('user_list')
 
+"""
 @login_required
 def file_management_dashboard(request):
     # Get all files that are not deleted
@@ -978,9 +981,93 @@ def file_management_dashboard(request):
         'file_types': file_types,
         'user_name': request.user.username,
         'can_view_logs': can_view_logs, 
-    })
+    })"""
 
 @login_required
+def file_management_dashboard(request):
+    user = request.user
+    
+    if user.is_superuser:
+        files = File.objects.filter(is_deleted=False)
+    else:
+        files = File.objects.filter(
+            is_deleted=False
+        ).filter(
+            Q(access_level='public') |
+            Q(access_level='restricted', authorized_users=user) |
+            Q(access_level='confidential', uploaded_by=user)
+        )
+    
+    ext_counter = Counter()
+    for f in files:
+        if f.file_exists():
+            ext = f.get_file_extension()
+            if ext:
+                ext_counter[ext] += 1
+
+    file_types = [
+        {"type": "PDF Documents", "ext": ".pdf", "icon": "pdf", "count": ext_counter.get(".pdf", 0)},
+        {"type": "Word Documents", "ext": ".docx", "icon": "docx", "count": ext_counter.get(".docx", 0)},
+        {"type": "Images", "ext": ".jpg", "icon": "image", "count": ext_counter.get(".jpg", 0) + ext_counter.get(".png", 0)},
+        {"type": "Excel Sheets", "ext": ".xlsx", "icon": "xlsx", "count": ext_counter.get(".xlsx", 0)},
+        {"type": "PowerPoint", "ext": ".pptx", "icon": "ppt", "count": ext_counter.get(".pptx", 0) + ext_counter.get(".ppt", 0)},
+        {"type": "CSV Files", "ext": ".csv", "icon": "csv", "count": ext_counter.get(".csv", 0)},
+        {"type": "Text Files", "ext": ".txt", "icon": "text", "count": ext_counter.get(".txt", 0)},
+        {"type": "XML Files", "ext": ".xml", "icon": "xml", "count": ext_counter.get(".xml", 0)},
+        {"type": "Others", "ext": "other", "icon": "file", "count": sum(ext_counter.values()) - (
+            ext_counter.get(".pdf", 0) +
+            ext_counter.get(".docx", 0) +
+            ext_counter.get(".jpg", 0) +
+            ext_counter.get(".png", 0) +
+            ext_counter.get(".xlsx", 0) +
+            ext_counter.get(".pptx", 0) +
+            ext_counter.get(".ppt", 0) +
+            ext_counter.get(".csv", 0) +
+            ext_counter.get(".txt", 0) +
+            ext_counter.get(".xml", 0)
+        )},
+    ]
+
+    if user.is_superuser:
+        categories = FileCategory.objects.annotate(
+            file_count=Count('file', filter=Q(file__is_deleted=False))
+        )
+    else:
+        categories = FileCategory.objects.annotate(
+            file_count=Count(
+                'file',
+                filter=(
+                    Q(file__is_deleted=False) &
+                    (
+                        Q(file__access_level='public') |
+                        Q(file__access_level='restricted', file__authorized_users=user) |
+                        Q(file__access_level='confidential', file__uploaded_by=user)
+                    )
+                )
+            )
+        )
+
+    recent_files_qs = files.order_by('-upload_date')[:10]  
+    recent_files = []
+    
+    for file in recent_files_qs:
+        if file.file_exists():
+            file.extension = file.get_file_extension()
+            recent_files.append(file)
+            if len(recent_files) >= 5:  
+                break
+
+    can_view_logs = request.user.has_perm('core.view_fileaccesslog')
+    
+    return render(request, 'core/file_management/dashboard.html', {
+        'categories': categories,
+        'recent_files': recent_files,  
+        'file_types': file_types,
+        'user_name': request.user.username,
+        'can_view_logs': can_view_logs, 
+    })
+
+"""@login_required
 def file_list_by_type_view(request, ext):
     user = request.user
 
@@ -1041,6 +1128,147 @@ def file_list_view(request, category_name=None):
         files = files.order_by('title')
 
     paginator = Paginator(files, 10)
+    page = request.GET.get('page')
+
+    try:
+        paginated_files = paginator.page(page)
+    except PageNotAnInteger:
+        paginated_files = paginator.page(1)
+    except EmptyPage:
+        paginated_files = paginator.page(paginator.num_pages)
+
+    categories = FileCategory.objects.all()
+    highlight_file_id = request.GET.get("file_id")
+    can_view_logs = request.user.has_perm('core.view_fileaccesslog')
+
+    return render(request, 'core/file_management/file_list.html', {
+        'files': paginated_files,
+        'categories': categories,
+        'active_category': category_name,
+        'validated_files': validated_files,
+        'can_view_logs': can_view_logs,
+        'highlight_file_id': highlight_file_id,
+        'recent': sort_option == 'recent',
+    })"""
+
+@login_required
+def file_list_by_type_view(request, ext):
+    user = request.user
+
+    if user.is_superuser:
+        files = File.objects.filter(is_deleted=False)
+    else:
+        files = File.objects.filter(
+            is_deleted=False
+        ).filter(
+            Q(access_level__in=['public', 'restricted']) |
+            Q(access_level='confidential', uploaded_by=user)
+        )
+
+    if ext != 'other':
+        files = files.filter(file__iendswith=ext)
+    else:
+        known_exts = [
+            '.pdf', '.docx', '.jpg', '.jpeg', '.png',
+            '.xlsx', '.ppt', '.pptx', '.csv', '.txt', '.xml'
+        ]
+
+        exclude_q = Q()
+        for e in known_exts:
+            exclude_q |= Q(file__iendswith=e)
+
+        files = files.exclude(exclude_q)
+
+    # Filter out files that don't exist on filesystem
+    existing_files = [f for f in files if f.file_exists()]
+
+    can_view_logs = request.user.has_perm('core.view_fileaccesslog')
+
+    return render(request, 'core/file_management/file_list.html', {
+        'files': existing_files,
+        'file_type': ext,
+        'can_view_logs': can_view_logs,
+    })
+
+@login_required
+def file_list_view(request, category_name=None):
+    user = request.user
+    validated_files = request.session.get("validated_files", [])
+
+    if user.is_superuser:
+        files = File.objects.filter(is_deleted=False)
+    else:
+        files = File.objects.filter(
+            is_deleted=False
+        ).filter(
+            Q(access_level__in=['public', 'restricted']) |
+            Q(access_level='confidential', uploaded_by=user)
+        )
+
+    if category_name:
+        files = files.filter(category__name__iexact=category_name)
+
+    sort_option = request.GET.get('sort')
+    if sort_option == 'recent':
+        files = files.order_by('-upload_date')
+    else:
+        files = files.order_by('title')
+
+    # Filter out files that don't exist on filesystem BEFORE pagination
+    existing_files = [f for f in files if f.file_exists()]
+
+    paginator = Paginator(existing_files, 10)
+    page = request.GET.get('page')
+
+    try:
+        paginated_files = paginator.page(page)
+    except PageNotAnInteger:
+        paginated_files = paginator.page(1)
+    except EmptyPage:
+        paginated_files = paginator.page(paginator.num_pages)
+
+    categories = FileCategory.objects.all()
+    highlight_file_id = request.GET.get("file_id")
+    can_view_logs = request.user.has_perm('core.view_fileaccesslog')
+
+    return render(request, 'core/file_management/file_list.html', {
+        'files': paginated_files,
+        'categories': categories,
+        'active_category': category_name,
+        'validated_files': validated_files,
+        'can_view_logs': can_view_logs,
+        'highlight_file_id': highlight_file_id,
+        'recent': sort_option == 'recent',
+    })
+    
+
+@login_required
+def file_list_view(request, category_name=None):
+    user = request.user
+    validated_files = request.session.get("validated_files", [])
+
+    if user.is_superuser:
+        files = File.objects.filter(is_deleted=False)
+    else:
+        files = File.objects.filter(
+            is_deleted=False
+        ).filter(
+            Q(access_level__in=['public', 'restricted']) |
+            Q(access_level='confidential', uploaded_by=user)
+        )
+
+    if category_name:
+        files = files.filter(category__name__iexact=category_name)
+
+    sort_option = request.GET.get('sort')
+    if sort_option == 'recent':
+        files = files.order_by('-upload_date')
+    else:
+        files = files.order_by('title')
+
+    existing_files = [f for f in files if f.file_exists()]
+
+    paginator = Paginator(existing_files, 10)
     page = request.GET.get('page')
 
     try:
@@ -2241,6 +2469,8 @@ def create_ticket(request):
         allowed_roles = ['Manager', 'Staff']
     else:
         allowed_roles = ['Staff']
+
+    ticket_created = False 
     # Handle form submission
     if request.method == 'POST':
         form = TicketForm(request.POST, user=request.user)
@@ -2273,9 +2503,24 @@ def create_ticket(request):
                     "ticket": ticket.id, 
                 }
             )
+
+            ticket_created = True
             # Redirect based on “create another” checkbox
+            """if 'create_another' in request.POST:
+                return redirect('create_ticket')"""
+                
             if 'create_another' in request.POST:
-                return redirect('create_ticket')
+                return render(
+                    request,
+                    'core/helpdesk/create_ticket.html',
+                    {
+                        'form': TicketForm(user=request.user),
+                        'issue_mapping': json.dumps(build_issue_mapping()),
+                        'user_group': user_group,
+                        'allowed_roles': allowed_roles,
+                        'ticket_created': True
+                    }
+                )
             return redirect('tickets')
     else:
         # GET: instantiate empty form (optionally prefilling terminal_id)
@@ -2295,6 +2540,7 @@ def create_ticket(request):
         'issue_mapping': json.dumps(js_mapping),
         'user_group': user_group,
         'allowed_roles': allowed_roles,
+        "ticket_created": False
     })
 
 
@@ -2776,7 +3022,10 @@ def ticket_detail(request, ticket_id):
 
                     msg.send()
 
-                return redirect('ticket_detail', ticket_id=ticket.id)
+                #return redirect('ticket_detail', ticket_id=ticket.id)
+                messages.success(request, f"Ticket #{ticket.id} successfully assigned to {staff_member.get_full_name()}")
+                
+                return redirect('tickets')
 
     activity_logs = ActivityLog.objects.filter(ticket=ticket).order_by('-timestamp')
 
@@ -2933,7 +3182,7 @@ def delete_comment(request, comment_id):
 
 
 
-@login_required
+"""@login_required
 def resolve_ticket_view(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     resolution = request.POST.get('resolution', '').strip()
@@ -2947,7 +3196,7 @@ def resolve_ticket_view(request, ticket_id):
             ticket.resolved_at = timezone.now()
             ticket.save()
             messages.success(request, 'Ticket resolved successfully!')
-            return redirect('ticket_detail', ticket_id=ticket.id)
+            return redirect('tickets')
         else:
             messages.error(request, 'Ticket already resolved')
             return render(request, 'core/helpdesk/error.html')
@@ -2960,12 +3209,76 @@ def resolve_ticket_view(request, ticket_id):
             ticket.resolved_at = timezone.now() 
             ticket.save()
             messages.success(request, 'Ticket resolved successfully!')
-            return redirect('ticket_detail', ticket_id=ticket.id)
+            return redirect('tickets')
         else:
             messages.error(request, 'Ticket already resolved!')
             return render(request, 'core/helpdesk/error.html')
 
     # If the user doesn't have permission
+    messages.error(request, 'You do not have permission to resolve this ticket.')
+    return render(request, 'core/helpdesk/permission_denied.html')"""
+
+@login_required
+def resolve_ticket_view(request, ticket_id):
+    ticket = get_object_or_404(Ticket, id=ticket_id)
+    resolution = request.POST.get('resolution', '').strip()
+    resolved_at = request.POST.get('resolved_at', '').strip()
+
+    if is_director(request.user) or is_manager(request.user) or is_staff(request.user):
+        if ticket.status != 'closed':
+            if resolved_at:
+                try:
+                    resolved_at = datetime.strptime(resolved_at, "%Y-%m-%dT%H:%M")
+                    resolved_at = timezone.make_aware(resolved_at)  # Make it timezone-aware
+                except ValueError:
+                    messages.error(request, "Invalid date format for 'Resolved At'. Please try again.")
+                    return render(request, 'core/helpdesk/error.html')
+            else:
+                resolved_at = timezone.now()  # Default to current time (timezone-aware)
+
+            # Ensure due_date is aware if it is naive
+            if ticket.due_date and ticket.due_date.tzinfo is None:
+                ticket.due_date = timezone.make_aware(ticket.due_date)
+
+            ticket.resolution = resolution
+            ticket.status = 'closed'
+            ticket.resolved_by = request.user
+            ticket.resolved_at = resolved_at
+            ticket.save()
+
+            messages.success(request, 'Ticket resolved successfully!')
+            return redirect('tickets')
+        else:
+            messages.error(request, 'Ticket already resolved')
+            return render(request, 'core/helpdesk/error.html')
+
+    elif request.user.has_perm('can_resolve_ticket'):
+        if ticket.status != 'closed':
+            if resolved_at:
+                try:
+                    resolved_at = datetime.strptime(resolved_at, "%Y-%m-%dT%H:%M")
+                    resolved_at = timezone.make_aware(resolved_at)  # Make it timezone-aware
+                except ValueError:
+                    messages.error(request, "Invalid date format for 'Resolved At'. Please try again.")
+                    return render(request, 'core/helpdesk/error.html')
+            else:
+                resolved_at = timezone.now()  # Default to current time (timezone-aware)
+
+            # Ensure due_date is aware if it is naive
+            if ticket.due_date and ticket.due_date.tzinfo is None:
+                ticket.due_date = timezone.make_aware(ticket.due_date)
+
+            ticket.status = 'closed'
+            ticket.resolved_by = request.user
+            ticket.resolved_at = resolved_at
+            ticket.save()
+
+            messages.success(request, 'Ticket resolved successfully!')
+            return redirect('tickets')
+        else:
+            messages.error(request, 'Ticket already resolved!')
+            return render(request, 'core/helpdesk/error.html')
+
     messages.error(request, 'You do not have permission to resolve this ticket.')
     return render(request, 'core/helpdesk/permission_denied.html')
 
@@ -3333,6 +3646,95 @@ def regions(request):
                     'user_group': user_group,
                     'allowed_roles': allowed_roles})
 
+
+@login_required
+@require_http_methods(["GET"])
+def get_zones(request, region_id):
+    """
+    Return zones for a given region as JSON
+    IMPORTANT: Only returns zones that belong to this specific region
+    """
+    try:
+        region = Region.objects.get(id=region_id)
+        
+        zones = Zone.objects.filter(
+            region_id=region_id
+        ).prefetch_related('terminal_set')
+        
+        zones_data = []
+        for zone in zones:
+            terminal_count = Terminal.objects.filter(
+                zone=zone,
+                region=region
+            ).count()
+            
+            if terminal_count > 0:
+                zones_data.append({
+                    'id': zone.id,
+                    'name': zone.name,
+                    'terminal_count': terminal_count
+                })
+        
+        return JsonResponse({
+            'zones': zones_data,
+            'region_name': region.name
+        })
+        
+    except Region.DoesNotExist:
+        return JsonResponse({'error': f'Region with ID {region_id} not found'}, status=404)
+    except Exception as e:
+        print(f"Error in get_zones: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_terminals(request, zone_id):
+    """
+    Return terminals for a given zone as JSON
+    """
+    try:
+        zone = Zone.objects.select_related('region').get(id=zone_id)
+        
+        terminals = Terminal.objects.filter(
+            zone=zone
+        ).select_related('customer', 'region')
+        
+        terminals_data = []
+        for terminal in terminals:
+            if terminal.region != zone.region:
+                print(f"⚠️ Warning: Terminal {terminal.id} region mismatch!")
+                terminal.region = zone.region
+                terminal.save()
+            
+            terminals_data.append({
+                'id': terminal.id,
+                'branch_name': terminal.branch_name,
+                'cdm_name': terminal.cdm_name,
+                'serial_number': terminal.serial_number,
+                'model': terminal.model,
+                'is_active': terminal.is_active,
+                'customer_name': terminal.customer.name if terminal.customer else None,
+                'region_name': terminal.region.name if terminal.region else None,
+                'zone_name': terminal.zone.name if terminal.zone else None,
+            })
+        
+        return JsonResponse({
+            'terminals': terminals_data,
+            'zone_name': zone.name,
+            'region_name': zone.region.name if zone.region else None
+        })
+        
+    except Zone.DoesNotExist:
+        return JsonResponse({'error': f'Zone with ID {zone_id} not found'}, status=404)
+    except Exception as e:
+        print(f"Error in get_terminals: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e)}, status=500)
+
 @user_passes_test(is_director)
 def delete_region(request, region_id):
     region = get_object_or_404(Region, id=region_id)
@@ -3345,24 +3747,25 @@ def terminals(request):
     form = TerminalForm()
     upload_form = TerminalUploadForm()
 
-    # Get all the required objects to pass to the template
     customers = Customer.objects.all()
     regions = Region.objects.all()
     zones = Zone.objects.all()
 
-    # Handle POST request for terminal creation or CSV upload
     if request.method == 'POST':
-        # Handle terminal creation
         if 'create' in request.POST or 'create_another' in request.POST:
             print("Form submitted")
             form = TerminalForm(request.POST)
             if form.is_valid():
                 print("Form is valid")
                 try:
-                    form.save()
+                    terminal = form.save()
+
+                    if terminal.zone and terminal.zone.region:
+                        terminal.region = terminal.zone.region
+                        terminal.save()
+
                     messages.success(request, "Terminal created successfully.")
 
-                    # Handle the "Create & Add Another" functionality
                     if 'create_another' in request.POST:
                         return redirect('terminals')
 
@@ -3373,7 +3776,7 @@ def terminals(request):
             else:
                 print("Form is not valid")
                 print("Form errors:", form.errors) 
-        # Handle CSV upload for terminals
+        
         elif request.FILES.get('file'):
             upload_form = TerminalUploadForm(request.POST, request.FILES)
             if upload_form.is_valid():
@@ -3411,6 +3814,10 @@ def terminals(request):
                                 model=model,
                                 zone=zone,
                             )
+
+                            if terminal.zone and terminal.zone.region:
+                                terminal.region = terminal.zone.region
+                                terminal.save()
 
                         except Exception as e:
                             print(f"❌ Error on row: {row}")
@@ -3478,6 +3885,9 @@ def edit_terminal(request, terminal_id):
     terminal.region_id = request.POST.get('region')
     terminal.model = request.POST.get('model')
     terminal.zone_id = request.POST.get('zone')
+
+    if terminal.zone and terminal.zone.region:
+        terminal.region = terminal.zone.region
     
     try:
         terminal.save()

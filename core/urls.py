@@ -100,6 +100,8 @@ urlpatterns = [
     path('customers/delete/<int:id>/', views.delete_customer, name='delete_customer'),
 
     path('master-data/regions/', views.regions, name='regions'),
+    path('get_zones/<int:region_id>/', views.get_zones, name='get_zones'),
+    path('get_terminals/<int:zone_id>/', views.get_terminals, name='get_terminals'),
     path('regions/delete/<int:region_id>/', views.delete_region, name='delete_region'),
     path('regions/add/', views.regions, name='add_region'), 
     

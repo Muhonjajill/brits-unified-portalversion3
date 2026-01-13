@@ -15,6 +15,8 @@ body {
     padding: 30px;
     box-sizing: border-box;
     animation: fadeInBackground 0.8s ease-out forwards;
+    max-width: 100%;
+    width: 100%;
 }
 
 /* Main Card Styling */
@@ -23,8 +25,9 @@ body {
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     padding: 40px;
-    max-width: 900px;
+    max-width: 100%;
     width: 100%;
+    margin-top: 3rem;
     transform: translateY(20px);
     opacity: 0;
     animation: slideUp 0.7s ease-out forwards 0.2s;
@@ -45,7 +48,7 @@ body {
 .edit-version-title {
     font-size: 2.5rem;
     font-weight: 800;
-    color: #2c3e50;
+    color: #123692;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -55,7 +58,7 @@ body {
 
 .edit-version-icon {
     font-size: 3.5rem;
-    color: #3498db;
+    color: #123692;
     transform: rotate(-10deg);
     animation: pulseIcon 4s infinite ease-in-out;
     display: inline-block;
@@ -63,13 +66,13 @@ body {
 
 .edit-version-terminal {
     font-size: 1.8rem;
-    color: #3498db;
+    color: #123692;
     text-decoration: none;
     transition: color 0.3s ease-in-out;
 }
 
 .edit-version-terminal:hover {
-    color: #217dbb;
+    color: #123692;
 }
 
 .edit-version-subtitle {
@@ -140,14 +143,14 @@ body {
 
 .form-input:focus {
     outline: none;
-    border-color: #3498db;
+    border-color: #123692;
     box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.2); /* Ring effect */
     transform: translateY(-2px); /* Slight lift */
     background-color: #fefeff;
 }
 
 .form-input:hover {
-    border-color: #a7d9ff;
+    border-color: #123692
 }
 
 /* Form Actions (Buttons) */
@@ -183,12 +186,12 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(45deg, #3498db, #2980b9);
+    background: linear-gradient(45deg, #123692, #172d69);
     color: #fff;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(45deg, #2980b9, #3498db);
+    background: linear-gradient(45deg, #172d69, #123692);
     transform: translateY(-5px) scale(1.03);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }

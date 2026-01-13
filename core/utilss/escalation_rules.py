@@ -237,7 +237,7 @@ def send_new_ticket_notification(ticket):
             <a href="{ticket_url}" 
                style="display: inline-block; background-color: #28a745; color: white; padding: 12px 30px; 
                       text-decoration: none; border-radius: 5px; font-weight: bold;">
-                📋 View & Assign Ticket
+                📋 View Ticket
             </a>
         </div>
         

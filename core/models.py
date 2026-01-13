@@ -6,6 +6,7 @@ from datetime import timedelta
 from core.priority_rules import determine_priority
 from core.utilss.escalation_rules import ZONE_PRIORITY_THRESHOLDS
 from encrypted_model_fields.fields import EncryptedCharField
+import os
 
 
 class EmailOTP(models.Model):
@@ -47,6 +48,24 @@ class File(models.Model):
     passcode = models.CharField(max_length=50, blank=True, null=True)  
     allow_preview = models.BooleanField(default=True)
     allow_download = models.BooleanField(default=True)
+
+    def file_exists(self):
+        """Check if the physical file exists on the filesystem"""
+        try:
+            if self.file and self.file.name:
+                return os.path.exists(self.file.path)
+        except (ValueError, FileNotFoundError):
+            pass
+        return False
+
+    def get_file_extension(self):
+        """Safely get the file extension"""
+        try:
+            if self.file and self.file.name:
+                return os.path.splitext(self.file.name)[1].lower()
+        except (ValueError, FileNotFoundError):
+            pass
+        return ''
 
     def can_user_access(self, user, passcode=None):
         if self.access_level == 'public':
@@ -124,6 +143,12 @@ class Terminal(models.Model):
     def is_custodian(self, user):
         return self.customer.custodian == user
 
+    def save(self, *args, **kwargs):
+        """Auto-sync region with zone's region"""
+        if self.zone and self.zone.region:
+            self.region = self.zone.region
+        super().save(*args, **kwargs)
+
 
 class SystemUser(models.Model):
     username = models.CharField(max_length=100, unique=True)
@@ -136,6 +161,7 @@ class SystemUser(models.Model):
 
 class Zone(models.Model):
     name = models.CharField(max_length=100)
+    region = models.ForeignKey('Region', on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.name
@@ -264,7 +290,8 @@ class VersionComment(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.text[:50]  #  
+        return self.text[:50]  
+        
 class Report(models.Model):
     name = models.CharField(max_length=255)
     category = models.CharField(max_length=50)
@@ -397,7 +424,6 @@ class Ticket(models.Model):
             if not self.current_escalation_level:
                 self.current_escalation_level = guidance['escalation_tier']
 
-        # Auto-priority determination
         if not self.priority:
             self.priority = determine_priority(
                 self.problem_category.name if self.problem_category else "",
@@ -405,7 +431,9 @@ class Ticket(models.Model):
                 self.description
             )
 
-        # ✅ SLA breach check
+        if self.due_date and self.due_date.tzinfo is None:
+            self.due_date = timezone.make_aware(self.due_date)
+
         if self.due_date:
             if self.is_escalated:
                 self.is_sla_breached = True

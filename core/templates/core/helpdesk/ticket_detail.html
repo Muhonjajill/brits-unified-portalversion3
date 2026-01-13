@@ -33,7 +33,7 @@
       <div class="assigned-to-wrapper">
           <strong>Assigned To:</strong>
           {% if is_manager %}
-              <form method="post" class="assigned-form">
+              <form method="post" class="assigned-form" data-spinner="assign"> 
                   {% csrf_token %}
                   <select name="assigned_to" class="form-select form-select-sm">
                       <option value="">-- Select Staff --</option>
@@ -92,9 +92,6 @@
           <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#resolveTicketModal">
             ✅ Resolve Ticket
           </button>
-       
-      {% else %}
-        <span class="badge badge-success">✔️ Resolved</span>
       {% endif %}
 
     </div>
@@ -204,7 +201,7 @@
 <div class="modal fade" id="escalateTicketModal" tabindex="-1" aria-labelledby="escalateTicketModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
-      <form method="post" action="{% url 'escalate_ticket' ticket.id %}">
+      <form method="post" action="{% url 'escalate_ticket' ticket.id %}" data-spinner="escalate">
         {% csrf_token %}
         <div class="modal-header">
           <h5 class="modal-title" id="escalateTicketModalLabel">Escalate Ticket #{{ ticket.id }}</h5>
@@ -247,19 +244,27 @@
 </div>
 
 <!-- Modal: Resolve Ticket with Resolution -->
+<!-- Modal: Resolve Ticket with Resolution -->
 <div class="modal fade" id="resolveTicketModal" tabindex="-1" aria-labelledby="resolveTicketModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
-      <form method="post" action="{% url 'resolve_ticket' ticket.id %}">
+      <form method="post" action="{% url 'resolve_ticket' ticket.id %}" data-spinner="resolve">
         {% csrf_token %}
         <div class="modal-header">
           <h5 class="modal-title" id="resolveTicketModalLabel">Resolve Ticket #{{ ticket.id }}</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
+          <!-- Resolution Statement -->
           <div class="form-group">
             <label for="resolution">Resolution Statement</label>
             <textarea class="form-control" name="resolution" id="resolution" rows="5" placeholder="Describe how the issue was resolved..." required></textarea>
+          </div>
+
+          <!-- Resolved At Date and Time Picker (New Field) -->
+          <div class="form-group mt-3">
+            <label for="resolved_at">Resolved At</label>
+            <input type="datetime-local" class="form-control" name="resolved_at" id="resolved_at" required>
           </div>
         </div>
         <div class="modal-footer">
@@ -270,7 +275,28 @@
     </div>
   </div>
 </div>
+
+<!-- Loading Overlay (GLOBAL) -->
+<div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loader-box">
+        <div class="spinner"></div>
+    </div>
+</div>
+
 {% endblock %}
 {% block extra_js %}
 <script src="{% static 'js/ticketing_dashboard.js' %}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const overlay = document.getElementById("loadingOverlay");
+
+    document.querySelectorAll('form[data-spinner="assign"], form[data-spinner="escalate"], form[data-spinner="resolve"]').forEach(form => {
+        form.addEventListener("submit", function () {
+            overlay.classList.remove("hidden");
+        });
+    });
+});
+</script>
+
 {% endblock %}

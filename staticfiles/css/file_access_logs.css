@@ -1,8 +1,9 @@
 /* Container Styles */
 .logs-container {
-    margin: 20px auto;
+    margin: 0;
     padding: 25px;
-    max-width: 1200px;
+    max-width: 100%;
+    width: 100%;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 20px;
     backdrop-filter: blur(12px);
@@ -19,7 +20,7 @@
 .logs-header h2 {
     font-size: 36px;
     font-weight: 900;
-    background: linear-gradient(90deg, #123692, #4a77ff, #00c6ff);
+    background: linear-gradient(90deg, #123692, #073692);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -43,7 +44,7 @@
 }
 
 .search-bar input[type="text"] {
-    padding: 12px 45px 12px 15px;
+    padding: 12px 15px 12px 15px;
     width: 100%;
     border-radius: 40px;
     border: 1.5px solid #ccc;
@@ -55,7 +56,7 @@
 }
 
 .search-bar input[type="text"]:focus {
-    border-color: #4a77ff;
+    border-color: #073692;
     box-shadow: 0 0 10px rgba(74, 119, 255, 0.4);
     outline: none;
 }
@@ -142,7 +143,7 @@ tr:hover {
     background: linear-gradient(90deg, #ff416c, #ff4b2b, #ff416c);
     background-size: 200% auto;
     color: white;
-    margin-bottom: 15px;
+    margin: 10px;
     box-shadow: 0 4px 12px rgba(255, 65, 108, 0.4);
     animation: gradientMove 6s linear infinite;
 }
@@ -172,7 +173,7 @@ tr:hover {
 }
 
 .pagination a {
-    background: linear-gradient(90deg, #123692, #4a77ff, #00c6ff);
+    background: linear-gradient(90deg, #123692, #073692);
     background-size: 200% auto;
     color: white;
     padding: 8px 16px;
@@ -235,5 +236,49 @@ tr:hover {
     .clear-all-btn {
         width: 100%;
         text-align: center;
+    }
+    table thead {
+        display: none;
+    }
+
+    table, tbody, tr {
+        display: block;
+        width: 100%;
+    }
+
+    tr {
+        background: #fff;
+        margin-bottom: 12px;
+        border-radius: 12px;
+        padding: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
+        padding: 10px 5px;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+    }
+
+    td:last-child {
+        border-bottom: none;
+    }
+
+    /* Add the labels from data-label */
+    td::before {
+        content: attr(data-label);
+        font-weight: bold;
+        color: #123692;
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+
+    /* Fix delete button alignment */
+    .delete-btn {
+        margin-left: 10px;
     }
 }

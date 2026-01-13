@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/create_ticket.css' %}">
+<link rel="stylesheet" href="{% static 'css/searchable-select.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -42,7 +43,18 @@
 
                 <div class="form-group">
                     <label for="{{ form.problem_category.id_for_label }}">Problem Category</label>
-                    {{ form.problem_category }}
+                    <div class="searchable-select-wrapper" data-target="id_problem_category">
+                        <input type="text" 
+                            class="search-input" 
+                            placeholder="Click ▼ or type here to search..."
+                            autocomplete="off">
+                        <span class="dropdown-icon">▼</span>
+                        <div class="options-list"></div>
+                    </div>
+                    <!-- Hide the actual select -->
+                    <div style="display: none;">
+                        {{ form.problem_category }}
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -67,7 +79,16 @@
 
                 <div class="form-group">
                     <label for="id_terminal">Terminal</label>
-                    <select name="terminal" id="id_terminal" class="form-control">
+                    <div class="searchable-select-wrapper" data-target="id_terminal">
+                        <input type="text" 
+                            class="search-input" 
+                            placeholder="Click ▼ or type here to search..."
+                            autocomplete="off">
+                        <span class="dropdown-icon">▼</span>
+                        <div class="options-list"></div>
+                    </div>
+                    <!-- Hide the actual select -->
+                    <select name="terminal" id="id_terminal" class="form-control" style="display: none;">
                         <option value="" selected disabled>-- Select a Terminal --</option>
                         {% for terminal in form.fields.terminal.queryset %}
                         <option value="{{ terminal.id }}"
@@ -106,10 +127,32 @@
 
     </form>
 
+
+    
+</div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay hidden">
+    <div class="loader-box">
+        <div class="spinner">
+            <div class="spinner-inner">
+                <div class="spinner-circle"></div>
+                <div class="spinner-circle"></div>
+                <div class="spinner-circle"></div>
+            </div>
+        </div>
+        <p class="loading-text">Creating ticket...</p>
+        <div class="success hidden">
+            <div class="checkmark">✓</div>
+            <p>Ticket created successfully</p>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/searchable-select.js' %}"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const categorySelect = document.getElementById("id_problem_category");
@@ -118,7 +161,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const customerSelect = document.getElementById("id_customer");
     const regionSelect   = document.getElementById("id_region");
 
-    // Auto-fill region & customer based on terminal
+    const form = document.querySelector(".ticket-form");
+    const overlay = document.getElementById("loadingOverlay");
+    const spinner = overlay.querySelector(".spinner");
+    const loadingText = overlay.querySelector(".loading-text");
+    const success = overlay.querySelector(".success");
+
+    overlay.classList.add("hidden");
+
     if (terminalSelect) {
         terminalSelect.addEventListener('change', function() {
             const terminalId = terminalSelect.value;
@@ -133,7 +183,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Category → Issues mapping
     const issueMapping = {{ issue_mapping|safe }};
     
     function populateIssues(catPk) {
@@ -153,6 +202,34 @@ document.addEventListener("DOMContentLoaded", () => {
         populateIssues(categorySelect.value);
         categorySelect.addEventListener("change", e => populateIssues(e.target.value));
     }
+
+    if (!form) return;
+
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        overlay.classList.remove("hidden");
+        spinner.classList.remove("hidden");
+        loadingText.classList.remove("hidden");
+        success.classList.add("hidden");
+
+        form.querySelectorAll("button").forEach(btn => btn.disabled = true);
+
+        setTimeout(() => {
+            form.submit();  
+        }, 300);
+    });
+
+    {% if ticket_created %}
+        overlay.classList.remove("hidden");
+        spinner.classList.add("hidden");
+        loadingText.classList.add("hidden");
+        success.classList.remove("hidden");
+
+        setTimeout(() => {
+            overlay.classList.add("hidden");
+        }, 2000);
+    {% endif %}
 });
 </script>
 

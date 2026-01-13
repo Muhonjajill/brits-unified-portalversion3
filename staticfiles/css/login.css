@@ -8,10 +8,12 @@
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   height: 100vh;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   background: #f4f6f9;
+  overflow-y: auto;
 }
 
 /* Layout wrapper */
@@ -19,7 +21,8 @@ body {
   display: flex;
   width: 90%;
   max-width: 950px;
-  height: 600px;
+  min-height: 600px;
+  height: auto;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   border-radius: 10px;
   overflow: hidden;
@@ -28,7 +31,7 @@ body {
 
 /* Left branding panel */
 .login-wrapper .left-panel {
-  background: linear-gradient(to bottom right, #ffffff, #e74c3c, #3498db);
+  background: linear-gradient(to bottom, #e74c3c, #073692);
   color: #f8f1f1;
   width: 50%;
   padding: 40px 30px;
@@ -224,12 +227,82 @@ body {
   100% { transform: rotate(360deg); }
 }
 
-/* Mobile Responsiveness */
+/* Tablet / iPad adjustments */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  body {
+    align-items: center; /* Center vertically */
+    padding: 20px;
+    background: #f4f6f9;
+  }
+
+  .login-wrapper {
+    flex-direction: row; /* Keep left/right panels side by side */
+    width: 80%;
+    max-width: 900px;
+    min-height: 500px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+  }
+
+  .login-wrapper .left-panel,
+  .login-wrapper .right-panel {
+    width: 50%; /* Side by side */
+    padding: 30px;
+  }
+
+  .left-panel h1 {
+    font-size: 30px;
+    margin-bottom: 15px;
+  }
+
+  .left-panel p {
+    font-size: 15px;
+  }
+
+  .right-panel h2 {
+    font-size: 26px;
+    margin-bottom: 15px;
+  }
+
+  .right-panel p {
+    font-size: 15px;
+    margin-bottom: 25px;
+  }
+
+  .login-form input {
+    font-size: 15px;
+    padding: 12px;
+  }
+
+  .btn-login {
+    font-size: 15px;
+    padding: 12px;
+  }
+
+  .login-links {
+    font-size: 13px;
+    margin-top: 15px;
+  }
+
+  .login-links .link {
+    font-size: 14px;
+  }
+}
+
 @media screen and (max-width: 768px) {
-  /* Adjust the layout of the login form */
+  body {
+    padding: 10px 0;
+    align-items: flex-start;
+  }
+
   .login-wrapper {
     flex-direction: column;
     height: auto;
+    min-height: auto;
+    margin-top: 20%; 
+    display: flex;
+    justify-content: center;
   }
 
   .login-wrapper .left-panel,
@@ -238,41 +311,40 @@ body {
     padding: 20px;
   }
 
-  /* Left panel adjustments */
   .left-panel h1 {
-    font-size: 26px;  /* Decrease font size */
+    font-size: 26px;
     margin-bottom: 15px;
   }
 
   .left-panel p {
-    font-size: 14px;  /* Adjust paragraph size */
+    font-size: 14px;
   }
 
-  /* Right panel adjustments */
   .right-panel h2 {
-    font-size: 24px; /* Reduced font size */
+    font-size: 24px;
     margin-bottom: 15px;
   }
 
   .right-panel p {
-    font-size: 14px; /* Adjusted font size for smaller screens */
+    font-size: 14px;
   }
 
   .login-form input {
-    font-size: 14px; /* Smaller font for mobile inputs */
+    font-size: 14px;
     padding: 10px;
   }
 
   .btn-login {
-    font-size: 14px;  /* Adjust button font size */
+    font-size: 14px;
     padding: 10px;
   }
 
   .login-links {
-    font-size: 12px;  /* Slightly smaller link text */
+    font-size: 12px;
   }
 
   .login-links .link {
-    font-size: 14px; /* Ensure it's legible */
+    font-size: 14px;
   }
 }
+
