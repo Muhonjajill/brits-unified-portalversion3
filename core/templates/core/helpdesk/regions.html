@@ -271,30 +271,46 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 if (data.terminals && data.terminals.length > 0) {
-                    let html = '<div class="terminals-grid">';
+                    let html = `
+                        <div class="table-responsive">
+                            <table class="terminals-table">
+                                <thead>
+                                    <tr>
+                                        <th>Branch Name</th>
+                                        <th>CDM Name</th>
+                                        <th>Serial Number</th>
+                                        <th>Model</th>
+                                        <th>Customer</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
                     data.terminals.forEach(terminal => {
                         const statusClass = terminal.is_active ? 'active' : 'inactive';
                         const statusText = terminal.is_active ? 'Active' : 'Inactive';
                         const statusIcon = terminal.is_active ? 'fa-check-circle' : 'fa-times-circle';
-                        
+
                         html += `
-                            <div class="terminal-card ${statusClass}">
-                                <div class="terminal-header">
-                                    <h4><i class="fas fa-building"></i> ${terminal.branch_name}</h4>
+                            <tr class="terminal-table-row">
+                                <td><i class="fas fa-building"></i> ${terminal.branch_name}</td>
+                                <td>${terminal.cdm_name}</td>
+                                <td>${terminal.serial_number}</td>
+                                <td>${terminal.model}</td>
+                                <td>${terminal.customer_name || 'N/A'}</td>
+                                <td>
                                     <span class="status-badge ${statusClass}">
                                         <i class="fas ${statusIcon}"></i> ${statusText}
                                     </span>
-                                </div>
-                                <div class="terminal-details">
-                                    <p><strong>CDM Name:</strong> ${terminal.cdm_name}</p>
-                                    <p><strong>Serial Number:</strong> ${terminal.serial_number}</p>
-                                    <p><strong>Model:</strong> ${terminal.model}</p>
-                                    <p><strong>Customer:</strong> ${terminal.customer_name || 'N/A'}</p>
-                                </div>
-                            </div>
+                                </td>
+                            </tr>
                         `;
                     });
-                    html += '</div>';
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
                     terminalsList.innerHTML = html;
                 } else {
                     terminalsList.innerHTML = `

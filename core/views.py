@@ -1057,6 +1057,18 @@ def file_management_dashboard(request):
             if len(recent_files) >= 5:  
                 break
 
+    visible_files = []
+    for file in recent_files:
+        if file.access_level == 'public' or user.is_superuser:
+            file.extension = os.path.splitext(file.file.name)[1] 
+            visible_files.append(file)
+        elif file.access_level == 'restricted' and file.authorized_users.filter(id=user.id).exists() or user.is_superuser:
+            file.extension = os.path.splitext(file.file.name)[1]
+            visible_files.append(file)
+        elif file.access_level == 'confidential' and (file.uploaded_by == user or user.is_superuser):
+            file.extension = os.path.splitext(file.file.name)[1]
+            visible_files.append(file)
+
     can_view_logs = request.user.has_perm('core.view_fileaccesslog')
     
     return render(request, 'core/file_management/dashboard.html', {
@@ -1214,7 +1226,6 @@ def file_list_view(request, category_name=None):
     else:
         files = files.order_by('title')
 
-    # Filter out files that don't exist on filesystem BEFORE pagination
     existing_files = [f for f in files if f.file_exists()]
 
     paginator = Paginator(existing_files, 10)

@@ -21,7 +21,6 @@ class EmailOTP(models.Model):
         def __str__(self):
             return f"{self.user.username} - {self.otp}"
         
-# File Management Models
 class FileCategory(models.Model):
     name = models.CharField(max_length=100, unique=True)
     icon = models.CharField(max_length=255, default='default_icon')
