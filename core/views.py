@@ -62,6 +62,9 @@ from django.conf import settings
 from django.urls import reverse
 
 from django.views.decorators.http import require_http_methods
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 
 def in_group(user, group_name):
     return user.is_authenticated and (user.is_superuser or user.groups.filter(name=group_name).exists())
@@ -490,9 +493,28 @@ def create_user(request):
         profile.id_number = id_number
         profile.save()
 
-        # Add user to the appropriate role group
         group, _ = Group.objects.get_or_create(name=role)
         user.groups.add(group)
+
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+        reset_url = request.build_absolute_uri(
+            reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+        ) 
+        
+        site_url = settings.SITE_URL
+
+        context = {
+            'user': user,
+            'password': password,
+            'role': role,
+            'reset_url': reset_url,
+            'site_url': site_url,
+        }
+        subject = "Welcome to the Platform - Your Account Details"
+        message = render_to_string('email/new_created_user.html', context)
+        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
 
         messages.success(request, f"{role} user created successfully.")
         return redirect('admin_dashboard')
@@ -2862,6 +2884,11 @@ def ticket_detail(request, ticket_id):
                 comment.ticket = ticket
                 comment.created_by = request.user
                 comment.save()
+
+                ticket.updated_by = request.user
+                
+                ticket.save(update_fields=['updated_at', 'updated_by'])
+
                 return redirect('ticket_detail', ticket_id=ticket.id)
 
         elif 'edit_ticket' in request.POST:

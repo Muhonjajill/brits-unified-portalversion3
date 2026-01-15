@@ -161,6 +161,7 @@ ESCALATION_LEVEL_EMAILS = {
 FALLBACK_NEW_TICKET_RECIPIENTS = ["godblessodhiambo@gmail.com"]
 
 NEW_TICKET_SENDER = "godblessodhiambo@gmail.com"
+OPERATIONS_TICKET_RECIPIENTS = ["godblessodhiambo@gmail.com"]
 
 LOGGING = {
     "version": 1,

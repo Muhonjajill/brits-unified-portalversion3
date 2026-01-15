@@ -1,0 +1,239 @@
+/* Reset default browser styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body styles */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f9;
+    padding: 20px;
+}
+
+/* Main container */
+.container {
+    background-color: #ffffff;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Header section with brand color */
+.header {
+    background-color: #123692;
+    color: white;
+    padding: 30px;
+    border-radius: 10px 10px 0 0;
+    margin: -40px -30px 30px -30px;
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.header p {
+    font-size: 14px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* Greeting */
+h2 {
+    font-size: 22px;
+    color: #123692;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+/* Section titles */
+p {
+    font-size: 16px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+/* Account details box */
+.details-box {
+    background-color: #f8f9fa;
+    border-left: 4px solid #123692;
+    padding: 20px;
+    border-radius: 6px;
+    margin: 25px 0;
+}
+
+.details-box h3 {
+    color: #123692;
+    font-size: 18px;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+/* List of user details */
+ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+li {
+    font-size: 16px;
+    color: #343a40;
+    margin-bottom: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+li:last-child {
+    border-bottom: none;
+}
+
+li strong {
+    color: #123692;
+    font-weight: 600;
+    display: inline-block;
+    min-width: 100px;
+}
+
+/* Links */
+a {
+    color: #123692;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+a:hover {
+    color: #172d69;
+    text-decoration: underline;
+}
+
+/* Important message box */
+.important {
+    background-color: #fff3cd;
+    border-left: 4px solid #ffc107;
+    color: #856404;
+    padding: 20px;
+    border-radius: 6px;
+    margin: 25px 0;
+}
+
+.important p {
+    color: #856404;
+    margin: 0;
+}
+
+.important strong {
+    color: #664d03;
+}
+
+/* Button styles */
+.btn {
+    display: inline-block;
+    background-color: #123692;
+    color: white;
+    padding: 12px 30px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
+    margin: 10px 0;
+    transition: background-color 0.3s ease;
+}
+
+.btn:hover {
+    background-color: #172d69;
+    text-decoration: none;
+}
+
+.btn-block {
+    display: block;
+    text-align: center;
+    width: 100%;
+}
+
+/* Platform link box */
+.platform-link {
+    background-color: #e9ecef;
+    padding: 20px;
+    border-radius: 6px;
+    text-align: center;
+    margin: 25px 0;
+}
+
+.platform-link p {
+    margin-bottom: 10px;
+    color: #343a40;
+    font-weight: 600;
+}
+
+/* Footer section */
+.footer {
+    text-align: center;
+    font-size: 14px;
+    color: #6c757d;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.footer p {
+    font-size: 14px;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.footer a {
+    color: #123692;
+    font-weight: normal;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+/* Company name highlight */
+.company-name {
+    color: #123692;
+    font-weight: 600;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 30px 20px;
+    }
+
+    .header {
+        padding: 20px;
+        margin: -30px -20px 20px -20px;
+    }
+
+    .header h1 {
+        font-size: 20px;
+    }
+
+    h2 {
+        font-size: 18px;
+    }
+
+    p, li {
+        font-size: 14px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}

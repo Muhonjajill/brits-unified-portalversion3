@@ -182,6 +182,26 @@ def send_new_ticket_notification(ticket):
     from django.urls import reverse
     from django.core.mail import EmailMultiAlternatives
     
+    logger.info(f"=== TICKET NOTIFICATION DEBUG ===")
+    logger.info(f"Ticket ID: {ticket.id}")
+    logger.info(f"Ticket has brts_unit: {ticket.brts_unit is not None}")
+    if ticket.brts_unit:
+        logger.info(f"Unit name: '{ticket.brts_unit.name}'")
+        logger.info(f"Unit name repr: {repr(ticket.brts_unit.name)}")
+    logger.info(f"=== END DEBUG ===")
+    
+    if ticket.brts_unit and ticket.brts_unit.name.lower() == "remote support":
+        logger.info(f"✅ Ticket #{ticket.id} is for Remote Support unit - skipping email notification")
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "escalations",
+            {
+                "type": "new_ticket_notification",
+                "ticket": serialize_ticket(ticket),
+            }
+        )
+        return  
+    
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         "escalations",
@@ -193,7 +213,6 @@ def send_new_ticket_notification(ticket):
 
     ticket_url = f"{settings.SITE_URL}{reverse('ticket_detail', kwargs={'ticket_id': ticket.id})}"
     
-    # Get creator name
     created_by_name = ticket.created_by.get_full_name() if ticket.created_by else "Unknown"
     if not created_by_name or created_by_name.strip() == "":
         created_by_name = ticket.created_by.username if ticket.created_by else "Unknown"
@@ -248,14 +267,31 @@ def send_new_ticket_notification(ticket):
     </html>
     """
 
-    recipients = list(
-        User.objects.filter(groups__name__in=["Admin", "Director", "Manager", "Staff"])
-        .exclude(email__isnull=True)
-        .values_list("email", flat=True)
-    )
+    unit_name_lower = ticket.brts_unit.name.lower() if ticket.brts_unit else ""
+    
+    if unit_name_lower == "technical/operations support":
+        logger.info(f"✅ Ticket #{ticket.id} is for Technical/Operations Support unit")
+        operations_emails = getattr(settings, 'OPERATIONS_TICKET_RECIPIENTS', [])
+        recipients = []
+        
+        for email in operations_emails:
+            if email: 
+                recipients.append(email)
+        
+        logger.info(f"Sending new ticket notification to Operations Support: {recipients}")
+    else:
+        logger.info(f"✅ Ticket #{ticket.id} - sending to regular staff (unit: {ticket.brts_unit.name if ticket.brts_unit else 'None'})")
+        recipients = list(
+            User.objects.filter(groups__name__in=["Admin", "Director", "Manager", "Staff"])
+            .exclude(email__isnull=True)
+            .exclude(email='')
+            .values_list("email", flat=True)
+        )
+        logger.info(f"Sending new ticket notification to staff users: {recipients}")
 
     if not recipients:
-        recipients = [settings.DEFAULT_FROM_EMAIL]
+        recipients = getattr(settings, 'FALLBACK_NEW_TICKET_RECIPIENTS', [settings.DEFAULT_FROM_EMAIL])
+        logger.warning(f"No recipients found, using fallback: {recipients}")
 
     sender = getattr(settings, "NEW_TICKET_SENDER", settings.DEFAULT_FROM_EMAIL)
 
@@ -263,9 +299,9 @@ def send_new_ticket_notification(ticket):
         email = EmailMultiAlternatives(subject, text_message, sender, recipients)
         email.attach_alternative(html_message, "text/html")
         email.send()
-        logger.info(f"✅ New ticket email sent for Ticket #{ticket.id}")
+        logger.info(f"✅ New ticket email sent for Ticket #{ticket.id} to {len(recipients)} recipient(s)")
     except Exception as e:
-        logger.error(f"❌ Failed to send new ticket email: {str(e)}")
+        logger.error(f"❌ Failed to send new ticket email for Ticket #{ticket.id}: {str(e)}")
         
 
 def send_unassigned_ticket_notification(ticket):

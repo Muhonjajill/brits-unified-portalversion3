@@ -14,6 +14,7 @@ from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.db import transaction
 from core.utilss.escalation_rules import send_new_ticket_notification
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -234,6 +235,12 @@ def create_ticket_notifications(sender, instance, created, **kwargs):
     
     logger.info(f">>> create_ticket_notifications fired for ticket {instance.pk}")
     
+    unit_name_lower = instance.brts_unit.name.lower() if instance.brts_unit else ""
+    
+    if unit_name_lower == "remote support":
+        logger.info(f"Ticket #{instance.pk} is for Remote Support unit - skipping all notifications")
+        return
+    
     users_to_notify = set()
 
     if instance.created_by:
@@ -242,10 +249,31 @@ def create_ticket_notifications(sender, instance, created, **kwargs):
     if instance.assigned_to:
         users_to_notify.add(instance.assigned_to)
 
-    staff_users = User.objects.filter(
-        groups__name__in=['Admin', 'Director', 'Manager', 'Staff']
-    ).distinct()
-    users_to_notify.update(staff_users)
+    if unit_name_lower == "technical/operations support":
+        logger.info(f"Ticket #{instance.pk} is for Technical/Operations Support unit")
+        
+        operations_emails = getattr(settings, 'OPERATIONS_TICKET_RECIPIENTS', [])
+        for email in operations_emails:
+            try:
+                operations_user = User.objects.get(email=email)
+                users_to_notify.add(operations_user)
+                logger.info(f"Added operations support user: {email}")
+            except User.DoesNotExist:
+                logger.warning(f"Operations support user ({email}) not found in database")
+    else:
+        """operations_emails = getattr(settings, 'OPERATIONS_TICKET_RECIPIENTS', [])
+        for email in operations_emails:
+            try:
+                operations_user = User.objects.get(email=email)
+                users_to_notify.add(operations_user)
+                logger.info(f"Added operations support user: {email}")
+            except User.DoesNotExist:
+                logger.warning(f"Operations support user ({email}) not found in database")"""
+                
+        staff_users = User.objects.filter(
+            groups__name__in=['Admin', 'Director', 'Manager', 'Staff']
+        ).distinct()
+        users_to_notify.update(staff_users)
 
     if instance.customer and getattr(instance.customer, "overseer", None):
         users_to_notify.add(instance.customer.overseer)
