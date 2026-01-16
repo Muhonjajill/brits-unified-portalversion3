@@ -21,11 +21,11 @@
 .searchable-select-wrapper input.search-input {
     width: 100%;
     padding: 10px;
-    border: 1px solid var(--border-color);;
-    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
     font-size: 1rem;
     box-sizing: border-box;
-    background-color: #e9f2ff; 
+    background-color: #f8f9fa;  /* ← Very light gray, matches light theme */
     color: var(--text-color);
     cursor: text;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
@@ -35,16 +35,16 @@
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(18, 54, 146, 0.1);
+    background-color: #ffffff;  /* Pure white on focus for clarity */
 }
-
 .searchable-select-wrapper input.search-input:disabled {
     background-color: #e9ecef;
     cursor: not-allowed;
 }
 
-.searchable-select-wrapper input.search-input::placeholder {
-    color: #999;
-    font-style: italic;
+.searchable-select-wrapper input.search-input:disabled {
+    background-color: #e9ecef;  /* Light gray when disabled */
+    cursor: not-allowed;
 }
 
 /* Dropdown Icon */
@@ -175,50 +175,6 @@
     
     .searchable-select-wrapper input.search-input {
         font-size: 16px; /* Prevents zoom on iOS */
-    }
-}
-
-/* Dark Mode Support (Optional) */
-@media (prefers-color-scheme: dark) {
-    .searchable-select-wrapper input.search-input {
-        background-color: #2d2d2d;
-        border-color: #444;
-        color: #fff;
-    }
-    
-    .searchable-select-wrapper input.search-input:focus {
-        border-color: #172d69;
-        box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
-    }
-    
-    .searchable-select-wrapper .options-list {
-        background-color: #2d2d2d;
-        border-color: #444;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    }
-    
-    .searchable-select-wrapper .option-item {
-        color: #e0e0e0;
-        border-bottom-color: #444;
-    }
-    
-    .searchable-select-wrapper .option-item:hover,
-    .searchable-select-wrapper .option-item.focused {
-        background-color: #3a3a3a;
-    }
-    
-    .searchable-select-wrapper .option-item.selected {
-        background-color: #1e3a5f;
-        color: #4a90e2;
-    }
-    
-    .searchable-select-wrapper .option-item.disabled {
-        color: #666;
-        background-color: #262626;
-    }
-    
-    .searchable-select-wrapper .no-results {
-        color: #888;
     }
 }
 

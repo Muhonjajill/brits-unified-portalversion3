@@ -162,6 +162,12 @@ class TicketForm(forms.ModelForm):
         required=True,
         widget=forms.Select(attrs={"class": "form-control"})
     )
+    terminal = forms.ModelChoiceField(
+        queryset=Terminal.objects.all(),
+        required=True,
+        empty_label="Select Terminal",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
     custom_created_at = forms.DateTimeField(
         required=False,
         widget=forms.DateTimeInput(attrs={
