@@ -21,6 +21,12 @@
       <span class="badge" id="notificationCount" style="display: none;">0</span>
 
       <div class="dropdown-menu notifications-dropdown" id="notificationsDropdown">
+        <div class="notifications-header">
+          <h6>Notifications</h6>
+          <button id="markAllReadBtn" class="btn-mark-all" title="Mark all as read">
+            <i class="fas fa-check-double"></i> Mark all read
+          </button>
+        </div>
         <div id="notificationsList">
           <p class="empty">No tickets</p>
         </div>
@@ -217,11 +223,6 @@ function markNotificationRead(notificationId) {
   .catch((err) => console.error("Error marking read:", err));
 }
 
-
-
-
-
-
 // Update notification count after marking as read
 function updateNotificationCount() {
   const countEl = document.getElementById("notificationCount");
@@ -234,26 +235,28 @@ function updateNotificationCount() {
   }
 }
 
-function renderNotifications(tickets, totalCount) {
-  const countEl = document.getElementById("notificationCount");
-  const listEl = document.getElementById("notificationsList");
+  function renderNotifications(tickets, totalCount) {
+    const countEl = document.getElementById("notificationCount");
+    const listEl = document.getElementById("notificationsList");
+    const markAllBtn = document.getElementById("markAllReadBtn");
 
-  if (!countEl || !listEl) return;
+    if (!countEl || !listEl) return;
 
-  listEl.innerHTML = "";
+    listEl.innerHTML = "";
 
-  if (!tickets || tickets.length === 0) {
-    listEl.innerHTML = `<div class="dropdown-item text-muted empty">No unread tickets</div>`;
-    countEl.style.display = "none";
-    return;
+    if (!tickets || tickets.length === 0) {
+      listEl.innerHTML = `<div class="dropdown-item text-muted empty">No unread tickets</div>`;
+      countEl.style.display = "none";
+      if (markAllBtn) markAllBtn.disabled = true; 
+      return;
+    }
+
+    tickets.filter(ticket => !ticket.is_read).forEach((t) => listEl.appendChild(createNotificationItem(t)));
+
+    countEl.textContent = totalCount;
+    countEl.style.display = "inline-block";
+    if (markAllBtn) markAllBtn.disabled = totalCount === 0; 
   }
-
-  // Only show notifications that are unread
-  tickets.filter(ticket => !ticket.is_read).forEach((t) => listEl.appendChild(createNotificationItem(t)));
-
-  countEl.textContent = totalCount;
-  countEl.style.display = "inline-block";
-}
 
 
   function handleNewTicket(ticket) {
@@ -325,6 +328,68 @@ function renderNotifications(tickets, totalCount) {
     }, 10000);
   }
 
+  // ==== Mark All as Read ====
+  const markAllReadBtn = document.getElementById("markAllReadBtn");
+  if (markAllReadBtn) {
+    markAllReadBtn.addEventListener("click", async function(e) {
+      e.preventDefault();
+      
+      const countEl = document.getElementById("notificationCount");
+      const currentCount = parseInt(countEl.textContent || "0", 10);
+      
+      if (currentCount === 0) {
+        alert("No notifications to mark as read");
+        return;
+      }
+      
+      // Disable button while processing
+      markAllReadBtn.disabled = true;
+      markAllReadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Marking...';
+      
+      try {
+        const response = await fetch("{% url 'mark_all_notifications_read' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Clear the notifications list
+          const listEl = document.getElementById("notificationsList");
+          if (listEl) {
+            listEl.innerHTML = '<div class="dropdown-item text-muted empty">No unread tickets</div>';
+          }
+          
+          // Hide the badge
+          countEl.style.display = "none";
+          countEl.textContent = "0";
+          
+          // Optional: Show success message
+          console.log(data.message);
+          
+          // Close the dropdown after a short delay
+          setTimeout(() => {
+            const menu = document.getElementById("notificationsDropdown");
+            if (menu) menu.classList.remove("show");
+          }, 500);
+        } else {
+          console.error("Failed to mark all as read");
+          alert("Failed to mark notifications as read. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error marking all as read:", error);
+        alert("An error occurred. Please try again.");
+      } finally {
+        // Re-enable button
+        markAllReadBtn.disabled = false;
+        markAllReadBtn.innerHTML = '<i class="fas fa-check-double"></i> Mark all read';
+      }
+    });
+  }
   // ==== Dropdown Toggle ====
   const bell = document.getElementById("notificationBell");
   const menu = document.getElementById("notificationsDropdown");

@@ -337,6 +337,96 @@
   font-size: 16px;
 }
 
+/* Notifications header with Mark All Read button */
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 2px solid #e0e0e0;
+  background-color: #f8f9fa;
+}
+
+.notifications-header h6 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #343a40;
+}
+
+.btn-mark-all {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-mark-all:hover {
+  background-color: #e7f1ff;
+  color: #0056b3;
+}
+
+.btn-mark-all:disabled {
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn-mark-all i {
+  font-size: 0.9rem;
+}/* Notifications header with Mark All Read button */
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 2px solid #e0e0e0;
+  background-color: #f8f9fa;
+}
+
+.notifications-header h6 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #343a40;
+}
+
+.btn-mark-all {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-mark-all:hover {
+  background-color: #e7f1ff;
+  color: #0056b3;
+}
+
+.btn-mark-all:disabled {
+  color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn-mark-all i {
+  font-size: 0.9rem;
+}
+
 @media (min-width: 769px) {
   .nav-items { /* center area; optional */ flex: 1; display:flex; justify-content:center; align-items:center; }
 }

@@ -137,5 +137,6 @@ urlpatterns = [
 
     path('notifications/', views.get_notifications, name='get_notifications'),
     path("notifications/mark_read/<int:notification_id>/", views.mark_notification_read, name="mark_notification_read"),
+    path('notifications/mark_all_read/', views.mark_all_notifications_read, name='mark_all_notifications_read'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

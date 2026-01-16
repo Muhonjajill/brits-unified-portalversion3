@@ -2,51 +2,152 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container-fluid px-4" style="margin-top: 80px;">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-primary"><i class="fas fa-exclamation-circle"></i> Escalated Tickets</h2>
-        <span class="badge bg-danger fs-6">{{ tickets|length }} Active</span>
+        <h2 class="fw-bold" style="color: #123692;"><i class="fas fa-exclamation-circle"></i> Escalated Tickets</h2>
+        <span class="badge bg-danger fs-6">{{ total_count }} Active</span>
     </div>
 
     {% if tickets %}
-        <div class="row g-4">
-            {% for ticket in tickets %}
-                <div class="col-md-6 col-lg-4">
-                    <div class="card shadow-sm border-0 rounded-3 h-100 hover-card">
-                        <div class="card-body">
-                            <h5 class="card-title text-dark fw-bold">{{ ticket.title }}</h5>
-                            
-                            <!-- Priority Badge -->
-                            <p class="mb-2">
-                                <strong>Priority:</strong>
-                                <span class="badge badge-{{ ticket.priority }}">
-                                    {{ ticket.get_priority_display }}
-                                </span>
-                            </p>
-
-                            <!-- Escalation Info -->
-                            <p class="text-muted small mb-2">
-                                <i class="bi bi-arrow-up-circle text-danger"></i> Escalated to: 
-                                <span class="badge bg-warning text-dark">{{ ticket.get_current_escalation_level_display }}</span>
-                            </p>
-
-                            <!-- Short Description -->
-                            <p class="card-text">
-                                {{ ticket.description|truncatewords:20 }}
-                            </p>
-                        </div>
-                        <div class="card-footer bg-light border-0 d-flex justify-content-between">
-                            <span class="text-muted small">
-                                <i class="bi bi-clock-history"></i> {{ ticket.created_at|date:"M d, Y H:i" }}
-                            </span>
-                            <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-outline-primary">
-                                View Details
-                            </a>
-                        </div>
-                    </div>
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-muted fw-normal small">TICKET ID</th>
+                                <th scope="col" class="py-3 text-muted fw-normal small">TITLE</th>
+                                <th scope="col" class="py-3 text-muted fw-normal small">PRIORITY</th>
+                                <th scope="col" class="py-3 text-muted fw-normal small">ESCALATION LEVEL</th>
+                                <th scope="col" class="py-3 text-muted fw-normal small">CREATED</th>
+                                <th scope="col" class="py-3 text-muted fw-normal small">ESCALATED</th>
+                                <th scope="col" class="text-center py-3 text-muted fw-normal small">ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ticket in tickets %}
+                                <tr class="border-bottom">
+                                    <td class="px-4 py-3">
+                                        <span class="fw-semibold text-dark">{{ ticket.id }}</span>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="fw-semibold text-dark mb-1">{{ ticket.title|truncatechars:50 }}</div>
+                                        <small class="text-muted">{{ ticket.description|truncatewords:10 }}</small>
+                                    </td>
+                                    <td class="py-3">
+                                        {% if ticket.priority == 'critical' %}
+                                            <span class="status-badge badge-critical">
+                                                Critical
+                                            </span>
+                                        {% elif ticket.priority == 'high' %}
+                                            <span class="status-badge badge-high">
+                                                High
+                                            </span>
+                                        {% elif ticket.priority == 'medium' %}
+                                            <span class="status-badge badge-medium">
+                                                Medium
+                                            </span>
+                                        {% else %}
+                                            <span class="status-badge badge-low">
+                                                Low
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-3">
+                                        <span class="status-badge badge-escalated">
+                                            {{ ticket.get_current_escalation_level_display }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="text-muted small">
+                                            <div><i class="bi bi-calendar3 me-1"></i>{{ ticket.created_at|date:"M d, Y" }}</div>
+                                            <div><i class="bi bi-clock me-1"></i>{{ ticket.created_at|date:"H:i" }}</div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="text-danger small">
+                                            <i class="bi bi-arrow-up-circle-fill me-1"></i>{{ ticket.escalated_at|date:"M d, Y H:i" }}
+                                        </div>
+                                    </td>
+                                    <td class="text-center py-3">
+                                        <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-outline-primary px-3">
+                                            <i class="bi bi-eye me-1"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-            {% endfor %}
+            </div>
         </div>
+
+        <!-- Pagination -->
+        {% if tickets.has_other_pages %}
+            <nav aria-label="Ticket pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <!-- Previous Button -->
+                    {% if tickets.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ tickets.previous_page_number }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo;&laquo;</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">&laquo;</span>
+                        </li>
+                    {% endif %}
+
+                    <!-- Page Numbers -->
+                    {% for num in tickets.paginator.page_range %}
+                        {% if tickets.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > tickets.number|add:'-3' and num < tickets.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Next Button -->
+                    {% if tickets.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ tickets.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ tickets.paginator.num_pages }}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">&raquo;</span>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">&raquo;&raquo;</span>
+                        </li>
+                    {% endif %}
+                </ul>
+                
+                <!-- Pagination Info -->
+                <p class="text-center text-muted small">
+                    Showing {{ tickets.start_index }} to {{ tickets.end_index }} of {{ total_count }} tickets
+                </p>
+            </nav>
+        {% endif %}
     {% else %}
         <div class="alert alert-success text-center p-4 rounded-3 shadow-sm">
             <i class="bi bi-check-circle-fill text-success fs-3"></i>
@@ -56,21 +157,128 @@
 </div>
 
 <style>
-    .hover-card {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    /* Clean table styling */
+    .table {
+        background-color: white;
     }
-    .hover-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    
+    .table thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #e9ecef;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        font-size: 0.75rem;
     }
-    /* Match your detail page priority badge styles */
-    .badge-high { background-color: #dc3545; }    /* Red */
-    .badge-medium { background-color: #fd7e14; } /* Orange */
-    .badge-low { background-color: #198754; }    /* Green */
+    
+    .table tbody tr {
+        transition: background-color 0.15s ease;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .table tbody tr:last-child {
+        border-bottom: none;
+    }
+    
+    /* Status Badge Base Style - Matching your image */
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px; /* Full pill shape */
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-align: center;
+        white-space: nowrap;
+        border: none;
+    }
+    
+    /* Priority Badges */
+    .badge-critical {
+        background-color: #e74c3c;
+        color: white;
+    }
+    
+    .badge-high { 
+        background-color: #dc9c35;
+        color: white;
+    }    
+    
+    .badge-medium { 
+        background-color: #007bff;
+        color: #000;
+    } 
+    
+    .badge-low { 
+        background-color: #17b845;
+        color: white;
+    }
+    
+    /* Escalation Badge */
+    .badge-escalated {
+        background-color: #ff9800;
+        color: white;
+    }
+    
+    /* Button styling */
+    .btn-outline-primary {
+        border-color: #123692;
+        color: #123692;
+        font-weight: 500;
+        transition: all 0.15s ease;
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: #172d69;
+        border-color: #172d69;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+    }
+    
+    /* Pagination styling */
+    .pagination {
+        margin-top: 1.5rem;
+    }
+    
+    .pagination .page-link {
+        color: #123692;
+        border: 1px solid #dee2e6;
+        padding: 0.5rem 0.75rem;
+        margin: 0 0.125rem;
+        border-radius: 0.375rem;
+        transition: all 0.15s ease;
+    }
+    
+    .pagination .page-link:hover {
+        background-color: #e7f1ff;
+        border-color: #123692;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: #123692;
+        border-color: #123692;
+        color: white;
+        box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
+    }
+    
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
+    
+    /* Card styling */
+    .card {
+        border: 1px solid #e9ecef;
+    }
 </style>
 
 {% endblock %}
 
-{% block extra_js%}
+{% block extra_js %}
 <script src="{% static 'js/ticketing_dashboard.js' %}"></script>
-{% endblock%}
+{% endblock %}

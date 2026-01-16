@@ -2792,7 +2792,51 @@ def mark_notification_read(request, notification_id):
     return JsonResponse({"success": False, "info": "Notification not found"})
 
 
+@login_required
+@require_POST
+def mark_all_notifications_read(request):
+    """Mark all unread notifications for the current user as read"""
+    profile = getattr(request.user, "profile", None)
+    qs = UserNotification.objects.none()
 
+    # Internal staff: only notifications for this user
+    if request.user.is_superuser or request.user.groups.filter(
+        name__in=['Admin','Director','Manager','Staff']
+    ).exists():
+        qs = UserNotification.objects.filter(user=request.user, is_read=False)
+
+    # Overseer: notifications for their customers
+    elif Customer.objects.filter(overseer=request.user).exists():
+        overseer_customers = Customer.objects.filter(overseer=request.user)
+        qs = UserNotification.objects.filter(
+            ticket__customer__in=overseer_customers,
+            user=request.user,
+            is_read=False
+        )
+
+    # Custodian: notifications for the terminal
+    elif profile and profile.terminal:
+        custodian_terminal = profile.terminal
+        if custodian_terminal.custodian == request.user:
+            qs = UserNotification.objects.filter(
+                ticket__terminal=custodian_terminal,
+                user=request.user,
+                is_read=False
+            )
+
+    # Mark all as read
+    count = qs.update(is_read=True)
+
+    logger.info(
+        "Marked %d notifications as read for user=%s",
+        count, request.user
+    )
+
+    return JsonResponse({
+        "success": True,
+        "count": count,
+        "message": f"{count} notification(s) marked as read"
+    })
 
 @login_required
 def escalated_tickets_page(request):
@@ -2819,8 +2863,21 @@ def escalated_tickets_page(request):
 
     tickets_qs = tickets_qs.order_by('-escalated_at')
 
+    # Pagination
+    paginator = Paginator(tickets_qs, 10)  
+    page_number = request.GET.get('page', 1)
+    
+    try:
+        tickets = paginator.page(page_number)
+    except PageNotAnInteger:
+        tickets = paginator.page(1)
+    except EmptyPage:
+        tickets = paginator.page(paginator.num_pages)
+
     return render(request, "core/helpdesk/escalated_list.html", {
-        "tickets": tickets_qs,
+        #"tickets": tickets_qs,
+        "tickets": tickets,
+        "total_count": tickets_qs.count(),
     })
 
 
