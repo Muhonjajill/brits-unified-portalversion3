@@ -2446,10 +2446,15 @@ def tickets(request):
     # Apply search and status filters if applicable
     if query:
         tickets_qs = tickets_qs.filter(
-            Q(title__icontains=query) |
-            Q(description__icontains=query) |
-            Q(problem_category__name__icontains=query)
+            Q(id__icontains=query) |                          
+            Q(title__icontains=query) |                       
+            Q(description__icontains=query) |                 
+            Q(terminal__branch_name__icontains=query) |       
+            Q(status__icontains=query) |                      
+            Q(assigned_to__username__icontains=query) |      
+            Q(problem_category__name__icontains=query)        
         )
+
 
     if status_filter:
         if status_filter == 'escalated':
@@ -3937,7 +3942,7 @@ def terminals(request):
             Q(zone__name__icontains=query)
         )
     paginator = Paginator(all_terminals, 10)  
-    page_number = request.GET.get('page')
+    page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
 
     user_group = None
@@ -3967,6 +3972,7 @@ def terminals(request):
         'zones': zones,
         'user_group': user_group,
         'allowed_roles': allowed_roles,
+        'search_query': query,
     })
 
 
