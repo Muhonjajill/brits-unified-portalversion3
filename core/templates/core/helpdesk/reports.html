@@ -14,7 +14,7 @@
   <p>View system reports here.</p>
 
     <!-- Filters -->
-    <form method="get" class="report-filters">
+    <form method="get" class="report-filters" id="reportFilterForm">
       <div class="form-header">
         <h3>Filter Options</h3>
         <div class="button-row">
@@ -273,6 +273,36 @@
       row.style.opacity = 1;
       row.style.transform = 'translateY(0)';
     }, 200 + 70 * i);
+  });
+
+  const form = document.getElementById('reportFilterForm');
+
+  form.querySelectorAll('select').forEach(select => {
+    select.addEventListener('change', () => {
+      form.submit();
+    });
+  });
+
+  const debounce = (fn, delay = 400) => {
+    let timeout;
+    return (...args) => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => fn(...args), delay);
+    };
+  };
+
+  const terminalInput = document.getElementById('terminal-search');
+  if (terminalInput) {
+    terminalInput.addEventListener(
+      'input',
+      debounce(() => form.submit())
+    );
+  }
+
+  document.querySelectorAll('.date-picker').forEach(input => {
+    input.addEventListener('change', () => {
+      form.submit();
+    });
   });
 </script>
 

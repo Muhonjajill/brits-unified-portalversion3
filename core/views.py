@@ -217,6 +217,10 @@ def admin_dashboard(request):
                     messages.error(request, "Invalid customer ID.")
                 else:
                     customer = get_object_or_404(Customer, id=customer_id)
+                    removed_overseer = customer.overseer
+                    if not removed_overseer:
+                        messages.warning(request, "No overseer was assigned.")
+                        return redirect('admin_dashboard')
                     customer.overseer = None
                     customer.save()
                     messages.success(request, f"Overseer removed from {customer.name}.")
@@ -228,6 +232,10 @@ def admin_dashboard(request):
                     messages.error(request, "Invalid terminal ID.")
                 else:
                     terminal = get_object_or_404(Terminal, id=terminal_id)
+                    removed_custodian = terminal.custodian
+                    if not removed_custodian:
+                        messages.warning(request, "No custodian was assigned.")
+                        return redirect('admin_dashboard')
                     terminal.custodian = None
                     terminal.save()
                     Profile.objects.filter(terminal=terminal).update(terminal=None, customer=None)
@@ -2416,9 +2424,13 @@ def tickets(request):
         print(f"Authenticated user: {request.user.username}")
         profile = getattr(request.user, 'profile', None)
 
-        if request.user.is_superuser or request.user.groups.filter(name__in=['Director', 'Manager', 'Staff']).exists():
+        if request.user.is_superuser or request.user.groups.filter(name__in=['Director', 'Manager']).exists():
             print("User has internal access (superuser/staff)")
             tickets_qs = Ticket.objects.all()
+
+        elif request.user.groups.filter(name='Staff').exists():
+            print(f"User is Staff - showing only assigned tickets for {request.user.username}")
+            tickets_qs = Ticket.objects.filter(assigned_to=request.user)
 
         elif Customer.objects.filter(overseer=request.user).exists():
             customer = Customer.objects.filter(overseer=request.user).first()
@@ -2465,6 +2477,9 @@ def tickets(request):
     # Order by creation date
     tickets_qs = tickets_qs.order_by('-created_at')
 
+    if request.GET.get('export') == 'excel':
+        return export_tickets_to_excel(tickets_qs)
+
     # Pagination
     paginator = Paginator(tickets_qs, 10)
     page_obj = paginator.get_page(page_number)
@@ -2494,9 +2509,36 @@ def tickets(request):
         'allowed_roles':allowed_roles,
     })
 
+def export_tickets_to_excel(tickets):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Tickets"
+
+    ws.append([
+        "ID", "Terminal", "Issue", "Status",
+        "Assigned To", "Created At"
+    ])
+
+    for ticket in tickets:
+        ws.append([
+            ticket.id,
+            ticket.terminal.branch_name if ticket.terminal else "",
+            ticket.title,
+            ticket.get_status_display(),
+            ticket.assigned_to.username if ticket.assigned_to else "",
+            ticket.created_at.strftime("%Y-%m-%d %H:%M"),
+        ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = "attachment; filename=tickets.xlsx"
+    wb.save(response)
+
+    return response
+
 @login_required(login_url='login')
 def create_ticket(request):
-    # Determine the user's group and allowed roles
     user_group = None
     allowed_roles = []
     if request.user.groups.exists():
@@ -2508,13 +2550,20 @@ def create_ticket(request):
     else:
         allowed_roles = ['Staff']
 
+    is_manager_or_above = request.user.groups.filter(name__in=['Manager', 'Director']).exists()
+    is_staff = request.user.groups.filter(name='Staff').exists()
+    
+    assignable_users = None
+    if is_manager_or_above:
+        assignable_users = User.objects.filter(groups__name__in=['Staff', 'Manager', 'Director']).distinct()
+    elif is_staff:
+        assignable_users = User.objects.filter(id=request.user.id)
+
     ticket_created = False 
-    # Handle form submission
     if request.method == 'POST':
         form = TicketForm(request.POST, user=request.user)
         if form.is_valid():
             ticket = form.save(commit=False)
-            # Prevent using an inactive terminal
             if ticket.terminal and not ticket.terminal.is_active:
                 messages.error(
                     request,
@@ -2522,17 +2571,73 @@ def create_ticket(request):
                     "Please enable it before creating a ticket."
                 )
                 return redirect('create_ticket')
-            # Set audit fields
             ticket.created_by = request.user
             custom_date = form.cleaned_data.get('custom_created_at')
             if custom_date:
                 ticket.created_at = custom_date
-            # Auto-assign customer & region if a terminal is chosen
             if ticket.terminal:
                 ticket.customer = ticket.terminal.customer
                 ticket.region = ticket.terminal.region
+            
+            assigned_to_id = request.POST.get('assigned_to')
+            if assigned_to_id and (is_manager_or_above or is_staff):
+                if is_staff:
+                    if int(assigned_to_id) == request.user.id:
+                        ticket.assigned_to = request.user
+                elif is_manager_or_above:
+                    try:
+                        assignee = User.objects.get(
+                            id=assigned_to_id,
+                            groups__name__in=['Staff', 'Manager', 'Director']
+                        )
+                        ticket.assigned_to = assignee
+                    except User.DoesNotExist:
+                        pass
+            
             ticket.save()
-            # Broadcast the new ticket over WebSocket
+            
+            if ticket.assigned_to:
+                subject = f"🎫 Ticket #{ticket.id} Assigned to You"
+                text_content = (
+                    f"Hello {ticket.assigned_to.get_full_name() or ticket.assigned_to.username},\n\n"
+                    f"You have been assigned ticket #{ticket.id} - {ticket.title}.\n"
+                    f"Please log in to the system to view and resolve it:\n"
+                    f"{request.build_absolute_uri(reverse('ticket_detail', args=[ticket.id]))}\n\n"
+                    f"Thank you."
+                )
+                html_content = render_to_string(
+                    'email/ticket_detail_email.html',
+                    {
+                        'ticket': ticket,
+                        'comments': [],
+                        'ticket_url': request.build_absolute_uri(reverse('ticket_detail', args=[ticket.id]))
+                    }
+                )
+
+                msg = EmailMultiAlternatives(
+                    subject,
+                    text_content,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [ticket.assigned_to.email]
+                )
+                msg.attach_alternative(html_content, "text/html")
+
+                logo_path = os.path.join(settings.BASE_DIR, 'static', 'icons', 'logo.png')
+                if os.path.exists(logo_path):
+                    with open(logo_path, 'rb') as f:
+                        logo = MIMEImage(f.read())
+                        logo.add_header('Content-ID', '<logo>')
+                        logo.add_header('Content-Disposition', 'inline; filename="logo.png"')
+                        msg.attach(logo)
+
+                msg.send()
+                
+                ActivityLog.objects.create(
+                    ticket=ticket,
+                    action=f"Ticket assigned to {ticket.assigned_to.get_full_name() or ticket.assigned_to.username}",
+                    user=request.user
+                )
+            
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
                 "escalations",
@@ -2543,10 +2648,6 @@ def create_ticket(request):
             )
 
             ticket_created = True
-            # Redirect based on “create another” checkbox
-            """if 'create_another' in request.POST:
-                return redirect('create_ticket')"""
-                
             if 'create_another' in request.POST:
                 return render(
                     request,
@@ -2556,18 +2657,19 @@ def create_ticket(request):
                         'issue_mapping': json.dumps(build_issue_mapping()),
                         'user_group': user_group,
                         'allowed_roles': allowed_roles,
-                        'ticket_created': True
+                        'ticket_created': True,
+                        'is_manager': is_manager_or_above,
+                        'is_staff': is_staff,
+                        'assignable_users': assignable_users,
                     }
                 )
             return redirect('tickets')
     else:
-        # GET: instantiate empty form (optionally prefilling terminal_id)
         terminal_id = request.GET.get('terminal_id')
         if terminal_id:
             form = TicketForm(user=request.user, terminal_id=terminal_id)
         else:
             form = TicketForm(user=request.user)
-    # Build issue-category → sub-issues map for JS
     cats = ProblemCategory.objects.all()
     js_mapping = {
         str(cat.pk): ISSUE_MAPPING.get(cat.name, [])
@@ -2578,9 +2680,11 @@ def create_ticket(request):
         'issue_mapping': json.dumps(js_mapping),
         'user_group': user_group,
         'allowed_roles': allowed_roles,
-        "ticket_created": False
+        'ticket_created': False,
+        'is_manager': is_manager_or_above,
+        'is_staff': is_staff,
+        'assignable_users': assignable_users,
     })
-
 
 from django.template.loader import render_to_string 
 @login_required
@@ -3281,46 +3385,17 @@ def delete_comment(request, comment_id):
         return redirect('ticket_detail', ticket_id=ticket_id)
 
 
-
-"""@login_required
-def resolve_ticket_view(request, ticket_id):
-    ticket = get_object_or_404(Ticket, id=ticket_id)
-    resolution = request.POST.get('resolution', '').strip()
-
-    # Check if the user is authorized to resolve the ticket
-    if is_director(request.user) or is_manager(request.user) or is_staff(request.user):
-        if ticket.status != 'closed':
-            ticket.resolution = resolution
-            ticket.status = 'closed'
-            ticket.resolved_by = request.user  
-            ticket.resolved_at = timezone.now()
-            ticket.save()
-            messages.success(request, 'Ticket resolved successfully!')
-            return redirect('tickets')
-        else:
-            messages.error(request, 'Ticket already resolved')
-            return render(request, 'core/helpdesk/error.html')
-
-    elif request.user.has_perm('can_resolve_ticket'):
-        # Custom permission check
-        if ticket.status != 'closed':
-            ticket.status = 'closed'
-            ticket.resolved_by = request.user  
-            ticket.resolved_at = timezone.now() 
-            ticket.save()
-            messages.success(request, 'Ticket resolved successfully!')
-            return redirect('tickets')
-        else:
-            messages.error(request, 'Ticket already resolved!')
-            return render(request, 'core/helpdesk/error.html')
-
-    # If the user doesn't have permission
-    messages.error(request, 'You do not have permission to resolve this ticket.')
-    return render(request, 'core/helpdesk/permission_denied.html')"""
-
 @login_required
 def resolve_ticket_view(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
+
+    if ticket.assigned_to is None:
+        messages.error(
+            request,
+            "This ticket must be assigned before it can be resolved."
+        )
+        return render(request, 'core/helpdesk/error.html')
+
     resolution = request.POST.get('resolution', '').strip()
     resolved_at = request.POST.get('resolved_at', '').strip()
 
@@ -3329,14 +3404,13 @@ def resolve_ticket_view(request, ticket_id):
             if resolved_at:
                 try:
                     resolved_at = datetime.strptime(resolved_at, "%Y-%m-%dT%H:%M")
-                    resolved_at = timezone.make_aware(resolved_at)  # Make it timezone-aware
+                    resolved_at = timezone.make_aware(resolved_at)  
                 except ValueError:
                     messages.error(request, "Invalid date format for 'Resolved At'. Please try again.")
                     return render(request, 'core/helpdesk/error.html')
             else:
-                resolved_at = timezone.now()  # Default to current time (timezone-aware)
+                resolved_at = timezone.now()  
 
-            # Ensure due_date is aware if it is naive
             if ticket.due_date and ticket.due_date.tzinfo is None:
                 ticket.due_date = timezone.make_aware(ticket.due_date)
 
@@ -3362,7 +3436,7 @@ def resolve_ticket_view(request, ticket_id):
                     messages.error(request, "Invalid date format for 'Resolved At'. Please try again.")
                     return render(request, 'core/helpdesk/error.html')
             else:
-                resolved_at = timezone.now()  # Default to current time (timezone-aware)
+                resolved_at = timezone.now() 
 
             # Ensure due_date is aware if it is naive
             if ticket.due_date and ticket.due_date.tzinfo is None:
@@ -3390,6 +3464,7 @@ def delete_ticket(request, ticket_id):
     messages.success(request, "Ticket deleted successfully.")
     return redirect('tickets')
 
+
 @login_required(login_url='login')
 def ticket_statuses(request):
     user = request.user
@@ -3414,12 +3489,73 @@ def ticket_statuses(request):
 
     allowed_roles = ["Director", "Manager", "Staff", "Superuser"]
 
+    staff_performance = None
+    date_range = request.GET.get('date_range', 'all')
+    
+    if user_group in allowed_roles or request.user.is_superuser:
+        start_date = None
+        now = timezone.now()
+        
+        if date_range == 'today':
+            start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif date_range == 'week':
+            start_date = now - timedelta(days=now.weekday()) 
+            start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif date_range == 'month':
+            start_date = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        elif date_range == 'quarter':
+            quarter_month = ((now.month - 1) // 3) * 3 + 1
+            start_date = now.replace(month=quarter_month, day=1, hour=0, minute=0, second=0, microsecond=0)
+        elif date_range == 'year':
+            start_date = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        staff_users = User.objects.filter(
+            groups__name__in=['Director', 'Manager', 'Staff']
+        ).distinct().order_by('first_name', 'last_name', 'username')
+        
+        performance_data = []
+        for staff_user in staff_users:
+            tickets_qs = Ticket.objects.filter(assigned_to=staff_user)
+            
+            if start_date:
+                tickets_qs = tickets_qs.filter(created_at__gte=start_date)
+            
+            open_count = tickets_qs.filter(status='open').count()
+            in_progress_count = tickets_qs.filter(status='in_progress').count()
+            closed_count = tickets_qs.filter(status='closed').count()
+            total_count = tickets_qs.count()
+            
+            user_groups = staff_user.groups.values_list('name', flat=True)
+            if 'Director' in user_groups:
+                role = 'Director'
+            elif 'Manager' in user_groups:
+                role = 'Manager'
+            elif 'Staff' in user_groups:
+                role = 'Staff'
+            else:
+                role = 'Unknown'
+            
+            performance_data.append({
+                'staff': staff_user,
+                'role': role,
+                'open_count': open_count,
+                'in_progress_count': in_progress_count,
+                'closed_count': closed_count,
+                'total_count': total_count,
+            })
+        
+        page_number = request.GET.get('page', 1)
+        paginator = Paginator(performance_data, 5)  
+        staff_performance = paginator.get_page(page_number)
+
     return render(request, 'core/helpdesk/ticket_statuses.html', {
         "is_custodian": is_custodian,
         "is_overseer": is_overseer,
         "is_customer": is_customer,
         "user_group": user_group,
         "allowed_roles": allowed_roles,
+        "staff_performance": staff_performance,
+        "date_range": date_range,
     })
 
 

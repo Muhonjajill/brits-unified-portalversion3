@@ -172,19 +172,18 @@ body {
 }
 
 .filter-action {
-  grid-column: span full; /* Spans across all columns for better alignment */
+  grid-column: span full; 
   display: flex;
   justify-content: flex-end;
   margin-top: 10px;
 }
 
-/* Date picker specific styles */
+
 .date-picker {
   background-color: #fff;
   cursor: pointer;
 }
 
-/* Table styling */
 .table-responsive {
   overflow-x: auto;
   overflow-y: hidden;
@@ -195,8 +194,8 @@ body {
 
 .report-table {
   width: 100%;
-  border-collapse: separate; /* Use separate to allow border-radius on cells (though not directly applied here) */
-  border-spacing: 0; /* Remove space between cells */
+  border-collapse: separate; 
+  border-spacing: 0; 
   font-size: 0.95em;
 }
 
@@ -224,8 +223,13 @@ body {
 
 .report-table tbody tr:hover {
   background-color: #e9f5ff;
-  box-shadow: inset 3px 0 0 #123692; /* Subtle highlight on hover */
+  box-shadow: inset 3px 0 0 #123692; 
 }
+
+.filter-action {
+  display: none;
+}
+
 
 /* Animation improvements */
 @keyframes fadeIn {

@@ -19,6 +19,12 @@
     <form method="get" class="search-form">
       <input type="text" name="search" class="ticket-search" value="{{ search_query }}" placeholder="Search tickets..." />
       <button type="submit" class="btn btn-sm btn-primary">Search</button>
+      <a
+        href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value|urlencode }}&{% endif %}{% endfor %}export=excel"
+        class="btn btn-success"
+      >
+        <i class="fa-solid fa-file-excel"></i> Export
+      </a>
     </form>
   </div>
 

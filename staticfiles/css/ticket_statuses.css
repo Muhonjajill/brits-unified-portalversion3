@@ -1,233 +1,406 @@
-/* General Styling */
+/* General Page Styling */
 body {
-    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-    background-color: #f4f6f9; /* Lighter background */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
     color: #333;
     line-height: 1.6;
 }
 
-/* Tickets Container */
-.tickets-container {
-    width: 100%;
-    max-width: 100%;
+/* Page Container */
+.page-container {
+    max-width: 1400px;
+    margin: 4rem auto;
+    padding: 0 1.5rem;
+}
+
+/* Content Cards */
+.content-card {
     background-color: #ffffff;
-    padding: 2.5rem; /* Increased padding */
-    border-radius: 12px; /* Softer corners */
-    box-shadow: 0 4px 20px rgba(0,0,0,0.08); /* More pronounced, softer shadow */
-    margin: 3rem auto; /* More vertical margin */
-    border: 1px solid #e0e6ed; /* Subtle border */
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    overflow: hidden;
 }
 
-/* Section Header */
-.section-header {
-    margin-bottom: 2rem; /* More space */
-    text-align: center; /* Center align header */
+.content-card.mt-4 {
+    margin-top: 2rem;
 }
 
-.section-header h2 {
-    font-size: 2.2rem; /* Larger, more impactful title */
-    color: #2c3e50; /* Darker, more professional blue-grey */
-    margin-bottom: 0.8rem; /* Space between title and subtitle */
-    font-weight: 700; /* Bolder */
+/* Card Header */
+.card-header {
+    padding: 2rem 2rem 1.5rem 2rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.card-header h2 {
+    font-size: 1.75rem;
+    color: #1a4d8f;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px; /* Space between icon and text */
+    gap: 0.75rem;
 }
 
-.section-header .subtitle {
-    font-size: 1.1rem;
-    color: #607d8b; /* Softer grey */
-    margin-bottom: 1rem;
+.card-header h2 i {
+    color: #1a4d8f;
+    font-size: 1.5rem;
 }
 
-.section-header .access-info {
+.card-header .subtitle {
     font-size: 0.95rem;
-    color: #7f8c8d; /* Even softer grey */
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.card-header .access-info {
+    font-size: 0.875rem;
+    color: #6c757d;
     font-style: italic;
-    border-top: 1px solid #f0f2f5; /* Separator line */
+    margin-top: 1rem;
     padding-top: 1rem;
-    margin-top: 1.5rem;
+    border-top: 1px solid #f0f0f0;
 }
 
-/* Table Styles */
-.ticket-table-wrapper {
-    overflow-x: auto;
-    border: 1px solid #e0e6ed; /* Border around the wrapper for a cleaner look */
-    border-radius: 8px; /* Match container border-radius */
+/* Filter Section */
+.filter-section {
+    padding: 1.5rem 2rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
 }
 
-.ticket-table {
-    width: 100%;
-    border-collapse: separate; /* Use separate to allow border-radius on cells */
-    border-spacing: 0; /* Remove default spacing */
-    margin-top: 0; /* Remove default margin as wrapper has border */
-    min-width: 650px; /* Slightly wider min-width */
-}
-
-.ticket-table thead {
-    background-color: #f8fafd; /* Very light blue-grey for header */
-}
-
-.ticket-table th,
-.ticket-table td {
-    text-align: left;
-    padding: 15px 20px; /* Increased padding */
-    border-bottom: 1px solid #f0f2f5; /* Lighter border for rows */
-    font-size: 1rem; /* Slightly larger font */
-    vertical-align: middle; /* Align content vertically */
-}
-
-.ticket-table th {
-    font-weight: 600; /* Same as before */
-    color: #52667b; /* Darker, cooler grey */
-    text-transform: uppercase; /* Uppercase for headers */
-    letter-spacing: 0.05em; /* Spacing for readability */
-}
-
-/* First and last child for rounded corners in table */
-.ticket-table thead th:first-child {
-    border-top-left-radius: 8px;
-}
-.ticket-table thead th:last-child {
-    border-top-right-radius: 8px;
-}
-.ticket-table tbody tr:last-child td:first-child {
-    border-bottom-left-radius: 8px;
-}
-.ticket-table tbody tr:last-child td:last-child {
-    border-bottom-right-radius: 8px;
-}
-
-
-.ticket-table tbody tr:hover {
-    background-color: #f6faff; /* Lighter hover effect */
-    transition: background-color 0.3s ease; /* Smooth transition */
-}
-
-/* Badges */
-.badge {
-    display: inline-flex; /* Use flex for vertical alignment */
+.filter-form {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    padding: 0.4em 0.8em; /* Slightly more padding */
-    font-size: 0.8rem; /* Slightly larger font */
-    font-weight: 700; /* Bolder */
-    color: #fff;
-    border-radius: 0.35rem; /* Softer rounded corners */
-    text-transform: uppercase;
-    min-width: 90px; /* Ensure badges have consistent width */
-    text-align: center;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1); /* Subtle shadow for badges */
-    transition: all 0.2s ease-in-out; /* Smooth transitions for hover */
+    gap: 1rem;
 }
 
-.badge-open {
-    background-color: #007bff; /* Brighter green */
-}
-.badge-in-progress { 
-    background-color: #c0392b; 
-    color: #fff; 
+.filter-form label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0;
 }
 
-.badge-closed {
-    background-color: rgb(25, 164, 25); 
+.filter-form .form-select {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: #fff;
+    font-size: 0.95rem;
+    color: #495057;
+    cursor: pointer;
+    transition: border-color 0.15s ease-in-out;
 }
 
-/* Ensure other badges from your original CSS remain or are updated */
-.badge-high { background-color: #e74c3c; } /* Red */
-.badge-medium { background-color: #f1c40f; color: #333;} /* Yellow */
-.badge-low { background-color: #1abc9c; } /* Turquoise */
-
-
-/* Status Links (new) */
-.status-link {
-    text-decoration: none; /* Remove underline */
-    color: inherit; /* Inherit color from parent */
-    display: inline-block; /* Ensure link takes up space */
+.filter-form .form-select:focus {
+    outline: none;
+    border-color: #1a4d8f;
+    box-shadow: 0 0 0 0.2rem rgba(26, 77, 143, 0.15);
 }
 
-.status-link:hover .badge {
-    transform: translateY(-2px); /* Lift effect on hover */
-    box-shadow: 0 3px 6px rgba(0,0,0,0.15); /* Stronger shadow on hover */
+/* Table Wrapper */
+.table-wrapper {
+    padding: 0;
+    overflow-x: auto;
 }
 
-/* Visual Cue Color Boxes (new) */
-.color-box {
-    display: inline-block;
-    width: 25px; /* Size of the color box */
-    height: 25px;
-    border-radius: 50%; /* Make it round */
-    border: 1px solid rgba(0,0,0,0.1); /* Subtle border */
+/* Data Table */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.data-table thead {
+    background-color: #f8f9fa;
+}
+
+.data-table th {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    white-space: nowrap;
+}
+
+.data-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
     vertical-align: middle;
 }
 
-.bg-open { background-color: #007bff; }
-.bg-in-progress { background-color: #c0392b; }
-.bg-closed { background-color: rgb(25, 164, 25); }
+.data-table tbody tr {
+    transition: background-color 0.15s ease;
+}
 
+.data-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.data-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Text Alignment */
 .text-center {
     text-align: center;
 }
 
+.text-muted {
+    color: #6c757d;
+}
+
+/* Status Badges */
+.badge {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 100px;
+    text-align: center;
+}
+
+.badge-open {
+    background-color: #007bff;
+}
+
+.badge-in-progress {
+    background-color: #dc3545;
+}
+
+.badge-closed {
+    background-color: #28a745;
+}
+
+/* Status Link */
+.status-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.status-link:hover .badge {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+/* Color Box */
+.color-box {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.bg-open {
+    background-color: #007bff;
+}
+
+.bg-in-progress {
+    background-color: #dc3545;
+}
+
+.bg-closed {
+    background-color: #28a745;
+}
+
+/* Staff Info */
+.staff-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.staff-info i {
+    color: #6c757d;
+    font-size: 1.25rem;
+}
+
+/* Role Badges */
+.role-badge {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 4px;
+    text-transform: capitalize;
+}
+
+.role-director {
+    background-color: #6f42c1;
+    color: #fff;
+}
+
+.role-manager {
+    background-color: #fd7e14;
+    color: #fff;
+}
+
+.role-staff {
+    background-color: #20c997;
+    color: #fff;
+}
+
+/* Count Badges */
+.count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 4px;
+}
+
+.count-open {
+    background-color: #e7f1ff;
+    color: #007bff;
+}
+
+.count-progress {
+    background-color: #ffe5e5;
+    color: #dc3545;
+}
+
+.count-closed {
+    background-color: #e6f7ec;
+    color: #28a745;
+}
+
+/* Pagination */
+.pagination-wrapper {
+    padding: 1.5rem 2rem;
+    background-color: #f8f9fa;
+    border-top: 1px solid #e9ecef;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.page-link {
+    padding: 0.5rem 1rem;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    color: #1a4d8f;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.15s ease;
+}
+
+.page-link:hover {
+    background-color: #1a4d8f;
+    color: #fff;
+    border-color: #1a4d8f;
+}
+
+.current-page {
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+}
+
 /* Responsive Design */
-@media (max-width: 768px) {
-    .tickets-container {
-        padding: 1.5rem;
-        margin: 2rem auto;
+@media (max-width: 992px) {
+    .page-container {
+        padding: 0 1rem;
+        margin: 1.5rem auto;
     }
-    .section-header h2 {
-        font-size: 1.8rem;
-        flex-direction: column; /* Stack icon and text */
-        gap: 5px;
+
+    .card-header {
+        padding: 1.5rem 1.5rem 1rem 1.5rem;
     }
-    .section-header .subtitle,
-    .section-header .access-info {
-        font-size: 0.9rem;
+
+    .card-header h2 {
+        font-size: 1.5rem;
     }
-    .ticket-table th,
-    .ticket-table td {
-        padding: 12px 15px; /* Adjust padding for smaller screens */
-        font-size: 0.9rem;
+
+    .filter-section {
+        padding: 1rem 1.5rem;
     }
-    .badge {
-        font-size: 0.7rem;
-        padding: 0.3em 0.6em;
-        min-width: 70px;
-    }
-    .color-box {
-        width: 20px;
-        height: 20px;
+
+    .data-table th,
+    .data-table td {
+        padding: 0.75rem 1rem;
     }
 }
 
-@media (max-width: 480px) {
-    .tickets-container {
-        padding: 1rem;
-        border-radius: 8px;
+@media (max-width: 768px) {
+    .card-header h2 {
+        font-size: 1.35rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
-    .section-header h2 {
-        font-size: 1.5rem;
+
+    .filter-form {
+        flex-direction: column;
+        align-items: stretch;
     }
-    .section-header .subtitle,
-    .section-header .access-info {
+
+    .filter-form .form-select {
+        width: 100%;
+    }
+
+    .data-table {
         font-size: 0.85rem;
     }
-    .ticket-table-wrapper {
-        border-radius: 4px;
+
+    .data-table th,
+    .data-table td {
+        padding: 0.65rem 0.75rem;
     }
-    .ticket-table th,
-    .ticket-table td {
-        padding: 10px 12px;
+
+    .badge {
+        min-width: 80px;
+        font-size: 0.75rem;
+    }
+
+    .pagination {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-container {
+        margin: 1rem auto;
+    }
+
+    .card-header {
+        padding: 1rem;
+    }
+
+    .filter-section {
+        padding: 1rem;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 0.5rem 0.65rem;
         font-size: 0.8rem;
     }
-    .badge {
-        min-width: 60px;
-        padding: 0.25em 0.5em;
-        font-size: 0.65rem;
+
+    .staff-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
     }
-    .color-box {
-        width: 18px;
-        height: 18px;
+
+    .count-badge {
+        min-width: 35px;
+        font-size: 0.8rem;
     }
 }

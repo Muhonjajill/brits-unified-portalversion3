@@ -79,36 +79,88 @@
 
                 <div class="form-group">
                     <label for="id_terminal">Terminal</label>
-                    <div class="searchable-select-wrapper" data-target="id_terminal">
-                        <input type="text" 
-                            class="search-input" 
-                            placeholder="Click ▼ or type here to search..."
-                            autocomplete="off">
-                        <span class="dropdown-icon">▼</span>
-                        <div class="options-list"></div>
-                    </div>
-                    <!-- Hide the actual select -->
-                    <select name="terminal" id="id_terminal" class="form-control" style="display: none;">
-                        <option value="" selected disabled>-- Select a Terminal --</option>
-                        {% for terminal in form.fields.terminal.queryset %}
-                        <option value="{{ terminal.id }}"
-                            {% if form.instance.terminal and form.instance.terminal.id == terminal.id %}selected{% endif %}
-                            {% if not terminal.is_active %}disabled style="color: grey;"{% endif %}>
-                            {{ terminal.branch_name }}{% if not terminal.is_active %} (Inactive){% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    {% if form.fields.terminal.widget.attrs.readonly %}
+                        <!-- Custodian: Show readonly terminal field -->
+                        <select name="terminal" id="id_terminal" class="form-control" style="pointer-events: none; background-color: #e9ecef;">
+                            {% for terminal in form.fields.terminal.queryset %}
+                            <option value="{{ terminal.id }}" selected>
+                                {{ terminal.branch_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <!-- Others: Show searchable terminal field -->
+                        <div class="searchable-select-wrapper" data-target="id_terminal">
+                            <input type="text" 
+                                class="search-input" 
+                                placeholder="Click ▼ or type here to search..."
+                                autocomplete="off">
+                            <span class="dropdown-icon">▼</span>
+                            <div class="options-list"></div>
+                        </div>
+                        <!-- Hide the actual select -->
+                        <select name="terminal" id="id_terminal" class="form-control" style="display: none;">
+                            <option value="" selected disabled>-- Select a Terminal --</option>
+                            {% for terminal in form.fields.terminal.queryset %}
+                            <option value="{{ terminal.id }}"
+                                {% if form.fields.terminal.initial and form.fields.terminal.initial.id == terminal.id %}selected{% endif %}
+                                {% if not terminal.is_active %}disabled style="color: grey;"{% endif %}>
+                                {{ terminal.branch_name }}{% if not terminal.is_active %} (Inactive){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
                 </div>
 
                 <div class="form-group">
                     <label for="{{ form.customer.id_for_label }}">Customer</label>
-                    {{ form.customer }}
+                    {% if form.fields.customer.widget.attrs.disabled %}
+                        <!-- Custodian/Overseer: Show readonly customer field -->
+                        <select name="customer" id="id_customer" class="form-control" disabled style="background-color: #e9ecef;">
+                            {% for customer in form.fields.customer.queryset %}
+                            <option value="{{ customer.id }}" selected>
+                                {{ customer.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <!-- Hidden field to ensure value is submitted -->
+                        <input type="hidden" name="customer" value="{{ form.fields.customer.initial.id }}">
+                    {% else %}
+                        {{ form.customer }}
+                    {% endif %}
                 </div>
 
                 <div class="form-group">
                     <label for="{{ form.region.id_for_label }}">Region</label>
-                    {{ form.region }}
+                    {% if form.fields.region.widget.attrs.disabled %}
+                        <!-- Custodian: Show readonly region field -->
+                        <select name="region" id="id_region" class="form-control" disabled style="background-color: #e9ecef;">
+                            {% for region in form.fields.region.queryset %}
+                            <option value="{{ region.id }}" selected>
+                                {{ region.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <!-- Hidden field to ensure value is submitted -->
+                        <input type="hidden" name="region" value="{{ form.fields.region.initial.id }}">
+                    {% else %}
+                        {{ form.region }}
+                    {% endif %}
                 </div>
+
+                {% if is_manager or is_staff %}
+                <div class="form-group">
+                    <label for="assigned_to">Assign To</label>
+                    <select name="assigned_to" id="assigned_to" class="form-control">
+                        <option value="">-- Select Staff --</option>
+                        {% for staff in assignable_users %}
+                            <option value="{{ staff.id }}">
+                                {{ staff.get_full_name|default:staff.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
 
             </div>
 
@@ -170,17 +222,23 @@ document.addEventListener("DOMContentLoaded", () => {
     overlay.classList.add("hidden");
 
     if (terminalSelect) {
-        terminalSelect.addEventListener('change', function() {
-            const terminalId = terminalSelect.value;
-            if (terminalId) {
-                fetch(`/get_terminal_details/${terminalId}/`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (customerSelect) customerSelect.value = data.customer_id || "";
-                        if (regionSelect) regionSelect.value = data.region_id || "";
-                    });
-            }
-        });
+        // Check if terminal is readonly (custodian) - don't attach change listener
+        const isReadonly = terminalSelect.hasAttribute('readonly') || 
+                          terminalSelect.style.pointerEvents === 'none';
+        
+        if (!isReadonly) {
+            terminalSelect.addEventListener('change', function() {
+                const terminalId = terminalSelect.value;
+                if (terminalId) {
+                    fetch(`/get_terminal_details/${terminalId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (customerSelect) customerSelect.value = data.customer_id || "";
+                            if (regionSelect) regionSelect.value = data.region_id || "";
+                        });
+                }
+            });
+        }
     }
 
     const issueMapping = {{ issue_mapping|safe }};

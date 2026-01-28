@@ -10,63 +10,162 @@
 
 {% block content %}
 
-<div class="tickets-container">
-  <div class="section-header">
-    <h2><i class="fas fa-clipboard-list"></i>  Ticket Statuses Overview</h2> 
-    <p class="subtitle">
-      Understanding the current state of support tickets in the system.
-    </p>
-    <p class="access-info"> 
-      {% if is_custodian %}
-        You are viewing ticket statuses for your assigned terminal only.
-      {% elif is_overseer or is_customer %}
-        You are viewing ticket statuses for your assigned customer only.
-      {% else %}
-        You have global access and are viewing all ticket statuses.
-      {% endif %}
-    </p>
+<div class="page-container">
+  <!-- Ticket Statuses Section -->
+  <div class="content-card">
+    <div class="card-header">
+      <h2><i class="fas fa-clipboard-list"></i> Ticket Statuses Overview</h2> 
+      <p class="subtitle">
+        Understanding the current state of support tickets in the system.
+      </p>
+      <p class="access-info"> 
+        {% if is_custodian %}
+          You are viewing ticket statuses for your assigned terminal only.
+        {% elif is_overseer or is_customer %}
+          You are viewing ticket statuses for your assigned customer only.
+        {% else %}
+          You have global access and are viewing all ticket statuses.
+        {% endif %}
+      </p>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Description</th>
+            <th class="text-center">Visual Cue</th> 
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <a href="{% url 'ticket_by_status' 'open' %}" class="status-link"> 
+                <span class="badge badge-open">Open</span>
+              </a>
+            </td>
+            <td>Tickets that are currently active and require attention.</td> 
+            <td class="text-center"><span class="color-box bg-open"></span></td> 
+          </tr>
+          <tr>
+            <td>
+              <a href="{% url 'ticket_by_status' 'in-progress' %}" class="status-link">
+                <span class="badge badge-in-progress">In Progress</span> 
+              </a>
+            </td>
+            <td>Tickets that are actively being worked on by a support agent.</td>
+            <td class="text-center"><span class="color-box bg-in-progress"></span></td>
+          </tr>
+          <tr>
+            <td>
+              <a href="{% url 'ticket_by_status' 'closed' %}" class="status-link">
+                <span class="badge badge-closed">Closed</span>
+              </a>
+            </td>
+            <td>Tickets that have been successfully completed and archived.</td>
+            <td class="text-center"><span class="color-box bg-closed"></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="ticket-table-wrapper">
-    <table class="ticket-table">
-      <thead>
-        <tr>
-          <th>Status</th>
-          <th>Description</th>
-          <th class="text-center">Visual Cue</th> 
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>
-            <a href="{% url 'ticket_by_status' 'open' %}" class="status-link"> 
-              <span class="badge badge-open">Open</span>
-            </a>
-          </td>
-          <td>Tickets that are currently active and require attention.</td> 
-          <td class="text-center"><span class="color-box bg-open"></span></td> 
-        </tr>
-        <tr>
-          <td>
-            <a href="{% url 'ticket_by_status' 'in-progress' %}" class="status-link">
-              <span class="badge badge-in-progress">In Progress</span> 
-            </a>
-          </td>
-          <td>Tickets that are actively being worked on by a support agent.</td>
-          <td class="text-center"><span class="color-box bg-in-progress"></span></td>
-        </tr>
-        <tr>
-          <td>
-            <a href="{% url 'ticket_by_status' 'closed' %}" class="status-link">
-              <span class="badge badge-closed">Closed</span>
-            </a>
-          </td>
-          <td>Tickets that have been successfully completed and archived.</td>
-          <td class="text-center"><span class="color-box bg-closed"></span></td>
-        </tr>
-      </tbody>
-    </table>
+  <!-- Staff Performance Table - Only visible to internal staff -->
+  {% if user_group in allowed_roles or request.user.is_superuser %}
+  <div class="content-card mt-4">
+    <div class="card-header">
+      <h2><i class="fas fa-users"></i> Staff Performance Overview</h2>
+      <p class="subtitle">Track ticket assignments and resolution rates for staff members.</p>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="filter-section">
+      <form method="get" class="filter-form">
+        <label for="date_range">Time Range:</label>
+        <select name="date_range" id="date_range" class="form-select" onchange="this.form.submit()">
+          <option value="all" {% if date_range == 'all' %}selected{% endif %}>All Time</option>
+          <option value="today" {% if date_range == 'today' %}selected{% endif %}>Today</option>
+          <option value="week" {% if date_range == 'week' %}selected{% endif %}>This Week</option>
+          <option value="month" {% if date_range == 'month' %}selected{% endif %}>This Month</option>
+          <option value="quarter" {% if date_range == 'quarter' %}selected{% endif %}>This Quarter</option>
+          <option value="year" {% if date_range == 'year' %}selected{% endif %}>This Year</option>
+        </select>
+      </form>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Staff Member</th>
+            <th>Role</th>
+            <th class="text-center">Open Tickets</th>
+            <th class="text-center">In Progress</th>
+            <th class="text-center">Closed Tickets</th>
+            <th class="text-center">Total Assigned</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for staff_data in staff_performance %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>
+              <div class="staff-info">
+                <i class="fas fa-user-circle"></i>
+                <span>{{ staff_data.staff.get_full_name|default:staff_data.staff.username }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="role-badge role-{{ staff_data.role|lower }}">
+                {{ staff_data.role }}
+              </span>
+            </td>
+            <td class="text-center">
+              <span class="count-badge count-open">{{ staff_data.open_count }}</span>
+            </td>
+            <td class="text-center">
+              <span class="count-badge count-progress">{{ staff_data.in_progress_count }}</span>
+            </td>
+            <td class="text-center">
+              <span class="count-badge count-closed">{{ staff_data.closed_count }}</span>
+            </td>
+            <td class="text-center">
+              <strong>{{ staff_data.total_count }}</strong>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center text-muted">No staff data available.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if staff_performance.has_other_pages %}
+    <div class="pagination-wrapper">
+      <div class="pagination">
+        {% if staff_performance.has_previous %}
+          <a href="?page=1{% if date_range %}&date_range={{ date_range }}{% endif %}" class="page-link">&laquo; First</a>
+          <a href="?page={{ staff_performance.previous_page_number }}{% if date_range %}&date_range={{ date_range }}{% endif %}" class="page-link">Previous</a>
+        {% endif %}
+
+        <span class="current-page">
+          Page {{ staff_performance.number }} of {{ staff_performance.paginator.num_pages }}
+        </span>
+
+        {% if staff_performance.has_next %}
+          <a href="?page={{ staff_performance.next_page_number }}{% if date_range %}&date_range={{ date_range }}{% endif %}" class="page-link">Next</a>
+          <a href="?page={{ staff_performance.paginator.num_pages }}{% if date_range %}&date_range={{ date_range }}{% endif %}" class="page-link">Last &raquo;</a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
   </div>
+  {% endif %}
 </div>
 
 <script src="{% static 'js/ticketing_dashboard.js' %}"></script>
