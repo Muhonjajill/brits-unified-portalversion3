@@ -124,7 +124,7 @@
       renderNotifications(data.tickets, data.count); // Re-render the notifications list
       break;
     default:
-      console.warn("⚠️ Unknown WebSocket event type:", data.type);
+      console.warn("Unknown WebSocket event type:", data.type);
   }
 };
 })();  <!--– IIFE closed here -->

@@ -47,7 +47,7 @@ body {
 
 .navbar-brand i {
   font-size: 1.75rem;
-  background: linear-gradient(135deg, #60a5fa, #3b82f6);
+  background: linear-gradient(135deg, #60a5fa, #004080);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -212,7 +212,7 @@ body {
   background: linear-gradient(135deg, #f8fafc, #f0f9ff);
   padding: 1rem;
   border-radius: 10px;
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid #004080;
   margin-bottom: 0.75rem;
 }
 
@@ -239,7 +239,7 @@ body {
 }
 
 .welcome-banner {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #004080 100%);
   color: #fff;
   padding: 2.5rem;
   border-radius: 16px;
@@ -319,7 +319,7 @@ body {
 .alert-info {
   background: #dbeafe;
   color: #0c4a6e;
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #004080;
 }
 
 .close-alert {
@@ -347,11 +347,11 @@ body {
   align-items: center;
   gap: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border-left: 4px solid #3b82f6;
+  border-left: 4px solid #004080;
 }
 
 .search-summary i {
-  color: #3b82f6;
+  color: #004080;
   font-size: 1.2rem;
 }
 
@@ -400,7 +400,7 @@ body {
 }
 
 .section-header h2 i {
-  color: #667eea;
+  color: #004080;
 }
 
 .section-header p {
@@ -435,7 +435,7 @@ body {
 }
 
 .card h3 i {
-  color: #667eea;
+  color: #004080;
   font-size: 1.2rem;
 }
 
@@ -450,7 +450,7 @@ body {
 }
 
 .card h4 i {
-  color: #0369a1;
+  color: #004080;
 }
 
 /* Create User Card */
@@ -484,7 +484,7 @@ body {
 .form-row input:focus,
 .form-row select:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #004080;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   background: #fff;
 }
@@ -496,7 +496,7 @@ body {
 
 /* Customer Card */
 .customer-card {
-  border-left: 4px solid #667eea;
+  border-left: 4px solid #004080;
 }
 
 .customer-header {
@@ -559,7 +559,7 @@ body {
 
 .assignment-form select:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #004080;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -713,12 +713,12 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #004080 100%);
   color: #fff;
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #5568d3 0%, #6b3b91 100%);
+  background: linear-gradient(135deg, #5568d3 0%, #004080 100%);
 }
 
 .btn-secondary {
@@ -957,7 +957,7 @@ body {
 
 .user-list li:hover {
   background: #f3f4f6;
-  border-left-color: #667eea;
+  border-left-color: #004080;
   transform: translateX(4px);
 }
 

@@ -15,12 +15,25 @@
   </div>
 
   <div class="ticket-actions">
-    <button class="btn btn-primary" id="new_category">Add New Category</button>
+    <button class="btn btn-primary" id="new_category">
+      <i class="fas fa-plus"></i> Add New Category
+    </button>
     <form method="GET" class="ticket-search-form">
       <input type="text" name="search" class="ticket-search" value="{{ search_query }}" placeholder="Search categories..." />
-      <button type="submit" class="btn btn-primary">Search</button>
+      <button type="submit" class="btn btn-primary">
+        <i class="fas fa-search"></i> Search
+      </button>
     </form>
   </div>
+
+  <!-- Messages -->
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li class="alert alert-{{ message.tags }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
 
   <div class="ticket-table-wrapper">
     <table class="ticket-table">
@@ -33,27 +46,29 @@
         </tr>
       </thead>
       <tbody>
-        {% if messages %}
-          <ul class="messages">
-            {% for message in messages %}
-              <li class="alert alert-{{ message.tags }}">{{ message }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
-
         {% for category in page_obj %}
         <tr>
           <td>{{ forloop.counter }}</td>
           <td>{{ category.name }}</td>
           <td>{{ category.brts_unit.description|default:category.brts_unit }}</td>
           <td>
-            <a href="{% url 'edit_problem_category' category.id %}" class="view-link">Edit</a>
-            <a href="{% url 'delete_problem_category' category.id %}" class="remove-link" onclick="return confirm('Are you sure you want to delete this category?');">Remove</a>
+            <a href="{% url 'edit_problem_category' category.id %}" class="view-link">
+              <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="#" 
+               class="remove-link delete-category-btn"
+               data-category-id="{{ category.id }}"
+               data-category-name="{{ category.name }}"
+               data-delete-url="{% url 'delete_problem_category' category.id %}">
+              <i class="fas fa-trash"></i> Remove
+            </a>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="4">No categories found.</td>
+          <td colspan="4" style="text-align: center; color: #6c757d; padding: 20px;">
+            No categories found.
+          </td>
         </tr>
         {% endfor %}
       </tbody>
@@ -61,10 +76,11 @@
   </div>
 
   <!-- Pagination Controls -->
+  {% if page_obj.has_other_pages %}
   <div class="pagination">
     <span class="page-links">
       {% if page_obj.has_previous %}
-        <a href="?page=1&search={{ search_query }}">First</a>
+        <a href="?page=1&search={{ search_query }}">&laquo; First</a>
         <a href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}">Previous</a>
       {% endif %}
 
@@ -72,9 +88,29 @@
 
       {% if page_obj.has_next %}
         <a href="?page={{ page_obj.next_page_number }}&search={{ search_query }}">Next</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}">Last</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}&search={{ search_query }}">Last &raquo;</a>
       {% endif %}
     </span>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <h3>Confirm Deletion</h3>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete this category?</p>
+      <p><strong id="modalCategoryName"></strong></p>
+      <p>This action cannot be undone.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn modal-btn-cancel" id="cancelDelete">Cancel</button>
+      <button class="modal-btn modal-btn-confirm" id="confirmDelete">Delete Category</button>
+    </div>
   </div>
 </div>
 {% endblock %}
@@ -82,12 +118,62 @@
 {% block extra_js %}
 <script>
   document.addEventListener('DOMContentLoaded', function(){
-    const categoryBtn =  document.getElementById('new_category');
+    // Create category button
+    const categoryBtn = document.getElementById('new_category');
     if(categoryBtn){
       categoryBtn.addEventListener('click', function(){
-        window.location.href = "{% url 'create_problem_category'%}";
+        window.location.href = "{% url 'create_problem_category' %}";
       });
     }
+
+    // Delete Modal Functionality
+    const deleteModal = document.getElementById('deleteModal');
+    const cancelDeleteBtn = document.getElementById('cancelDelete');
+    const confirmDeleteBtn = document.getElementById('confirmDelete');
+    const modalCategoryName = document.getElementById('modalCategoryName');
+    let deleteUrl = '';
+
+    // Add click event to all delete buttons
+    document.querySelectorAll('.delete-category-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        const categoryName = this.getAttribute('data-category-name');
+        deleteUrl = this.getAttribute('data-delete-url');
+        
+        modalCategoryName.textContent = categoryName;
+        deleteModal.classList.add('active');
+      });
+    });
+
+    // Cancel button
+    cancelDeleteBtn.addEventListener('click', function() {
+      deleteModal.classList.remove('active');
+      deleteUrl = '';
+    });
+
+    // Confirm delete button
+    confirmDeleteBtn.addEventListener('click', function() {
+      if (deleteUrl) {
+        window.location.href = deleteUrl;
+      }
+    });
+
+    // Close modal when clicking outside
+    deleteModal.addEventListener('click', function(e) {
+      if (e.target === deleteModal) {
+        deleteModal.classList.remove('active');
+        deleteUrl = '';
+      }
+    });
+
+    // Close modal on ESC key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && deleteModal.classList.contains('active')) {
+        deleteModal.classList.remove('active');
+        deleteUrl = '';
+      }
+    });
   });
 </script>
 <script src="{% static 'js/ticketing_dashboard.js' %}"></script>
