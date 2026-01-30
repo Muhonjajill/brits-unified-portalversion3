@@ -18,7 +18,7 @@
     </button>
 
     <!-- Upload CSV Form -->
-    <form method="POST" enctype="multipart/form-data" action="{% url 'terminals' %}">
+    <form method="POST" enctype="multipart/form-data" action="{% url 'terminals' %}" class="upload-form">
         {% csrf_token %}
         <div class="form-group">
             <label for="upload_file">Upload Terminals CSV</label>
@@ -28,17 +28,21 @@
     </form>
 
     <!-- Terminal Table Section -->
-    
-
+    <form method="get" action="" class="mb-3 search-form">
+        <div class="input-group search-group">
+            <input
+                type="text"
+                name="q"
+                class="form-control search-input"
+                placeholder="Search terminals..."
+                value="{{ request.GET.q }}"
+            >
+            <button class="btn btn-outline-primary" type="submit">
+                <i class="fas fa-search"></i> Search
+            </button>
+        </div>
+    </form>
     <div class="table-responsive">
-        <form method="get" action="" class="mb-3">
-            <div class="input-group">
-                <input type="text" name="q" class="form-control" placeholder="Search terminals..." value="{{ request.GET.q }}">
-                <button class="btn btn-outline-primary" type="submit">
-                    <i class="fas fa-search"></i> Search
-                </button>
-            </div>
-        </form>
         <table class="terminal-table">
             <thead>
                 <tr>
@@ -186,7 +190,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to remove the terminal <strong>{{ terminal.cdm_name }}</strong>?</p>
+                    <p>Are you sure you want to remove the terminal <strong>{{ terminal.branch_name }}</strong>?</p>
                 </div>
                 <div class="modal-footer">
                     <form method="POST" action="{% url 'delete_terminal' terminal.id %}">

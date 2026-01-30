@@ -1,7 +1,20 @@
 /* Global transitions for smooth effects */
-* {
-  transition: all 0.3s ease;
+button,
+.btn,
+a {
+  transition: background-color 0.3s ease, transform 0.3s ease;
 }
+
+input,
+select,
+textarea {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+body {
+  padding-top: 2rem;
+}
+
 
 /* Page container with padding, rounded corners, and shadows */
 .page-container {
@@ -15,9 +28,159 @@
   margin-top: 4rem;
 }
 
+.page-container h2 {
+  color: #123692;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.page-container h2 i {
+  font-size: 1.5rem;
+}
+
+.page-container > p {
+  font-size: 1.1rem;
+  color: #555;
+  margin-bottom: 1.5rem;
+}
+
+/* Form Groups */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #343a40;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #123692;
+  box-shadow: 0 0 0 0.2rem rgba(18, 54, 146, 0.25);
+}
+
+/* Input Group */
+.input-group {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.input-group .form-control {
+  flex: 1;
+}
+
+.input-group .btn {
+  white-space: nowrap;
+}
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn i {
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background-color: #123692;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #172d69;
+  transform: scale(1.05);
+}
+
+.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #218838;
+  transform: scale(1.05);
+}
+
+.btn-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800;
+  transform: scale(1.05);
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+  transform: scale(1.05);
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+  transform: scale(1.05);
+}
+
+.btn-outline-primary {
+  background-color: transparent;
+  color: #123692;
+  border: 1px solid #123692;
+}
+
+.btn-outline-primary:hover {
+  background-color: #123692;
+  color: white;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
 /* Table section with rounded corners and hover effects */
 .table-responsive {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   margin-top: 2rem;
 }
 
@@ -26,6 +189,7 @@
   border-collapse: collapse;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  min-width: 1000px;
 }
 
 .terminal-table th,
@@ -40,6 +204,7 @@
 .terminal-table th {
   background-color: #f8f9fa;
   color: #343a40;
+  font-weight: 600;
 }
 
 .terminal-table tbody tr:hover {
@@ -50,38 +215,133 @@
   cursor: pointer;
 }
 
-/* Modal styles */
+.terminal-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.terminal-table td .btn {
+  display: inline-block;
+  margin-right: 8px;
+  margin-bottom: 4px; 
+  vertical-align: middle;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+.terminal-table td {
+  white-space: nowrap;
+}
+
+/* ===============================
+   Bootstrap Modal Styling (Unified) - Only Visual Styles
+================================== */
+
+/* Only style the modal dialog and content, don't override Bootstrap's display logic */
 .modal-dialog {
+  position: relative;
+  width: auto;
+  margin: 1.75rem auto;
+  max-width: 500px;
+}
+
+.modal-dialog.modal-lg {
   max-width: 800px;
+}
+
+.modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
   border-radius: 10px;
-  /* Removing animation to avoid performance issues */
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  border: none;
 }
 
 .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem;
   background-color: #f8f9fa;
   border-bottom: 1px solid #dee2e6;
+  border-radius: 10px 10px 0 0;
+}
+
+.upload-form {
+  margin: 1rem;
 }
 
 .modal-title {
   font-weight: bold;
   font-size: 1.25rem;
+  margin: 0;
+  color: #123692;
+}
+
+.search-group {
+  flex-wrap: nowrap;
+}
+
+.search-group .btn {
+  flex-shrink: 0;
 }
 
 .modal-body {
+  position: relative;
+  flex: 1 1 auto;
   padding: 2rem;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 1rem;
+  border-top: 1px solid #dee2e6;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.modal-footer form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.btn-close {
+  padding: 0.5rem;
+  background: transparent;
+  border: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #000;
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+.btn-close:hover {
+  opacity: 0.75;
 }
 
 .ticket-item {
   margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #123692;
 }
 
-.ticket-item a {
+.ticket-item a,
+.ticket-link {
   color: #123692;
   text-decoration: none;
   font-weight: 500;
 }
 
-.ticket-item a:hover {
+.ticket-item a:hover,
+.ticket-link:hover {
   text-decoration: underline;
   color: #172d69;
 }
@@ -89,11 +349,15 @@
 /* Pagination controls */
 .pagination {
   text-align: center;
-  margin-top: 20px;
+  margin-top: 2rem;
 }
 
 .page-links {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .page-links a {
@@ -102,59 +366,455 @@
   padding: 8px 16px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  margin: 0 5px;
-  font-size: 1em;
-  transition: background-color 0.3s ease;
+  font-size: 1rem;
+  transition: all 0.3s ease;
 }
 
 .page-links a:hover {
-  background-color: #f1f1f1;
+  background-color: #123692;
+  color: white;
+  border-color: #123692;
 }
 
 .current-page {
   padding: 8px 16px;
-  font-size: 1em;
+  font-size: 1rem;
   color: #6c757d;
+  font-weight: 600;
 }
 
-/* Button Hover Effects */
-.btn:hover {
-  transform: scale(1.05);
-  transition: transform 0.3s ease;
+.text-muted {
+  color: #6c757d;
+  font-size: 0.9rem;
 }
 
-.btn-primary:hover {
-  background-color: #172d69;
-  border-color: #172d69;
+.search-group {
+  width: 100%;
 }
 
-.btn-success:hover {
-  background-color: #28a745;
-  border-color: #28a745;
+.search-input {
+  min-height: 48px;          
+  font-size: 1rem;
 }
-
-.btn-danger:hover {
-  background-color: #dc3545;
-  border-color: #dc3545;
-}
-.terminal-table td .btn {
-  display: inline-block;
-  margin-right: 8px;
-  margin-bottom: 4px; 
-  vertical-align: middle;
-}
-
-.terminal-table td {
+.search-group .btn {
+  width: auto !important;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}.search-group .btn {
+  width: auto !important;
+  flex: 0 0 auto;
   white-space: nowrap;
 }
+/* ===============================
+   Responsive Design
+================================== */
 
-/* Mobile responsiveness */
+/* Tablet */
+@media (max-width: 992px) {
+  .page-container {
+    padding: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .page-container h2 {
+    font-size: 1.8rem;
+  }
+
+  .terminal-table {
+    font-size: 0.9rem;
+  }
+
+  .modal-dialog {
+    max-width: 90%;
+  }
+
+  .modal-dialog.modal-lg {
+    max-width: 90%;
+  }
+}
+
+/* Mobile */
 @media (max-width: 768px) {
   .page-container {
+    padding: 1.5rem;
+    margin: 1.5rem auto;
+    margin-top: 2rem;
+  }
+
+  .page-container h2 {
+    font-size: 1.6rem;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .page-container h2 i {
+    font-size: 1.4rem;
+  }
+
+  .page-container > p {
+    font-size: 0.95rem;
+    text-align: center;
+  }
+
+  .page-container > .btn,
+  .modal-footer .btn,
+  .terminal-table td .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .input-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .input-group .btn {
+    width: 100%;
+  }
+
+  .terminal-table {
+    font-size: 0.85rem;
+    min-width: 100%;
+  }
+
+  .terminal-table th,
+  .terminal-table td {
+    padding: 8px 6px;
+    font-size: 0.85rem;
+  }
+
+  .terminal-table td .btn {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    margin-right: 4px;
+    margin-bottom: 4px;
+  }
+
+  .modal-dialog {
+    max-width: 95%;
+    margin: 1rem auto;
+  }
+
+  .modal-dialog.modal-lg {
+    max-width: 95%;
+  }
+
+  .modal-header,
+  .modal-body {
+    padding: 1.25rem;
+  }
+
+  .modal-title {
+    font-size: 1.1rem;
+  }
+
+  .modal-footer {
     padding: 1rem;
   }
 
-  .terminal-table th, .terminal-table td {
-    padding: 10px;
+  .modal-footer form {
+    width: 100%;
+  }
+
+  .modal-footer .btn {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .page-links {
+    gap: 5px;
+  }
+
+  .page-links a,
+  .current-page {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+  .search-input {
+    min-height: 52px;        
+    font-size: 1.05rem;
+    padding: 0.75rem 1rem;
   }
 }
+
+/* Small Mobile */
+@media (max-width: 576px) {
+  .page-container {
+    padding: 1rem;
+    margin: 1rem auto;
+    border-radius: 6px;
+  }
+
+  .page-container h2 {
+    font-size: 1.4rem;
+    gap: 0.5rem;
+  }
+
+  .page-container h2 i {
+    font-size: 1.3rem;
+  }
+
+  .page-container > p {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+
+  .form-control {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .terminal-table {
+    font-size: 0.8rem;
+  }
+
+  .terminal-table th,
+  .terminal-table td {
+    padding: 6px 5px;
+    font-size: 0.8rem;
+  }
+
+  .terminal-table td .btn {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    display: block;
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 3px;
+  }
+
+  .modal-dialog {
+    max-width: 98%;
+    margin: 0.5rem auto;
+  }
+
+  .modal-dialog.modal-lg {
+    max-width: 98%;
+  }
+
+  .modal-header {
+    padding: 1rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+  }
+
+  .modal-footer {
+    padding: 0.75rem;
+  }
+
+  .modal-footer .btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+
+  .form-group label {
+    font-size: 0.9rem;
+  }
+
+  .ticket-item {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .page-links {
+    gap: 4px;
+  }
+
+  .page-links a,
+  .current-page {
+    padding: 5px 10px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 480px) {
+  .page-container {
+    padding: 0.75rem;
+    margin: 0.75rem auto;
+  }
+
+  .page-container h2 {
+    font-size: 1.3rem;
+  }
+
+  .page-container h2 i {
+    font-size: 1.2rem;
+  }
+
+  .page-container > p {
+    font-size: 0.85rem;
+  }
+
+  .btn {
+    padding: 7px 14px;
+    font-size: 0.85rem;
+  }
+
+  .form-control:not(.search-input) {
+    font-size: 0.85rem;
+  }
+
+  .terminal-table {
+    font-size: 0.75rem;
+  }
+
+  .terminal-table th,
+  .terminal-table td {
+    padding: 5px 4px;
+    font-size: 0.75rem;
+  }
+
+  .terminal-table td .btn {
+    padding: 3px 6px;
+    font-size: 0.7rem;
+  }
+
+  .modal-dialog {
+    margin: 0.25rem auto;
+  }
+
+  .modal-header,
+  .modal-body {
+    padding: 0.75rem;
+  }
+
+  .modal-title {
+    font-size: 0.95rem;
+  }
+
+  .modal-footer {
+    padding: 0.65rem;
+  }
+
+  .modal-footer .btn {
+    padding: 7px 10px;
+    font-size: 0.8rem;
+  }
+
+  .form-group {
+    margin-bottom: 0.75rem;
+  }
+
+  .page-links a,
+  .current-page {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+  }
+
+  .search-input {
+    min-height: 56px;
+    font-size: 1.1rem;
+  }
+}
+
+/* Very Small Devices */
+@media (max-width: 360px) {
+  .page-container {
+    padding: 0.6rem;
+    margin: 0.5rem auto;
+  }
+
+  .page-container h2 {
+    font-size: 1.2rem;
+    gap: 0.4rem;
+  }
+
+  .page-container h2 i {
+    font-size: 1.1rem;
+  }
+
+  .terminal-table th,
+  .terminal-table td {
+    padding: 4px 3px;
+    font-size: 0.7rem;
+  }
+
+  .terminal-table td .btn {
+    padding: 2px 5px;
+    font-size: 0.65rem;
+  }
+
+  .page-links a,
+  .current-page {
+    padding: 3px 6px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Landscape Mode */
+@media (max-width: 768px) and (orientation: landscape) {
+  .page-container {
+    margin: 1rem auto;
+    padding: 1.25rem;
+  }
+
+  .page-container h2 {
+    font-size: 1.5rem;
+  }
+
+  .modal-dialog {
+    max-width: 92%;
+  }
+
+  .modal-dialog.modal-lg {
+    max-width: 92%;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn:hover {
+    transform: none;
+  }
+}
+
+.search-group {
+  width: 100%;
+}
+
+.search-group .search-input {
+  width: 100% !important;
+  min-height: 56px !important;
+  padding: 0.85rem 1rem !important;
+  font-size: 1.05rem !important;
+  line-height: 1.4 !important;
+  border-radius: 8px !important;
+}
+
+.search-form {
+  width: 100% !important;
+}
+
+.search-group {
+  width: 100% !important;
+  display: flex !important;
+}
+
+.search-group .search-input {
+  width: 100% !important;
+  flex: 1 1 auto !important;
+  min-height: 56px !important;
+  font-size: 1.05rem !important;
+  padding: 0.9rem 1rem !important;
+  box-sizing: border-box !important;
+}
+
+.search-group .btn {
+  min-height: 56px;
+}
+

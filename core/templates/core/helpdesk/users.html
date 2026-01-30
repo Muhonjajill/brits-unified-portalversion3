@@ -8,13 +8,16 @@
 {% endblock %}
 
 {% block content %}
+<br>
 <div class="page-container">
   <h2><i class="fas fa-user-friends"></i> Registered Users</h2>
 
   {% if messages %}
     <ul class="messages">
       {% for message in messages %}
-        <li class="alert alert-success">{{ message }}</li>
+        <li class="alert alert-success">
+          <i class="fas fa-check-circle"></i> {{ message }}
+        </li>
       {% endfor %}
     </ul>
   {% endif %}
@@ -33,32 +36,62 @@
       <tbody>
         {% for user in page_obj %}
         <tr>
-          <td data-label="Name">{{ user.username }}</td>
-          <td data-label="Email">{{ user.email }}</td>
+          <td data-label="Name">
+            <i class="fas fa-user"></i> {{ user.username }}
+          </td>
+          <td data-label="Email">
+            <i class="fas fa-envelope"></i> {{ user.email }}
+          </td>
           <td data-label="Role">
             {% with user.groups.first.name as role %}
               <span class="badge {% if role == 'Director' %}director{% elif role == 'Manager' %}manager{% elif role == 'Staff' %}staff{% else %}no-role{% endif %}">
+                {% if role == 'Director' %}
+                  <i class="fas fa-user-tie"></i>
+                {% elif role == 'Manager' %}
+                  <i class="fas fa-user-cog"></i>
+                {% elif role == 'Staff' %}
+                  <i class="fas fa-user-clock"></i>
+                {% else %}
+                  <i class="fas fa-user-slash"></i>
+                {% endif %}
                 {{ role|default:"No Role" }}
               </span>
             {% endwith %}
           </td>
           <td data-label="Status">
             <span class="badge {% if user.is_active %}active{% else %}inactive{% endif %}">
-              {{ user.is_active|yesno:"Active,Inactive" }}
+              {% if user.is_active %}
+                <i class="fas fa-check-circle"></i> Active
+              {% else %}
+                <i class="fas fa-times-circle"></i> Inactive
+              {% endif %}
             </span>
           </td>
           <!--<td class="actions" data-label="Actions">
-            <a href="{% url 'user_detail' user.id %}" class="btn view">View</a>
+            <a href="{% url 'user_detail' user.id %}" class="btn view">
+              <i class="fas fa-eye"></i> View
+            </a>
             {% if perms.auth.change_user %}
-              <a href="{% url 'edit_user' user.id %}" class="btn edit">Edit</a>
+              <a href="{% url 'edit_user' user.id %}" class="btn edit">
+                <i class="fas fa-edit"></i> Edit
+              </a>
             {% endif %}
             {% if perms.auth.delete_user %}
               <form method="post" action="{% url 'delete_user' user.id %}" style="display:inline;">
                 {% csrf_token %}
-                <button type="submit" class="btn delete" onclick="return confirm('Are you sure you want to delete this user?')">Delete</button>
+                <button type="submit" class="btn delete" onclick="return confirm('Are you sure you want to delete this user?')">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
               </form>
             {% endif %}
           </td>-->
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" style="text-align: center; color: #6c757d; padding: 2rem;">
+            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;"></i>
+            No users found.
+          </td>
         </tr>
         {% endfor %}
       </tbody>
@@ -66,23 +99,25 @@
   </div>
 
   <!-- Pagination Links -->
+  {% if page_obj.has_other_pages %}
   <div class="pagination">
     <span class="step-links">
       {% if page_obj.has_previous %}
-        <a href="?page=1">&laquo; first</a>
-        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        <a href="?page=1"><i class="fas fa-angle-double-left"></i> First</a>
+        <a href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-angle-left"></i> Previous</a>
       {% endif %}
 
       <span class="current">
-        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        <i class="fas fa-file-alt"></i> Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
       </span>
 
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}">next</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        <a href="?page={{ page_obj.next_page_number }}">Next <i class="fas fa-angle-right"></i></a>
+        <a href="?page={{ page_obj.paginator.num_pages }}">Last <i class="fas fa-angle-double-right"></i></a>
       {% endif %}
     </span>
   </div>
+  {% endif %}
 </div>
 
 <script src="{% static 'js/ticketing_dashboard.js' %}"></script>
