@@ -37,13 +37,27 @@
             <tbody>
                 {% for ticket in tickets %}
                 <tr onclick="window.location='{% url 'ticket_detail' ticket_id=ticket.id %}'" class="ticket-row">
-                    <td>{{ ticket.title }}</td>
-                    <td><span class="status-{{ ticket.status|lower }}">{{ ticket.status }}</span></td>
-                    <td><span class="priority-{{ ticket.priority|lower }}">{{ ticket.priority }}</span></td>
-                    <td>{{ ticket.customer.name }}</td>
-                    <td>{{ ticket.terminal|default:"—" }}</td>
-                    <td>{{ ticket.assigned_to|default:"Unassigned" }}</td>
-                    <td>{{ ticket.created_at|date:"Y-m-d" }}</td>
+                    <td data-label="Title">{{ ticket.title }}</td>
+
+                    <td data-label="Status">
+                        <span class="badge status-{{ ticket.status|lower }}">
+                            {{ ticket.status }}
+                        </span>
+                    </td>
+
+                    <td data-label="Priority">
+                        <span class="badge priority-{{ ticket.priority|lower }}">
+                            {{ ticket.priority }}
+                        </span>
+                    </td>
+
+                    <td data-label="Customer">{{ ticket.customer.name }}</td>
+
+                    <td data-label="Terminal">{{ ticket.terminal|default:"—" }}</td>
+
+                    <td data-label="Assigned To">{{ ticket.assigned_to|default:"Unassigned" }}</td>
+
+                    <td data-label="Created On">{{ ticket.created_at|date:"Y-m-d" }}</td>
                 </tr>
                 {% empty %}
                 <tr>

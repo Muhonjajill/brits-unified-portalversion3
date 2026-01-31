@@ -10,82 +10,159 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
   align-items: center;
   background: #f4f6f9;
-  padding: 20px 0;
+  padding: 1.5rem 0;
   overflow-y: auto;
+  position: relative;
+}
+
+/* Background Blobs */
+.blob {
+  position: fixed;
+  pointer-events: none;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.35;
+  z-index: 0;
+}
+
+.blob1 {
+  top: -100px;
+  left: -100px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, #60a5fa 0%, #3b82f6 100%);
+}
+
+.blob2 {
+  bottom: -100px;
+  right: -100px;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, #a78bfa 0%, #7c3aed 100%);
+}
+
+.blob3 {
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, #34d399 0%, #059669 100%);
+  transform: translate(-50%, -50%);
+  opacity: 0.15;
 }
 
 /* Layout wrapper */
 .login-wrapper {
   display: flex;
-  width: 90%;
-  max-width: 950px;
-  min-height: 600px;
+  width: 92%;
+  max-width: 960px;
+  min-height: 580px;
   height: auto;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  border-radius: 14px;
   overflow: hidden;
   flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
 }
 
 /* Left branding panel */
 .login-wrapper .left-panel {
-  background: linear-gradient(to bottom, #e74c3c, #073692);
+  background: linear-gradient(145deg, #e74c3c 0%, #123692 100%);
   color: #f8f1f1;
   width: 50%;
-  padding: 40px 30px;
+  padding: 50px 35px;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle overlay pattern on left panel */
+.left-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.06) 0%, transparent 60%),
+              radial-gradient(circle at 70% 30%, rgba(255,255,255,0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.left-panel > * {
+  position: relative;
+  z-index: 1;
 }
 
 .left-panel img {
-  width: 150px;
+  width: 140px;
   height: auto;
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
 }
 
 .left-panel h1 {
-  font-size: 32px;
-  margin-bottom: 10px;
+  font-size: 1.9rem;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.3px;
 }
 
 .left-panel p {
-  font-size: 16px;
+  font-size: 1rem;
   opacity: 0.85;
+  line-height: 1.5;
+  max-width: 280px;
+  margin: 0 auto;
 }
 
-/* Right login form card */
+/* Right register form panel */
 .login-wrapper .right-panel {
   background: white;
   width: 50%;
-  padding: 50px 40px;
+  padding: 50px 45px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* Align content to top */
+  justify-content: flex-start;
   max-height: 100%;
-  overflow-y: auto; /* Allow scrolling if needed */
+  overflow-y: auto;
 }
 
-/* Ensure the heading and paragraph are visible */
 .right-panel h2 {
-  font-size: 28px;
-  margin-bottom: 10px;
-  color: #0f1f47;
+  font-size: 1.9rem;
+  margin-bottom: 0.4rem;
+  color: #123692;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.right-panel p {
-  color: #161616;
-  margin-bottom: 30px;
+.right-panel h2 i {
+  color: #123692;
+  font-size: 1.7rem;
 }
 
-/* Styling for form */
+.right-panel > p {
+  color: #6b7280;
+  margin-bottom: 1.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* Register Form */
 .login-form {
   display: flex;
   flex-direction: column;
+  gap: 0.1rem;
 }
 
 .login-form input[type="text"],
@@ -93,90 +170,435 @@ body {
 .login-form input[type="password"],
 .login-form input[type="tel"] {
   padding: 12px 15px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 15px;
-  transition: border 0.3s ease;
+  margin-bottom: 0.85rem;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #f9fafb;
+  color: #111827;
+  width: 100%;
+  font-family: inherit;
 }
 
 .login-form input:focus {
-  border-color: #1a1f3d;
+  border-color: #123692;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(18, 54, 146, 0.12);
+  background: #fff;
 }
 
+.login-form input::placeholder {
+  color: #9ca3af;
+}
+
+/* Register Button */
 .btn-login {
-  background: #123692;
+  background: linear-gradient(90deg, #123692, #1e56b0);
   color: white;
   border: none;
-  padding: 12px;
-  border-radius: 6px;
-  font-size: 16px;
+  padding: 13px;
+  border-radius: 8px;
+  font-size: 1.05rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease;
-  margin-bottom: 20px; /* Ensure space for other elements below */
+  transition: all 0.3s ease;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(18, 54, 146, 0.25);
+  letter-spacing: 0.5px;
 }
 
 .btn-login:hover {
-  background: #1a1f3d;
-  opacity: 0.9;
+  background: linear-gradient(90deg, #0e2a70, #123692);
+  box-shadow: 0 6px 16px rgba(18, 54, 146, 0.35);
+  transform: translateY(-1px);
 }
 
+.btn-login:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(18, 54, 146, 0.2);
+}
+
+/* Login Links */
 .login-links {
-  margin-top: 20px;
-  font-size: 14px;
-  color: #555;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+  text-align: center;
+  padding-bottom: 0.5rem;
+}
+
+.login-links span {
+  margin-right: 0.25rem;
 }
 
 .login-links .link {
-  color: #0f1f47;
+  color: #123692;
   text-decoration: none;
+  font-weight: 500;
   margin: 0 4px;
+  transition: color 0.2s ease;
 }
 
 .login-links .link:hover {
+  color: #0e2a70;
   text-decoration: underline;
 }
 
-/* Responsive adjustments */
+/* ===============================
+   Responsive Design
+================================== */
+
+/* Tablet */
+@media screen and (max-width: 1024px) {
+  .login-wrapper {
+    width: 88%;
+    min-height: auto;
+  }
+
+  .login-wrapper .left-panel {
+    padding: 40px 30px;
+  }
+
+  .login-wrapper .right-panel {
+    padding: 45px 35px;
+  }
+
+  .left-panel h1 {
+    font-size: 1.75rem;
+  }
+
+  .right-panel h2 {
+    font-size: 1.75rem;
+  }
+}
+
+/* Mobile - Stacked Layout */
 @media screen and (max-width: 768px) {
   body {
+    padding: 1.5rem 0;
     align-items: flex-start;
-    padding: 10px 0;
   }
+
   .login-wrapper {
     flex-direction: column;
+    width: 95%;
+    min-height: auto;
     height: auto;
+    margin-top: 2vh;
+    border-radius: 14px;
+  }
+
+  .login-wrapper .left-panel {
+    width: 100%;
+    padding: 2.5rem 1.75rem;
+  }
+
+  .left-panel img {
+    width: 110px;
+    margin-bottom: 1.25rem;
+  }
+
+  .left-panel h1 {
+    font-size: 1.6rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .left-panel p {
+    font-size: 0.95rem;
+  }
+
+  .login-wrapper .right-panel {
+    width: 100%;
+    padding: 2.5rem 1.75rem;
+  }
+
+  .right-panel h2 {
+    font-size: 1.6rem;
+  }
+
+  .right-panel h2 i {
+    font-size: 1.5rem;
+  }
+
+  .right-panel > p {
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .login-form input[type="text"],
+  .login-form input[type="email"],
+  .login-form input[type="password"],
+  .login-form input[type="tel"] {
+    padding: 12px 14px;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .btn-login {
+    padding: 13px;
+    font-size: 1rem;
+  }
+
+  .login-links {
+    margin-top: 0.75rem;
+    font-size: 0.88rem;
+  }
+}
+
+/* Small Mobile */
+@media screen and (max-width: 576px) {
+  body {
+    padding: 1rem 0;
+  }
+
+  .login-wrapper {
+    width: 97%;
+    margin-top: 1.5vh;
+    border-radius: 12px;
+  }
+
+  .login-wrapper .left-panel {
+    padding: 2rem 1.25rem;
+  }
+
+  .left-panel img {
+    width: 95px;
+    margin-bottom: 1rem;
+  }
+
+  .left-panel h1 {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .left-panel p {
+    font-size: 0.9rem;
+  }
+
+  .login-wrapper .right-panel {
+    padding: 2rem 1.25rem;
+  }
+
+  .right-panel h2 {
+    font-size: 1.45rem;
+  }
+
+  .right-panel h2 i {
+    font-size: 1.35rem;
+  }
+
+  .right-panel > p {
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .login-form input[type="text"],
+  .login-form input[type="email"],
+  .login-form input[type="password"],
+  .login-form input[type="tel"] {
+    padding: 11px 12px;
+    font-size: 0.95rem;
+    border-radius: 6px;
+    margin-bottom: 0.7rem;
+  }
+
+  .btn-login {
+    padding: 12px;
+    font-size: 0.95rem;
+    border-radius: 6px;
+  }
+
+  .login-links {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .login-links .link {
+    font-size: 0.85rem;
+  }
+
+  /* Shrink blobs on small screens */
+  .blob1 { width: 200px; height: 200px; }
+  .blob2 { width: 180px; height: 180px; }
+  .blob3 { width: 140px; height: 140px; }
+}
+
+/* Extra Small Mobile */
+@media screen and (max-width: 400px) {
+  .login-wrapper {
+    width: 98%;
+    margin-top: 1vh;
+    border-radius: 10px;
+  }
+
+  .login-wrapper .left-panel {
+    padding: 1.75rem 1rem;
+  }
+
+  .left-panel img {
+    width: 80px;
+  }
+
+  .left-panel h1 {
+    font-size: 1.25rem;
+  }
+
+  .left-panel p {
+    font-size: 0.85rem;
+  }
+
+  .login-wrapper .right-panel {
+    padding: 1.75rem 1rem;
+  }
+
+  .right-panel h2 {
+    font-size: 1.3rem;
+  }
+
+  .right-panel h2 i {
+    font-size: 1.2rem;
+  }
+
+  .right-panel > p {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .login-form input[type="text"],
+  .login-form input[type="email"],
+  .login-form input[type="password"],
+  .login-form input[type="tel"] {
+    padding: 10px 11px;
+    font-size: 0.9rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .btn-login {
+    padding: 11px;
+    font-size: 0.9rem;
+  }
+
+  .login-links {
+    font-size: 0.8rem;
+  }
+
+  .login-links .link {
+    font-size: 0.8rem;
+  }
+
+  /* Further shrink blobs */
+  .blob1 { width: 160px; height: 160px; }
+  .blob2 { width: 140px; height: 140px; }
+  .blob3 { width: 100px; height: 100px; }
+}
+
+/* Landscape on small screens */
+@media screen and (max-width: 768px) and (orientation: landscape) {
+  body {
+    padding: 0.5rem 0;
+    align-items: center;
+  }
+
+  .login-wrapper {
+    flex-direction: row;
+    width: 92%;
+    margin-top: 0;
     min-height: auto;
   }
 
   .login-wrapper .left-panel,
   .login-wrapper .right-panel {
-    width: 100%;
-    padding: 20px;
+    width: 50%;
+  }
+
+  .login-wrapper .left-panel {
+    padding: 1.5rem 1rem;
+  }
+
+  .left-panel img {
+    width: 60px;
+    margin-bottom: 0.5rem;
+  }
+
+  .left-panel h1 {
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .left-panel p {
+    font-size: 0.75rem;
+  }
+
+  .login-wrapper .right-panel {
+    padding: 1.5rem 1.25rem;
   }
 
   .right-panel h2 {
-    font-size: 24px; /* Reduced font size */
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
   }
 
-  .right-panel p {
-    font-size: 14px; /* Adjusted font size for smaller screens */
+  .right-panel h2 i {
+    font-size: 1rem;
   }
 
-  .login-form input {
-    font-size: 14px; /* Smaller font for mobile inputs */
+  .right-panel > p {
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
   }
 
-  .login-links {
-    font-size: 12px; /* Slightly smaller link text */
-  }
-
-  .login-links .link {
-    font-size: 14px; /* Ensure it's legible */
+  .login-form input[type="text"],
+  .login-form input[type="email"],
+  .login-form input[type="password"],
+  .login-form input[type="tel"] {
+    padding: 7px 9px;
+    font-size: 0.82rem;
+    margin-bottom: 0.4rem;
   }
 
   .btn-login {
-    padding: 10px; /* Reduced padding for mobile screens */
+    padding: 8px;
+    font-size: 0.82rem;
   }
+
+  .login-links {
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+  }
+
+  .login-links .link {
+    font-size: 0.72rem;
+  }
+}
+
+/* Disable hover lift on touch */
+@media (max-width: 768px) {
+  .btn-login:hover {
+    transform: none;
+  }
+
+  .btn-login:active {
+    transform: scale(0.97);
+  }
+}
+
+/* Custom scrollbar for right panel */
+.right-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.right-panel::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.right-panel::-webkit-scrollbar-thumb {
+  background: #123692;
+  border-radius: 10px;
+}
+
+.right-panel::-webkit-scrollbar-thumb:hover {
+  background: #0e2a70;
 }

@@ -34,10 +34,29 @@ body {
   display: flex;
   align-items: center;
   gap: 2rem;
-  padding: 2rem 4rem;
-  background: linear-gradient(135deg, #0d47a1, #073692);
+  padding: 2.5rem 4rem;
+  background: linear-gradient(135deg, #123692, #1e56b0);
   color: #fff;
   flex-wrap: wrap;
+  position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Subtle overlay pattern */
+.profile-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 70%, rgba(255,255,255,0.08) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.profile-header > * {
+  position: relative;
+  z-index: 1;
 }
 
 .profile-avatar {
@@ -45,31 +64,43 @@ body {
   height: 120px;
   border-radius: 50%;
   border: 4px solid #fff;
-  box-shadow: 0 0 25px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 25px rgba(0,0,0,0.3);
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
 .profile-avatar:hover {
-  transform: scale(1.07);
+  transform: scale(1.08);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
 }
 
 .profile-avatar.default-avatar {
-  background-color: #f0f0f0;
+  background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2.5rem;
-  font-weight: bold;
-  color: #555;
+  font-weight: 700;
+  color: #123692;
+  border: 4px solid #fff;
+}
+
+.avatar-initials {
+  text-transform: uppercase;
+  letter-spacing: 2px;
 }
 
 .profile-info h1 {
   font-size: 2rem;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.4rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
+
 .profile-info p {
   font-size: 1.1rem;
-  opacity: 0.9;
+  opacity: 0.92;
+  font-weight: 500;
 }
 
 /* ===== Details Grid ===== */
@@ -84,33 +115,47 @@ body {
 
 .details-card {
   background: #fff;
-  border: 1px solid #e0e0e0;
+  border: 1px solid #e5e8ec;
   border-radius: 14px;
-  padding: 1.8rem;
+  padding: 2rem;
   box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
 .details-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  border-color: #123692;
 }
 
 .details-card h2 {
   font-size: 1.45rem;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.5rem;
   color: #123692;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  font-weight: 700;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e8ec;
 }
 
 .details-card p {
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.9rem;
   font-size: 1.05rem;
-  line-height: 1.6;
+  line-height: 1.7;
+  color: #495057;
 }
+
+.details-card p:last-child {
+  margin-bottom: 0;
+}
+
 .details-card strong {
-  color: #222;
+  color: #212529;
+  font-weight: 600;
+  min-width: 140px;
+  display: inline-block;
 }
 
 /* ===== Action Buttons ===== */
@@ -118,14 +163,15 @@ body {
   display: flex;
   justify-content: flex-end;
   gap: 1.2rem;
-  padding: 1.8rem 4rem;
+  padding: 2rem 4rem;
   background: #f4f6f8;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid #e0e4e8;
+  flex-wrap: wrap;
 }
 
 .profile-actions a,
 .profile-actions button {
-  padding: 0.85rem 1.4rem;
+  padding: 0.9rem 1.6rem;
   border-radius: 10px;
   font-weight: 600;
   font-size: 1rem;
@@ -135,53 +181,83 @@ body {
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  white-space: nowrap;
 }
 
 /* Settings Button */
 .profile-actions a.settings {
   background: #e3f2fd;
   color: #123692;
-  border: 1px solid #90caf9;
+  border: 1.5px solid #90caf9;
 }
+
 .profile-actions a.settings:hover {
-  background: #1976d2;
+  background: #123692;
   color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(18, 54, 146, 0.25);
 }
 
 /* Logout Button */
 .profile-actions button.logout {
   background: #ffebee;
   color: #d32f2f;
-  border: 1px solid #ef9a9a;
+  border: 1.5px solid #ef9a9a;
 }
+
 .profile-actions button.logout:hover {
   background: #d32f2f;
   color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.25);
 }
 
 /* Back Button */
 .profile-actions a.back {
   background: #e8f5e9;
   color: #123692;
-  border: 1px solid #a5d6a7;
+  border: 1.5px solid #a5d6a7;
 }
+
 .profile-actions a.back:hover {
-  background: #073692;
+  background: #123692;
   color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(18, 54, 146, 0.25);
 }
 
-.details-card h2,
-.details-card p {
-  text-align: center;
+.profile-actions form {
+  margin: 0;
 }
 
-/* ===== Responsive ===== */
+/* ===============================
+   Responsive Design
+================================== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .profile-header {
+    padding: 2.25rem 3rem;
+  }
+
+  .profile-details {
+    padding: 2.5rem 3rem;
+    gap: 1.75rem;
+  }
+
+  .profile-actions {
+    padding: 1.75rem 3rem;
+  }
+}
+
+/* Mobile */
 @media (max-width: 768px) {
   .profile-header {
-    padding: 2rem;
+    padding: 2rem 1.5rem;
     flex-direction: column;
     text-align: center;
+    gap: 1.25rem;
   }
 
   .profile-avatar {
@@ -190,68 +266,279 @@ body {
   }
 
   .profile-info h1 {
-    font-size: 1.5rem;
+    font-size: 1.65rem;
+  }
+
+  .profile-info p {
+    font-size: 1.05rem;
   }
 
   .profile-details {
-    padding: 2rem;
+    padding: 2rem 1.5rem;
+    gap: 1.5rem;
+    grid-template-columns: 1fr;
+  }
+
+  .details-card {
+    padding: 1.75rem;
+  }
+
+  .details-card h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.85rem;
+  }
+
+  .details-card p {
+    font-size: 1rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .details-card strong {
+    min-width: auto;
+    display: block;
+    margin-bottom: 0.25rem;
   }
 
   .profile-actions {
     flex-direction: column;
     align-items: stretch;
-    padding: 1.5rem 2rem;
-  }
-
-  .details-card h2 {
-    font-size: 1.25rem;
-  }
-
-  .details-card p {
-    font-size: 0.95rem;
+    padding: 1.5rem;
+    gap: 1rem;
   }
 
   .profile-actions a,
   .profile-actions button {
     width: 100%;
-    margin-bottom: 1rem;
+    justify-content: center;
     font-size: 1rem;
+    padding: 0.95rem 1.4rem;
   }
 }
 
-/* Smaller screens (max-width: 480px) */
-@media (max-width: 480px) {
+/* Small Mobile */
+@media (max-width: 576px) {
+  .profile-header {
+    padding: 1.75rem 1.25rem;
+  }
+
   .profile-avatar {
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: 90px;
+    border-width: 3px;
+  }
+
+  .profile-avatar.default-avatar {
+    font-size: 2.2rem;
   }
 
   .profile-info h1 {
-    font-size: 1.3rem;
+    font-size: 1.5rem;
   }
 
   .profile-info p {
     font-size: 1rem;
   }
 
-  .profile-actions a,
-  .profile-actions button {
-    font-size: 0.9rem;
-  }
-
   .profile-details {
-    padding: 1.5rem;
+    padding: 1.75rem 1.25rem;
+    gap: 1.25rem;
   }
 
   .details-card {
     padding: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .details-card h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .details-card p {
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .profile-actions {
+    padding: 1.25rem;
+    gap: 0.85rem;
+  }
+
+  .profile-actions a,
+  .profile-actions button {
+    padding: 0.85rem 1.2rem;
+    font-size: 0.95rem;
+    border-radius: 8px;
+  }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 480px) {
+  .profile-header {
+    padding: 1.5rem 1rem;
+  }
+
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-avatar.default-avatar {
+    font-size: 2rem;
+  }
+
+  .profile-info h1 {
+    font-size: 1.35rem;
+  }
+
+  .profile-info p {
+    font-size: 0.95rem;
+  }
+
+  .profile-details {
+    padding: 1.5rem 1rem;
+    gap: 1rem;
+  }
+
+  .details-card {
+    padding: 1.25rem;
   }
 
   .details-card h2 {
     font-size: 1.1rem;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.65rem;
   }
 
   .details-card p {
     font-size: 0.9rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .profile-actions {
+    padding: 1rem;
+  }
+
+  .profile-actions a,
+  .profile-actions button {
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Very Small Devices */
+@media (max-width: 360px) {
+  .profile-header {
+    padding: 1.25rem 0.85rem;
+  }
+
+  .profile-avatar {
+    width: 70px;
+    height: 70px;
+  }
+
+  .profile-avatar.default-avatar {
+    font-size: 1.8rem;
+  }
+
+  .profile-info h1 {
+    font-size: 1.25rem;
+  }
+
+  .profile-info p {
+    font-size: 0.9rem;
+  }
+
+  .profile-details {
+    padding: 1.25rem 0.85rem;
+  }
+
+  .details-card {
+    padding: 1rem;
+  }
+
+  .details-card h2 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.6rem;
+  }
+
+  .details-card p {
+    font-size: 0.85rem;
+  }
+
+  .profile-actions {
+    padding: 0.85rem;
+  }
+
+  .profile-actions a,
+  .profile-actions button {
+    padding: 0.75rem 0.9rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Landscape Mode */
+@media (max-width: 768px) and (orientation: landscape) {
+  .profile-header {
+    flex-direction: row;
+    padding: 1.5rem 2rem;
+    text-align: left;
+  }
+
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-info h1 {
+    font-size: 1.4rem;
+  }
+
+  .profile-info p {
+    font-size: 0.95rem;
+  }
+
+  .profile-details {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 1.5rem 2rem;
+  }
+
+  .details-card {
+    padding: 1.25rem;
+  }
+
+  .profile-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+    padding: 1.25rem 2rem;
+  }
+
+  .profile-actions a,
+  .profile-actions button {
+    width: auto;
+  }
+}
+
+/* Disable hover transforms on touch */
+@media (max-width: 768px) {
+  .profile-avatar:hover {
+    transform: none;
+  }
+
+  .details-card:hover {
+    transform: none;
+  }
+
+  .profile-actions a:hover,
+  .profile-actions button:hover {
+    transform: none;
+  }
+
+  .profile-actions a:active,
+  .profile-actions button:active {
+    transform: scale(0.97);
   }
 }

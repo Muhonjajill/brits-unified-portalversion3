@@ -1,5 +1,5 @@
 body {
-  font-family: 'Segoe UI', sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #f4f6f9;
   margin: 0;
   padding: 1rem;
@@ -7,18 +7,30 @@ body {
 
 .page-title {
   text-align: center;
-  color: #2c3e50;
+  color: #123692;
   margin-bottom: 2rem;
+  font-size: 2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.page-title i {
+  font-size: 1.8rem;
+  color: #123692;
 }
 
 .table-container {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
-  margin: 0;
+  margin: 0 auto;
   background: #ffffff;
   border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+  padding: 1.5rem;
 }
 
 .user-table {
@@ -31,21 +43,63 @@ body {
   color: white;
 }
 
-.user-table th, .user-table td {
+.user-table th {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.9em;
+}
+
+.user-table td {
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid #eee;
+  font-size: 1rem;
 }
 
+.user-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.user-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.user-table tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.user-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Badge Styles */
 .badge {
-  padding: 4px 10px;
-  border-radius: 5px;
+  padding: 6px 12px;
+  border-radius: 6px;
   font-weight: 600;
   text-transform: capitalize;
+  font-size: 0.85rem;
+  display: inline-block;
+  white-space: nowrap;
 }
 
+/* Role Badges */
 .badge.admin {
   background-color: #123692;
+  color: white;
+}
+
+.badge.director {
+  background-color: #123692;
+  color: white;
+}
+
+.badge.manager {
+  background-color: #28a745;
   color: white;
 }
 
@@ -54,16 +108,22 @@ body {
   color: white;
 }
 
+.badge.staff {
+  background-color: #ffc107;
+  color: #333;
+}
+
 .badge.viewer {
   background-color: #6c757d;
   color: white;
 }
 
 .badge.no-role {
-  background-color: #cccccc;
-  color: #333;
+  background-color: #e0e0e0;
+  color: #666;
 }
 
+/* Status Badges */
 .badge.active {
   background-color: #d4edda;
   color: #155724;
@@ -74,13 +134,24 @@ body {
   color: #721c24;
 }
 
-.actions a.btn {
-  padding: 0.4rem 0.7rem;
+/* Action Buttons */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.actions a.btn,
+.actions button.btn {
+  padding: 0.5rem 0.9rem;
   font-size: 0.85rem;
   text-decoration: none;
-  margin-right: 6px;
-  border-radius: 4px;
-  transition: 0.2s;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  display: inline-block;
 }
 
 .actions a.view {
@@ -88,38 +159,47 @@ body {
   color: white;
 }
 
-.actions a.edit {
-  background-color: #ffc107;
-  color: black;
+.actions a.view:hover {
+  background-color: #138496;
+  transform: translateY(-1px);
 }
 
+.actions a.edit {
+  background-color: #ffc107;
+  color: #333;
+}
+
+.actions a.edit:hover {
+  background-color: #e0a800;
+  transform: translateY(-1px);
+}
+
+.actions button.delete,
 .actions a.delete {
   background-color: #dc3545;
   color: white;
 }
 
-.actions .btn.delete {
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  padding: 0.4rem 0.7rem;
-  font-size: 0.85rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: 0.2s;
+.actions button.delete:hover,
+.actions a.delete:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
 }
 
-.actions .btn.delete:hover {
-  opacity: 0.85;
-}
-
-
-.actions a:hover {
-  opacity: 0.85;
-}
+/* Pagination */
 .pagination {
   text-align: center;
-  margin-top: 20px;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.step-links {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .pagination a {
@@ -127,61 +207,360 @@ body {
   margin: 0 4px;
   text-decoration: none;
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 6px;
+  color: #123692;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  background-color: #fff;
+}
+
+.pagination a:hover {
+  background-color: #123692;
+  color: white;
+  border-color: #123692;
 }
 
 .pagination .current {
   padding: 8px 16px;
-  font-weight: bold;
+  font-weight: 700;
   background-color: #123692;
   color: white;
-  border-radius: 4px;
+  border-radius: 6px;
+  margin: 0 4px;
 }
 
-.pagination a:hover {
-  background-color: #f1f1f1;
-}
+/* ===============================
+   Responsive Design
+================================== */
 
-/* Responsive Table for Mobile */
-@media (max-width: 768px) {
-  .user-table, .user-table thead, .user-table tbody, .user-table th, .user-table td, .user-table tr {
-    display: block;
+/* Tablet */
+@media (max-width: 992px) {
+  .page-title {
+    font-size: 1.8rem;
   }
 
+  .page-title i {
+    font-size: 1.6rem;
+  }
+
+  .table-container {
+    padding: 1.25rem;
+  }
+
+  .user-table th,
+  .user-table td {
+    padding: 0.85rem;
+    font-size: 0.95rem;
+  }
+}
+
+/* Mobile - Card Layout */
+@media (max-width: 768px) {
+  body {
+    padding: 0.75rem;
+  }
+
+  .page-title {
+    font-size: 1.6rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .page-title i {
+    font-size: 1.5rem;
+  }
+
+  .table-container {
+    padding: 1rem;
+    border-radius: 8px;
+  }
+
+  /* Hide table header */
   .user-table thead {
     display: none;
   }
 
+  /* Convert table to cards */
+  .user-table,
+  .user-table tbody,
+  .user-table tr,
+  .user-table td {
+    display: block;
+  }
+
   .user-table tr {
-    margin-bottom: 1.2rem;
-    border: 1px solid #ccc;
+    margin-bottom: 1.25rem;
+    border: 1px solid #e0e0e0;
     border-radius: 8px;
     padding: 1rem;
     background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .user-table tr:last-child {
+    margin-bottom: 0;
   }
 
   .user-table td {
     text-align: left;
     position: relative;
-    padding-left: 50%;
+    padding: 0.75rem 0;
+    padding-left: 45%;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.95rem;
+  }
+
+  .user-table td:last-child {
+    border-bottom: none;
+  }
+
+  /* Add labels before data */
+  .user-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+    color: #495057;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Actions column special handling */
+  .actions {
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .actions a.btn,
+  .actions button.btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .actions form {
+    width: 100%;
+  }
+
+  /* Pagination */
+  .pagination {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+  }
+
+  .step-links {
+    gap: 6px;
+  }
+
+  .pagination a,
+  .pagination .current {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 576px) {
+  body {
+    padding: 0.5rem;
+  }
+
+  .page-title {
+    font-size: 1.4rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .page-title i {
+    font-size: 1.3rem;
+  }
+
+  .table-container {
+    padding: 0.85rem;
+  }
+
+  .user-table tr {
+    padding: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .user-table td {
+    padding: 0.65rem 0;
+    padding-left: 42%;
     font-size: 0.9rem;
   }
 
   .user-table td::before {
-    content: attr(data-label);
-    position: absolute;
-    left: 1rem;
-    font-weight: bold;
-    color: #333;
+    font-size: 0.8rem;
   }
 
-  .actions {
-    text-align: center;
-    margin-top: 0.5rem;
+  .badge {
+    padding: 5px 10px;
+    font-size: 0.8rem;
   }
 
-  .actions a {
-    display: inline-block;
-    margin: 0.2rem 0.4rem;
+  .actions a.btn,
+  .actions button.btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .pagination a,
+  .pagination .current {
+    padding: 5px 10px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.3rem;
+  }
+
+  .page-title i {
+    font-size: 1.2rem;
+  }
+
+  .table-container {
+    padding: 0.75rem;
+  }
+
+  .user-table tr {
+    padding: 0.75rem;
+  }
+
+  .user-table td {
+    padding: 0.6rem 0;
+    padding-left: 40%;
+    font-size: 0.85rem;
+  }
+
+  .user-table td::before {
+    font-size: 0.75rem;
+  }
+
+  .badge {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+
+  .actions a.btn,
+  .actions button.btn {
+    padding: 0.45rem 0.65rem;
+    font-size: 0.8rem;
+  }
+
+  .pagination a,
+  .pagination .current {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Very Small Devices */
+@media (max-width: 360px) {
+  .page-title {
+    font-size: 1.2rem;
+  }
+
+  .page-title i {
+    font-size: 1.1rem;
+  }
+
+  .table-container {
+    padding: 0.65rem;
+  }
+
+  .user-table tr {
+    padding: 0.65rem;
+  }
+
+  .user-table td {
+    padding: 0.5rem 0;
+    padding-left: 38%;
+    font-size: 0.8rem;
+  }
+
+  .user-table td::before {
+    font-size: 0.7rem;
+  }
+
+  .badge {
+    padding: 3px 6px;
+    font-size: 0.7rem;
+  }
+
+  .pagination a,
+  .pagination .current {
+    padding: 3px 6px;
+    font-size: 0.75rem;
+    margin: 0 2px;
+  }
+}
+
+/* Landscape Mode */
+@media (max-width: 768px) and (orientation: landscape) {
+  .page-title {
+    font-size: 1.5rem;
+    flex-direction: row;
+    margin-bottom: 1.25rem;
+  }
+
+  .user-table td {
+    padding-left: 40%;
+  }
+}
+
+/* Disable hover effects on mobile */
+@media (max-width: 768px) {
+  .user-table tbody tr:hover {
+    background-color: transparent;
+  }
+
+  .actions a.btn:hover,
+  .actions button.btn:hover {
+    transform: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background: white;
+    padding: 0;
+  }
+
+  .page-title {
+    color: #000;
+    margin-bottom: 1rem;
+  }
+
+  .table-container {
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .user-table {
+    width: 100%;
+  }
+
+  .user-table thead {
+    background-color: #123692 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .actions,
+  .pagination {
+    display: none;
+  }
+
+  .user-table tbody tr {
+    page-break-inside: avoid;
   }
 }
