@@ -32,10 +32,13 @@ body {
   padding-bottom: 30px;
   height: 100vh;
   position: fixed;
+  top: 0;
+  left: 0;
   overflow-y: auto;
   border-right: 1px solid var(--border-color);
   transition: transform 0.3s ease;
   z-index: 1001;
+  overscroll-behavior: contain;
 }
 
 .sidebar-overlay {

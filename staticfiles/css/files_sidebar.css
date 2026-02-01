@@ -1,4 +1,4 @@
-/* Sidebar Base */
+/* ==================== SIDEBAR BASE ==================== */
 .sidebar {
   position: fixed;
   top: 60px;
@@ -11,11 +11,23 @@
   border-right: 1px solid #e0e0e0;
   box-shadow: 4px 0 12px rgba(0, 0, 0, 0.06);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: auto;
   transform: translateX(0);
-  transition: transform 0.4s ease, box-shadow 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
   z-index: 999;
   animation: slideIn 0.5s ease-out;
 }
+
+/* Custom scrollbar */
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb {
+  background: #123692;
+  border-radius: 3px;
+  opacity: 0.35;
+}
+.sidebar::-webkit-scrollbar-thumb:hover { opacity: 0.6; }
 
 @keyframes slideIn {
   from {
@@ -28,19 +40,21 @@
   }
 }
 
-/* Logo */
+/* ==================== LOGO ==================== */
 .sidebar-logo {
   display: block;
-  margin: 0 auto 30px;
+  margin: 0 auto 28px;
   max-width: 150px;
+  height: auto;
   transition: transform 0.3s ease;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.07));
 }
 
 .sidebar-logo:hover {
   transform: scale(1.05);
 }
 
-/* Nav List */
+/* ==================== NAV LIST ==================== */
 .sidebar ul {
   list-style: none;
   padding: 0;
@@ -48,28 +62,41 @@
 }
 
 .sidebar li {
-  margin-bottom: 15px;
+  margin-bottom: 6px;
 }
 
+/* ==================== NAV LINKS ==================== */
 .sidebar a {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 18px;
+  padding: 11px 16px;
   border-radius: 10px;
   text-decoration: none;
   color: #333;
-  font-size: 0.95rem;
-  transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease;
+  font-size: 0.93rem;
+  font-weight: 500;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease;
   position: relative;
 }
 
 .sidebar a .icon {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   color: #007bff;
-  transition: transform 0.3s ease;
+  width: 20px;
+  min-width: 20px;
+  text-align: center;
+  transition: transform 0.3s ease, color 0.25s ease;
 }
 
+.sidebar a span {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hover */
 .sidebar a:hover {
   background-color: #eaf3ff;
   color: #007bff;
@@ -79,8 +106,10 @@
 
 .sidebar a:hover .icon {
   transform: scale(1.2);
+  color: #0056b3;
 }
 
+/* Active */
 .sidebar a.active {
   background-color: #d4e9ff;
   font-weight: 600;
@@ -88,13 +117,174 @@
   box-shadow: inset 4px 0 0 #123692;
 }
 
-/* Mobile Responsive */
+.sidebar a.active .icon {
+  color: #123692;
+}
+
+/* ================================================
+   RESPONSIVE DESIGN
+================================================ */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 230px;
+    padding: 18px 13px;
+  }
+
+  .sidebar-logo {
+    max-width: 135px;
+    margin-bottom: 24px;
+  }
+
+  .sidebar a {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    gap: 12px;
+  }
+
+  .sidebar a .icon { font-size: 1rem; }
+}
+
+/* Mobile — drawer */
 @media (max-width: 768px) {
   .sidebar {
+    width: 260px;
     transform: translateX(-100%);
+    box-shadow: 6px 0 24px rgba(0, 0, 0, 0.15);
+    padding: 22px 16px;
+    /* override the initial slideIn so it doesn't flash on mobile */
+    animation: none;
   }
 
   .sidebar.active {
     transform: translateX(0);
+    animation: slideInMobile 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes slideInMobile {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(0); }
+  }
+
+  .sidebar-logo {
+    max-width: 140px;
+    margin-bottom: 26px;
+  }
+
+  .sidebar li { margin-bottom: 5px; }
+
+  .sidebar a {
+    padding: 12px 16px;
+    font-size: 0.97rem;
+    gap: 14px;
+    border-radius: 9px;
+  }
+
+  .sidebar a .icon { font-size: 1.08rem; }
+}
+
+/* Small mobile */
+@media (max-width: 576px) {
+  .sidebar {
+    width: 248px;
+    padding: 20px 14px;
+  }
+
+  .sidebar-logo {
+    max-width: 130px;
+    margin-bottom: 22px;
+  }
+
+  .sidebar a {
+    padding: 11px 14px;
+    font-size: 0.93rem;
+    gap: 12px;
+  }
+
+  .sidebar a .icon { font-size: 1.03rem; }
+}
+
+/* Extra small */
+@media (max-width: 400px) {
+  .sidebar {
+    width: 235px;
+    padding: 18px 12px;
+  }
+
+  .sidebar-logo {
+    max-width: 118px;
+    margin-bottom: 20px;
+  }
+
+  .sidebar a {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    gap: 11px;
+    border-radius: 8px;
+  }
+
+  .sidebar a .icon { font-size: 0.98rem; }
+}
+
+/* Landscape on mobile — keep it compact */
+@media (max-width: 768px) and (orientation: landscape) {
+  .sidebar {
+    width: 230px;
+    padding: 14px 12px;
+  }
+
+  .sidebar-logo {
+    max-width: 100px;
+    margin-bottom: 16px;
+  }
+
+  .sidebar li { margin-bottom: 3px; }
+
+  .sidebar a {
+    padding: 9px 13px;
+    font-size: 0.88rem;
+    gap: 11px;
+  }
+
+  .sidebar a .icon { font-size: 0.95rem; }
+}
+
+/* ==================== TOUCH DEVICES ==================== */
+@media (hover: none) {
+  /* Kill hover slide — it sticks on iOS */
+  .sidebar a:hover {
+    transform: none;
+    background-color: transparent;
+    box-shadow: none;
+    color: #333;
+  }
+
+  .sidebar a:hover .icon {
+    transform: none;
+    color: #007bff;
+  }
+
+  /* Press feedback instead */
+  .sidebar a:active {
+    background-color: #eaf3ff;
+    color: #007bff;
+    transform: scale(0.97);
+  }
+
+  .sidebar a:active .icon {
+    color: #0056b3;
+  }
+
+  /* Logo hover off on touch too */
+  .sidebar-logo:hover {
+    transform: none;
+  }
+}
+
+/* Momentum scroll on iOS */
+@media (max-width: 768px) {
+  .sidebar {
+    -webkit-overflow-scrolling: touch;
   }
 }

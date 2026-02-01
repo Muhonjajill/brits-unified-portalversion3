@@ -11,6 +11,9 @@
 <body>
   <!-- TOP NAVBAR -->
   <header class="top-navbar">
+    <button class="hamburger-btn" onclick="document.querySelector('.sidebar').classList.toggle('active'); document.querySelector('.sidebar-overlay').classList.toggle('active');">
+      <i class="fas fa-bars"></i>
+    </button>
     <div class="navbar-brand">
       <i class="fas fa-shield-alt"></i>
       <span>AdminPanel</span>
@@ -698,5 +701,7 @@
       form.submit();
     });
   </script>
+
+ <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('active'); this.classList.remove('active');"></div> 
 </body>
 </html>
