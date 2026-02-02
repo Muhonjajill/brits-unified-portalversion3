@@ -93,17 +93,92 @@ window.addEventListener('DOMContentLoaded', () => {
     terminalRegionBase: '#4A6572' 
   };
 
-  // === Chart Animation and Styling Config ===
+  // === Enhanced Chart Animation and Styling Config ===
   const animationOptions = {
     animation: {
-      duration: 1200, // Slightly reduced duration for quicker feedback
-      easing: 'easeOutQuart', // Smoother, more natural easing curve
+      duration: 1500, // Smooth, professional animation duration
+      easing: 'easeInOutCubic', // Sophisticated easing for smooth transitions
+      delay: (context) => {
+        // Staggered animation for bar/line charts
+        let delay = 0;
+        if (context.type === 'data' && context.mode === 'default') {
+          delay = context.dataIndex * 80 + context.datasetIndex * 100;
+        }
+        return delay;
+      },
+      onProgress: function(animation) {
+        // Optional: Track animation progress
+        const progress = animation.currentStep / animation.numSteps;
+        // Can be used for custom loading indicators
+      },
       onComplete: function (animation) {
-        console.log('Chart animation completed!');
+        // Subtle completion callback
+        const chart = animation.chart;
+        chart.options.animation.duration = 300; // Faster updates after initial render
+      }
+    },
+    animations: {
+      // Enhanced property-specific animations
+      tension: {
+        duration: 1000,
+        easing: 'easeInOutCubic',
+        from: 0.3,
+        to: 0.4,
+        loop: false
+      },
+      radius: {
+        duration: 800,
+        easing: 'easeOutElastic',
+        from: 0,
+        to: 5
+      },
+      borderWidth: {
+        duration: 600,
+        easing: 'easeInOutQuad'
+      }
+    },
+    transitions: {
+      // Smooth transitions on data updates
+      active: {
+        animation: {
+          duration: 400,
+          easing: 'easeInOutQuart'
+        }
+      },
+      resize: {
+        animation: {
+          duration: 500,
+          easing: 'easeInOutQuad'
+        }
+      },
+      show: {
+        animations: {
+          x: {
+            from: 0
+          },
+          y: {
+            from: 0
+          }
+        }
+      },
+      hide: {
+        animations: {
+          x: {
+            to: 0
+          },
+          y: {
+            to: 0
+          }
+        }
       }
     },
     responsive: true,
-    maintainAspectRatio: false, // Allow charts to fill container without strict aspect ratio
+    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+      animationDuration: 200 // Quick hover response
+    },
     plugins: {
       legend: {
         position: 'bottom',
@@ -113,34 +188,78 @@ window.addEventListener('DOMContentLoaded', () => {
           font: {
             size: 14,
             family: 'Roboto, sans-serif',
+            weight: '500'
           },
           color: COLOR_MAP.textDark,
+          usePointStyle: true, // Rounded legend markers
+          pointStyle: 'circle'
         },
+        onHover: function(event, legendItem, legend) {
+          event.native.target.style.cursor = 'pointer';
+        },
+        onLeave: function(event, legendItem, legend) {
+          event.native.target.style.cursor = 'default';
+        }
       },
       tooltip: {
         enabled: true,
-        backgroundColor: COLOR_MAP.neutralDark,
+        backgroundColor: 'rgba(0, 0, 0, 0.85)',
         titleFont: {
-          size: 14,
+          size: 15,
           weight: 'bold',
           family: 'Roboto, sans-serif',
         },
         bodyFont: {
-          size: 12,
+          size: 13,
           family: 'Roboto, sans-serif',
         },
-        padding: 12,
-        caretPadding: 10,
-        cornerRadius: 8,
+        footerFont: {
+          size: 11,
+          family: 'Roboto, sans-serif',
+          style: 'italic'
+        },
+        padding: 14,
+        caretPadding: 12,
+        caretSize: 6,
+        cornerRadius: 10,
         displayColors: true,
         borderColor: COLOR_MAP.primary,
-        borderWidth: 1,
+        borderWidth: 2,
+        boxPadding: 6,
+        usePointStyle: true,
+        callbacks: {
+          // Enhanced tooltip with animations
+          title: function(context) {
+            return context[0].label || '';
+          },
+          label: function(context) {
+            let label = context.dataset.label || '';
+            if (label) {
+              label += ': ';
+            }
+            if (context.parsed.y !== null) {
+              label += context.parsed.y;
+            }
+            return label;
+          }
+        },
+        animation: {
+          duration: 300,
+          easing: 'easeOutQuart'
+        }
       },
+      // Subtle animation on hover
+      decimation: {
+        enabled: false
+      }
     },
     hover: {
       mode: 'nearest',
       intersect: true,
-      animationDuration: 400,
+      animationDuration: 300,
+      onHover: function(event, activeElements) {
+        event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
+      }
     },
     scales: {
       x: {
@@ -148,11 +267,25 @@ window.addEventListener('DOMContentLoaded', () => {
           color: COLOR_MAP.textLight,
           font: {
             family: 'Roboto, sans-serif',
-          }
+            size: 12
+          },
+          maxRotation: 45,
+          minRotation: 0
         },
         grid: {
-          color: COLOR_MAP.neutralLight,
+          color: 'rgba(0, 0, 0, 0.05)',
           borderColor: COLOR_MAP.neutralLight,
+          lineWidth: 1,
+          drawBorder: true,
+          drawOnChartArea: true,
+          drawTicks: true,
+          tickLength: 8,
+          offset: true
+        },
+        border: {
+          display: true,
+          color: COLOR_MAP.neutralLight,
+          width: 2
         }
       },
       y: {
@@ -160,12 +293,52 @@ window.addEventListener('DOMContentLoaded', () => {
           color: COLOR_MAP.textLight,
           font: {
             family: 'Roboto, sans-serif',
+            size: 12
+          },
+          callback: function(value) {
+            return Number.isInteger(value) ? value : null; // Only show integer ticks
           }
         },
         grid: {
-          color: COLOR_MAP.neutralLight,
+          color: 'rgba(0, 0, 0, 0.08)',
           borderColor: COLOR_MAP.neutralLight,
+          lineWidth: 1,
+          drawBorder: true,
+          drawOnChartArea: true,
+          drawTicks: true,
+          tickLength: 8
+        },
+        border: {
+          display: true,
+          color: COLOR_MAP.neutralLight,
+          width: 2
         }
+      }
+    },
+    // Element-specific hover effects
+    elements: {
+      point: {
+        radius: 4,
+        hoverRadius: 7,
+        hitRadius: 10,
+        borderWidth: 2,
+        hoverBorderWidth: 3
+      },
+      line: {
+        borderWidth: 3,
+        tension: 0.4,
+        borderCapStyle: 'round',
+        borderJoinStyle: 'round'
+      },
+      bar: {
+        borderWidth: 0,
+        borderRadius: 6,
+        borderSkipped: false
+      },
+      arc: {
+        borderWidth: 2,
+        hoverBorderWidth: 3,
+        hoverOffset: 8 // Pie slice pop-out on hover
       }
     }
   };
