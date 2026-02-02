@@ -49,7 +49,8 @@
           <th>Status</th>
           <!--<th>Priority</th>-->
           <th>Assigned To</th>
-          <th>View Ticket</th>
+          <!--<th>View Ticket</th>-->
+          <th>Resolved at</th>
           {% if request.user.is_superuser %}
           <th>Actions</th>
           {% endif %}
@@ -81,8 +82,15 @@
               <span class="text-muted">Unassigned</span>
             {% endif %}
           </td>
-          <td>
+          <!--<td>
             <a href="{% url 'ticket_detail' ticket.id %}" class="view-link" onclick="event.stopPropagation();">View</a>
+          </td>-->
+          <td>
+            {% if ticket.resolved_at %}
+              {{ ticket.resolved_at }}
+            {% else %}
+              <span class="text-muted">Not Resolved Yet</span>
+            {% endif %}
           </td>
           <td>
             {% if request.user.is_superuser %}
