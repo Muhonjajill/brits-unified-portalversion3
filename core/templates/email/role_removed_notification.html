@@ -1,14 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Your Role Has Been Removed</title>
 </head>
-<body>
-    <h2>Hello {{ user.first_name }} {{ user.last_name }},</h2>
-    <p>We regret to inform you that your role has been removed. </p>
-    <p>{{ role_message }}</p>
+<body style="font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 20px; margin: 0;">
+    <div style="background-color: #ffffff; width: 100%; max-width: 600px; margin: 0 auto; padding: 40px 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
 
-    <p>If you have any questions or need assistance, please contact the system administrator.</p>
-    <p>Best regards,<br>The Blue River Technology Solutions Team</p>
+        <!-- Brand Header -->
+        <div style="background-color: #123692; color: white; padding: 30px; border-radius: 10px 10px 0 0; margin: -40px -30px 30px -30px; text-align: center;">
+            <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 5px 0;">Role Removal Notification</h1>
+            <p style="font-size: 14px; opacity: 0.9; margin: 0; color: white;">Your account has been updated</p>
+        </div>
+
+        <!-- Greeting -->
+        <h2 style="font-size: 22px; color: #123692; margin-bottom: 15px; font-weight: bold;">Hello {{ user.first_name }} {{ user.last_name }},</h2>
+
+        <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">We regret to inform you that your role has been removed.</p>
+
+        <!-- Role Message Notice -->
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; color: #856404; padding: 20px; border-radius: 6px; margin: 25px 0;">
+            <p style="color: #856404; margin: 0; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #664d03;">Notice:</strong> {{ role_message }}
+            </p>
+        </div>
+
+        <!-- Info Notice -->
+        <div style="background-color: #e8f4fd; border-left: 4px solid #123692; color: #1a3a6b; padding: 20px; border-radius: 6px; margin: 25px 0;">
+            <p style="color: #1a3a6b; margin: 0; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #123692;">Please Note:</strong> If you have any questions about this change or need assistance, please don't hesitate to contact the system administrator.
+            </p>
+        </div>
+
+        <!-- Sign-off -->
+        <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 15px;">
+            Best regards,<br>
+            <span style="color: #123692; font-weight: 600;">The Blue River Technology Solutions Team</span>
+        </p>
+
+        <!-- Footer -->
+        <div style="text-align: center; font-size: 14px; color: #6c757d; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e9ecef;">
+            <p style="font-size: 14px; color: #6c757d; margin: 0 0 10px 0;">&copy; 2026 Blue River Technology Solutions. All rights reserved.</p>
+            <p style="font-size: 14px; color: #6c757d; margin: 5px 0 0 0;">
+                <a href="mailto:support@blueriverafrica.net" style="color: #123692; text-decoration: none; font-weight: normal;">Contact Support</a>
+            </p>
+        </div>
+    </div>
 </body>
 </html>

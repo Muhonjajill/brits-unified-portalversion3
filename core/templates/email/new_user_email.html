@@ -1,13 +1,58 @@
 <!-- templates/emails/new_user_email.html -->
 <html>
 <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>New User Registration</title>
 </head>
-<body>
-    <h2>A new user has registered:</h2>
-    <p><strong>Name:</strong> {{ user.first_name }} {{ user.last_name }}</p>
-    <p><strong>Username:</strong> {{ user.username }}</p>
-    <p><strong>Email:</strong> {{ user.email }}</p>
-    <p>Please assign a role to the user so they can log in.</p>
+<body style="font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 20px; margin: 0;">
+    <div style="background-color: #ffffff; width: 100%; max-width: 600px; margin: 0 auto; padding: 40px 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+
+        <!-- Brand Header -->
+        <div style="background-color: #123692; color: white; padding: 30px; border-radius: 10px 10px 0 0; margin: -40px -30px 30px -30px; text-align: center;">
+            <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 5px 0;">New User Registration</h1>
+            <p style="font-size: 14px; opacity: 0.9; margin: 0; color: white;">A new account has been created</p>
+        </div>
+
+        <!-- Intro -->
+        <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">A new user has registered on the BRITS Ticketing System. Please review their details below and assign an appropriate role so they can log in.</p>
+
+        <!-- User Details Box -->
+        <div style="background-color: #f8f9fa; border-left: 4px solid #123692; padding: 20px; border-radius: 6px; margin: 25px 0;">
+            <h3 style="color: #123692; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">New User Details</h3>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">
+                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 100px;">Name:</strong> {{ user.first_name }} {{ user.last_name }}
+                </li>
+                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">
+                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 100px;">Username:</strong> {{ user.username }}
+                </li>
+                <li style="font-size: 16px; color: #343a40; margin-bottom: 0; padding: 8px 0; border-bottom: none;">
+                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 100px;">Email:</strong> {{ user.email }}
+                </li>
+            </ul>
+        </div>
+
+        <!-- Action Notice -->
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; color: #856404; padding: 20px; border-radius: 6px; margin: 25px 0;">
+            <p style="color: #856404; margin: 0; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #664d03;">Action Required:</strong> Please assign a role to this user so they can log in and begin using the BRITS Ticketing System.
+            </p>
+        </div>
+
+        <!-- Sign-off -->
+        <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 15px;">
+            Best regards,<br>
+            <span style="color: #123692; font-weight: 600;">The Blue River Technology Solutions Team</span>
+        </p>
+
+        <!-- Footer -->
+        <div style="text-align: center; font-size: 14px; color: #6c757d; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e9ecef;">
+            <p style="font-size: 14px; color: #6c757d; margin: 0 0 10px 0;">&copy; 2026 Blue River Technology Solutions. All rights reserved.</p>
+            <p style="font-size: 14px; color: #6c757d; margin: 5px 0 0 0;">
+                <a href="mailto:support@blueriverafrica.net" style="color: #123692; text-decoration: none; font-weight: normal;">Contact Support</a>
+            </p>
+        </div>
+    </div>
 </body>
 </html>
