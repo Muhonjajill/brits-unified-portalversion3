@@ -1720,7 +1720,7 @@ def ticketing_dashboard(request):
     # Top terminals with most tickets
     terminal_data = (
         ticket_filter
-        .values('terminal__branch_name')
+        .values('terminal__id', 'terminal__branch_name')
         .annotate(count=Count('id'))
         .order_by('-count')[:10]
     )
@@ -1751,10 +1751,10 @@ def ticketing_dashboard(request):
 
     # Overview + Category-time widgets
     overview_data = [
-        {'label': 'Daily', 'count': time_data['day']},
-        {'label': 'Weekly', 'count': time_data['week']},
-        {'label': 'Monthly', 'count': time_data['month']},
-        {'label': 'Yearly', 'count': time_data['year']},
+        {'label': 'Today', 'count': time_data['day']},
+        {'label': 'This Week', 'count': time_data['week']},
+        {'label': 'This Month', 'count': time_data['month']},
+        {'label': 'This Year', 'count': time_data['year']},
     ]
 
     category_time_data = [
@@ -1763,10 +1763,10 @@ def ticketing_dashboard(request):
     ]
 
     kpi_data = [
-        ("Daily", "dailyCount", "fa-sun"),
-        ("Weekly", "weeklyCount", "fa-calendar-week"),
-        ("Monthly", "monthlyCount", "fa-calendar-alt"),
-        ("Yearly", "yearlyCount", "fa-calendar"),
+        ("Today", "dailyCount", "fa-sun"),
+        ("This Week", "weeklyCount", "fa-calendar-week"),
+        ("This Month", "monthlyCount", "fa-calendar-alt"),
+        ("This Year", "yearlyCount", "fa-calendar"),
     ]
 
     # User Group Determination
@@ -1801,7 +1801,7 @@ def ticketing_dashboard(request):
             for d in monthly_trends if d['month']
         ]),
         'terminal_data': json.dumps([
-            {'terminal': d['terminal__branch_name'], 'count': d['count']}
+            {'terminal_id': d['terminal__id'], 'terminal': d['terminal__branch_name'], 'count': d['count']}
             for d in terminal_data
         ]),
         'region_data': json.dumps([
@@ -2507,6 +2507,124 @@ def tickets(request):
         'status_filter': status_filter,
         'user_group': user_group,
         'allowed_roles':allowed_roles,
+    })
+
+def serialize_tickets(tickets):
+    return [
+        {
+            "id": t.id,
+            "title": t.title,
+            "status": t.status,
+            "priority": t.priority,
+            "terminal_id": t.terminal_id if t.terminal else None,
+            "created_by": t.created_by.username if t.created_by else None,
+            "created_at": t.created_at.strftime("%Y-%m-%d %H:%M"),
+            "assigned_to": t.assigned_to.username if t.assigned_to else None,
+        }
+        for t in tickets
+    ]
+
+def get_user_tickets_queryset(user):
+    tickets_qs = Ticket.objects.none()
+    profile = getattr(user, 'profile', None)
+
+    if user.is_superuser or user.groups.filter(name__in=['Director', 'Manager']).exists():
+        tickets_qs = Ticket.objects.all()
+
+    elif user.groups.filter(name='Staff').exists():
+        tickets_qs = Ticket.objects.filter(assigned_to=user)
+
+    elif Customer.objects.filter(overseer=user).exists():
+        customer = Customer.objects.filter(overseer=user).first()
+        tickets_qs = Ticket.objects.filter(customer=customer)
+
+    elif profile and profile.terminal:
+        customer = profile.terminal.customer
+        if profile.terminal.custodian == user:
+            tickets_qs = Ticket.objects.filter(customer=customer, terminal=profile.terminal)
+
+    return tickets_qs
+
+def compute_time_data(qs):
+    """
+    Compute time-based aggregates from a filtered queryset.
+    Ensures chart, KPI, and modal counts are always consistent.
+    """
+    now = timezone.now()
+    start_of_week = now - timezone.timedelta(days=now.weekday())
+
+    return {
+        "day": qs.filter(created_at__date=now.date()).count(),
+        "week": qs.filter(created_at__date__gte=start_of_week.date()).count(),
+        "month": qs.filter(
+            created_at__month=now.month,
+            created_at__year=now.year
+        ).count(),
+        "year": qs.filter(created_at__year=now.year).count(),
+    }
+
+
+@login_required(login_url='login')
+def api_tickets(request):
+    # Base queryset (already scoped by user role/permissions)
+    tickets = get_user_tickets_queryset(request.user).order_by('-created_at')
+    now = timezone.now()
+
+    # ----------------------------
+    # Apply filters
+    # ----------------------------
+    if region := request.GET.get("region"):
+        tickets = tickets.filter(terminal__zone__region__name=region)
+
+    if customer := request.GET.get("customer"):
+        tickets = tickets.filter(customer__name=customer)
+
+    if terminal := request.GET.get("terminal"):
+        tickets = tickets.filter(terminal_id=terminal)
+
+    if status := request.GET.get("status"):
+        tickets = tickets.filter(status=status)
+
+    if priority := request.GET.get("priority"):
+        tickets = tickets.filter(priority=priority)
+
+    if category := request.GET.get("category"):
+        tickets = tickets.filter(problem_category__name=category)
+
+    # ----------------------------
+    # Apply time period filter
+    # ----------------------------
+    if period := request.GET.get("period"):
+        period = period.lower()
+
+        if period in ("today", "day", "daily"):
+            tickets = tickets.filter(created_at__date=now.date())
+
+        elif period in ("week", "weekly"):
+            start_of_week = now - timezone.timedelta(days=now.weekday())
+            tickets = tickets.filter(created_at__date__gte=start_of_week.date())
+
+        elif period in ("month", "monthly"):
+            tickets = tickets.filter(
+                created_at__month=now.month,
+                created_at__year=now.year
+            )
+
+        elif period in ("year", "yearly"):
+            tickets = tickets.filter(created_at__year=now.year)
+
+    # ----------------------------
+    # Time-based aggregates
+    # ----------------------------
+    time_data = compute_time_data(tickets)
+
+    # ----------------------------
+    # Response
+    # ----------------------------
+    return JsonResponse({
+        "count": tickets.count(),
+        "tickets": serialize_tickets(tickets),
+        "time_data": time_data
     })
 
 def export_tickets_to_excel(tickets):
@@ -3287,6 +3405,22 @@ def show_tickets(request, period):
 
     ticket_filter = Ticket.objects.none()
     profile = getattr(request.user, 'profile', None)
+
+    PERIOD_MAP = {
+        'today': 'daily',
+        'this week': 'weekly',
+        'this-week': 'weekly',
+        'week': 'weekly',
+        'this month': 'monthly',
+        'this-month': 'monthly',
+        'month': 'monthly',
+        'this year': 'yearly',
+        'this-year': 'yearly',
+        'year': 'yearly',
+    }
+
+    period = PERIOD_MAP.get(period, period)
+
 
     # Role-based filtering
     if request.user.is_superuser or request.user.groups.filter(name__in=['Director', 'Manager', 'Staff']).exists():

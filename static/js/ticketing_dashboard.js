@@ -363,35 +363,175 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
 
-  function fetchTickets(period) {
-  fetch(`/tickets/${period}/`)  
+  // Modal functionality for displaying tickets
+  function createTicketModal() {
+    // Check if modal already exists
+    if (document.getElementById('ticketModal')) {
+      return document.getElementById('ticketModal');
+    }
+
+    const modal = document.createElement('div');
+    modal.id = 'ticketModal';
+    modal.className = 'ticket-modal';
+    modal.innerHTML = `
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title"></h2>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-loading">
+            <div class="spinner"></div>
+            <p>Loading tickets...</p>
+          </div>
+          <div class="modal-tickets"></div>
+          <div class="modal-empty" style="display: none;">
+            <i class="fas fa-inbox"></i>
+            <p>No tickets found</p>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Close modal handlers
+    const closeBtn = modal.querySelector('.modal-close');
+    const overlay = modal.querySelector('.modal-overlay');
+    
+    closeBtn.addEventListener('click', () => closeModal());
+    overlay.addEventListener('click', () => closeModal());
+    
+    // ESC key to close
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('active')) {
+        closeModal();
+      }
+    });
+
+    return modal;
+  }
+
+  /*function showModal(title, tickets) {
+    const modal = createTicketModal();
+    const modalTitle = modal.querySelector('.modal-title');
+    const modalBody = modal.querySelector('.modal-tickets');
+    const loadingEl = modal.querySelector('.modal-loading');
+    const emptyEl = modal.querySelector('.modal-empty');
+
+    modalTitle.textContent = title;
+    modalBody.innerHTML = '';
+    loadingEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+
+    if (!tickets || tickets.length === 0) {
+      emptyEl.style.display = 'flex';
+    } else {
+      tickets.forEach((ticket, index) => {
+        const ticketCard = document.createElement('div');
+        ticketCard.className = 'ticket-card';
+        ticketCard.style.animationDelay = `${index * 0.05}s`;
+        
+        const statusClass = ticket.status ? ticket.status.toLowerCase().replace(' ', '_') : 'unknown';
+        const priorityClass = ticket.priority ? ticket.priority.toLowerCase() : 'unknown';
+        
+        ticketCard.innerHTML = `
+          <div class="ticket-card-header">
+            <div class="ticket-id">#${ticket.id || 'N/A'}</div>
+            <div class="ticket-badges">
+              <span class="badge badge-status status-${statusClass}">${ticket.status || 'Unknown'}</span>
+              <span class="badge badge-priority priority-${priorityClass}">${ticket.priority || 'Unknown'}</span>
+            </div>
+          </div>
+          <h3 class="ticket-title">${ticket.title || 'Untitled'}</h3>
+          <div class="ticket-meta">
+            <div class="meta-item">
+              <i class="fas fa-user"></i>
+              <span>${ticket.created_by || 'Unknown'}</span>
+            </div>
+            <div class="meta-item">
+              <i class="fas fa-calendar"></i>
+              <span>${ticket.created_at || 'N/A'}</span>
+            </div>
+            ${ticket.assigned_to ? `
+            <div class="meta-item">
+              <i class="fas fa-user-tag"></i>
+              <span>${ticket.assigned_to}</span>
+            </div>
+            ` : ''}
+          </div>
+          <div class="ticket-actions">
+            <a href="/tickets/${ticket.id}/" class="btn-view">
+              <i class="fas fa-eye"></i> View Details
+            </a>
+          </div>
+        `;
+        modalBody.appendChild(ticketCard);
+      });
+    }
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }*/
+
+  function closeModal() {
+    const modal = document.getElementById('ticketModal');
+    if (modal) {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+
+  // Fetch tickets from server and show in modal
+  function fetchAndShowTickets(endpoint, title) {
+    const modal = createTicketModal();
+    const loadingEl = modal.querySelector('.modal-loading');
+    const modalBody = modal.querySelector('.modal-tickets');
+    const emptyEl = modal.querySelector('.modal-empty');
+    const modalTitle = modal.querySelector('.modal-title');
+
+    modalTitle.textContent = title;
+    modalBody.innerHTML = '';
+    loadingEl.style.display = 'flex';
+    emptyEl.style.display = 'none';
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    fetch(endpoint)
       .then(response => {
-          if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          return response.json();
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
       })
       .then(data => {
-          const ticketList = document.getElementById('ticket-list');
-          ticketList.innerHTML = '';
-          data.tickets.forEach(ticket => {
-              const ticketElement = document.createElement('div');
-              ticketElement.classList.add('ticket-item');
-              ticketElement.innerHTML = `
-                  <h4>${ticket.title}</h4>
-                  <p>Status: ${ticket.status}</p>
-                  <p>Priority: ${ticket.priority}</p>
-              `;
-              ticketList.appendChild(ticketElement);
-          });
+        loadingEl.style.display = 'none';
+        const tickets = data.tickets || [];
+        const timeData = data.time_data || {};
+
+        // Show totals
+        document.getElementById("dailyCount").textContent = timeData.day;
+        document.getElementById("weeklyCount").textContent = timeData.week;
+        document.getElementById("monthlyCount").textContent = timeData.month;
+        document.getElementById("yearlyCount").textContent = timeData.year;
+
+        if (tickets.length === 0) {
+          emptyEl.style.display = 'flex';
+        } else {
+          renderTicketsTable(tickets);
+        }
       })
-      .catch(error => console.error('Error fetching tickets:', error));
-}
-
-
-
-  // Initial Load: Fetch Daily Tickets by Default
-  fetchTickets('daily');
+      .catch(error => {
+        console.error('Error fetching tickets:', error);
+        loadingEl.style.display = 'none';
+        emptyEl.innerHTML = `
+          <i class="fas fa-exclamation-triangle"></i>
+          <p>Error loading tickets</p>
+          <small>${error.message}</small>
+        `;
+        emptyEl.style.display = 'flex';
+      });
+  }
 
   const ticketReportChart = document.getElementById('ticketReportChart');
   if (ticketReportChart) {
@@ -438,17 +578,25 @@ window.addEventListener('DOMContentLoaded', () => {
         datasets: [{
           label: 'Tickets',
           data: monthlyCounts,
-          borderColor: COLOR_MAP.primary,
-          backgroundColor: COLOR_MAP.primaryLight,
-          tension: 0.3,
+          borderColor: '#123692',
+          backgroundColor: 'rgba(18, 54, 146, 0.1)',
+          tension: 0.4,
           fill: true,
-          pointBackgroundColor: COLOR_MAP.primary
+          pointBackgroundColor: '#123692',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          pointHoverBackgroundColor: '#172d69',
+          pointHoverBorderWidth: 3
         }]
       },
       options: {
         ...animationOptions,
         scales: {
+          ...animationOptions.scales,
           y: {
+            ...animationOptions.scales.y,
             beginAtZero: true
           }
         }
@@ -461,6 +609,8 @@ window.addEventListener('DOMContentLoaded', () => {
     destroyExistingChart('terminalChart');
     const terminalLabels = TERMINAL_DATA.map(item => item.terminal || 'Unnamed');
     const terminalCounts = TERMINAL_DATA.map(item => item.count);
+    const terminalIds = TERMINAL_DATA.map(item => item.terminal_id);
+    
     new Chart(terminalChart, {
       type: 'bar',
       data: {
@@ -468,20 +618,55 @@ window.addEventListener('DOMContentLoaded', () => {
         datasets: [{
           label: 'Tickets',
           data: terminalCounts,
-          backgroundColor: COLOR_MAP.gradientSet,
-          borderRadius: 5,
-          barThickness: 35
+          backgroundColor: terminalLabels.map((_, i) => {
+            const colors = ['#123692', '#172d69', '#dc3545'];
+            return colors[i % colors.length];
+          }),
+          borderRadius: 8,
+          barThickness: 35,
+          hoverBackgroundColor: terminalLabels.map((_, i) => {
+            const colors = ['#172d69', '#123692', '#b02a37'];
+            return colors[i % colors.length];
+          })
         }]
       },
       options: {
         ...animationOptions,
         scales: {
+          ...animationOptions.scales,
           y: {
+            ...animationOptions.scales.y,
             beginAtZero: true
           },
           x: {
+            ...animationOptions.scales.x,
             grid: { display: false }
           }
+        },
+        onClick: (event) => {
+          const chart = event.chart;
+
+          const points = chart.getElementsAtEventForMode(
+            event.native,
+            'nearest',
+            { intersect: true },
+            true
+          );
+
+          if (!points.length) return;
+
+          const index = points[0].index;
+          const terminalId = terminalIds[index];
+          const terminalName = terminalLabels[index];
+
+          console.log('Clicked terminal:', terminalName, terminalId);
+
+          if (!terminalId) return;
+
+          fetchAndShowTickets(
+            `/api/tickets/?terminal=${terminalId}`,
+            `Tickets for ${terminalName}`
+          );
         }
       }
     });
@@ -493,6 +678,7 @@ window.addEventListener('DOMContentLoaded', () => {
     destroyExistingChart('regionChart');
     const regionLabels = REGION_DATA.map(item => item.region || 'Unnamed');
     const regionCounts = REGION_DATA.map(item => item.count);
+    
     new Chart(regionChart, {
       type: 'bar',
       data: {
@@ -500,58 +686,153 @@ window.addEventListener('DOMContentLoaded', () => {
         datasets: [{
           label: 'Tickets',
           data: regionCounts,
-          backgroundColor: COLOR_MAP.gradientSet,
-          borderRadius: 5,
-          barThickness: 35
+          backgroundColor: regionLabels.map((_, i) => {
+            const colors = ['#123692', '#172d69', '#dc3545', '#123692', '#172d69'];
+            return colors[i % colors.length];
+          }),
+          borderRadius: 8,
+          barThickness: 35,
+          hoverBackgroundColor: regionLabels.map((_, i) => {
+            const colors = ['#172d69', '#123692', '#b02a37', '#172d69', '#123692'];
+            return colors[i % colors.length];
+          })
         }]
       },
-      options: animationOptions
+      options: {
+        ...animationOptions,
+        scales: {
+          ...animationOptions.scales,
+          y: {
+            ...animationOptions.scales.y,
+            beginAtZero: true
+          }
+        },
+        onClick: (event, elements) => {
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const region = regionLabels[index];
+            fetchAndShowTickets(`/api/tickets/?region=${encodeURIComponent(region)}`, `Tickets in ${region}`);
+          }
+        }
+      }
     });
   }
 
   const priorityChart = document.getElementById('priorityChart');
     if (priorityChart) {
       destroyExistingChart('priorityChart');
-      console.log(PRIORITY_DATA);
-      //const priorityLabels = PRIORITY_DATA.map(item => item.priority.replace(/\b\w/g, l => l.toUpperCase()));
-      const priorityLabels = PRIORITY_DATA.map(item => item.priority.toLowerCase());
-      const priorityCounts = PRIORITY_DATA.map(item => item.count);
-      new Chart(priorityChart, {
+      const priorityData = PRIORITY_DATA.map(item => ({
+        priority: item.priority,
+        count: item.count
+      }));
+      const priorityLabels = priorityData.map(item => item.priority.charAt(0).toUpperCase() + item.priority.slice(1));
+      const priorityCounts = priorityData.map(item => item.count);
+      
+      const priorityChartInstance = new Chart(priorityChart, {
         type: 'pie',
         data: {
-          //labels: priorityLabels,
-          labels: priorityLabels.map(label => label.charAt(0).toUpperCase() + label.slice(1)),
+          labels: priorityLabels,
           datasets: [{
             data: priorityCounts,
-            //backgroundColor: [COLOR_MAP.low, COLOR_MAP.medium, COLOR_MAP.high, COLOR_MAP.critical],
-            backgroundColor: priorityLabels.map(label => COLOR_MAP[label] || '#CCCCCC'),
+            backgroundColor: priorityData.map(item => {
+              const p = item.priority.toLowerCase();
+              if (p === 'low') return '#17b845';
+              if (p === 'medium') return '#007bff';
+              if (p === 'high') return '#dc9c35';
+              if (p === 'critical') return '#e74c3c';
+              return '#6c757d';
+            }),
             borderColor: '#fff',
-            borderWidth: 2
+            borderWidth: 3,
+            hoverBorderWidth: 4,
+            hoverOffset: 12
           }]
         },
-        options: animationOptions
+        options: {
+          ...animationOptions,
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const priority = priorityData[index].priority;
+              const priorityLabel = priorityLabels[index];
+              fetchAndShowTickets(`/api/tickets/?priority=${priority}`, `${priorityLabel} Priority Tickets`)
+            }
+          },
+          plugins: {
+            ...animationOptions.plugins,
+            tooltip: {
+              ...animationOptions.plugins.tooltip,
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
       });
     }
 
     const statusChart = document.getElementById('statusChart');
     if (statusChart) {
       destroyExistingChart('statusChart');
-      //const statusLabels = STATUS_DATA.map(item => item.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()));
-      const statusLabels = STATUS_DATA.map(item => item.status.toLowerCase().replace(' ', '_'));
-      const statusCounts = STATUS_DATA.map(item => item.count);
-      new Chart(statusChart, {
+      const statusData = STATUS_DATA.map(item => ({
+        status: item.status,
+        count: item.count
+      }));
+      const statusLabels = statusData.map(item => item.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()));
+      const statusCounts = statusData.map(item => item.count);
+      
+      const statusChartInstance = new Chart(statusChart, {
         type: 'pie',
         data: {
-          labels: statusLabels.map(label => label.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())),
+          labels: statusLabels,
           datasets: [{
             data: statusCounts,
-            //backgroundColor: [COLOR_MAP.open, COLOR_MAP.in_progress, COLOR_MAP.closed],
-            backgroundColor: statusLabels.map(label => COLOR_MAP[label] || '#cccccc'),
+            backgroundColor: statusData.map(item => {
+              const s = item.status.toLowerCase().replace(' ', '_');
+              if (s === 'open') return '#007bff';
+              if (s === 'in_progress') return '#c0392b';
+              if (s === 'resolved') return '#28a745';
+              if (s === 'closed') return '#6c757d';
+              return '#cccccc';
+            }),
             borderColor: '#fff',
-            borderWidth: 2
+            borderWidth: 3,
+            hoverBorderWidth: 4,
+            hoverOffset: 12
           }]
         },
-        options: animationOptions
+        options: {
+          ...animationOptions,
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const status = statusData[index].status;
+              const statusLabel = statusLabels[index];
+              fetchAndShowTickets(`/api/tickets/?status=${status}`, `${statusLabel} Tickets`);
+            }
+          },
+          plugins: {
+            ...animationOptions.plugins,
+            tooltip: {
+              ...animationOptions.plugins.tooltip,
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = ((value / total) * 100).toFixed(1);
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
       });
     }
     
@@ -565,11 +846,17 @@ window.addEventListener('DOMContentLoaded', () => {
         datasets: [{
           label: 'Ticket Volume',
           data: [TIME_DATA.day, TIME_DATA.week, TIME_DATA.month, TIME_DATA.year],
-          borderColor: COLOR_MAP.info,
-          backgroundColor: COLOR_MAP.infoLight,
+          borderColor: '#172d69',
+          backgroundColor: 'rgba(23, 45, 105, 0.1)',
           fill: true,
           tension: 0.4,
-          pointBackgroundColor: COLOR_MAP.info
+          pointBackgroundColor: '#172d69',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          pointHoverBackgroundColor: '#123692',
+          pointHoverBorderWidth: 3
         }]
       },
       options: animationOptions
@@ -600,6 +887,7 @@ window.addEventListener('DOMContentLoaded', () => {
     destroyExistingChart('categoryTimeChart');
     const categoryLabels = CATEGORY_TIME_DATA.map(item => item.category);
     const categoryCounts = CATEGORY_TIME_DATA.map(item => item.daily_count);
+    
     new Chart(categoryTimeChart, {
       type: 'bar',
       data: {
@@ -607,62 +895,228 @@ window.addEventListener('DOMContentLoaded', () => {
         datasets: [{
           label: 'Tickets by Category',
           data: categoryCounts,
-          backgroundColor: COLOR_MAP.gradientSet[2],
-          borderRadius: 4,
-          barThickness: 30
+          backgroundColor: categoryLabels.map((_, i) => {
+            const colors = ['#172d69', '#123692', '#dc3545'];
+            return colors[i % colors.length];
+          }),
+          borderRadius: 8,
+          barThickness: 30,
+          hoverBackgroundColor: categoryLabels.map((_, i) => {
+            const colors = ['#123692', '#172d69', '#b02a37'];
+            return colors[i % colors.length];
+          })
         }]
       },
-      options: animationOptions
+      options: {
+        ...animationOptions,
+        onClick: (event, elements) => {
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const category = categoryLabels[index];
+            fetchAndShowTickets(`/api/tickets/?category=${encodeURIComponent(category)}`, `${category} Tickets`);
+          }
+        }
+      }
     });
   }
 
   const overviewChart = document.getElementById('overviewChart');
-  if (typeof OVERVIEW_DATA !== 'undefined' && overviewChart) {
-    const overviewLabels = OVERVIEW_DATA.map(item => item.label);
-    const overviewCounts = OVERVIEW_DATA.map(item => item.count);
+    if (typeof OVERVIEW_DATA !== 'undefined' && overviewChart) {
+        const overviewLabels = OVERVIEW_DATA.map(item => item.label);
+        const overviewCounts = OVERVIEW_DATA.map(item => item.count);
 
-    destroyExistingChart('overviewChart');
+        destroyExistingChart('overviewChart');
 
-    new Chart(overviewChart, {
-      type: 'bar',
-      data: {
-        labels: overviewLabels,
-        datasets: [{
-          label: 'Ticket Counts',
-          data: overviewCounts,
-          backgroundColor: [
-            COLOR_MAP.gradientSet[0],
-            COLOR_MAP.gradientSet[1],
-            COLOR_MAP.gradientSet[2],
-            COLOR_MAP.gradientSet[3]
-          ],
-          borderRadius: 5,
-          barThickness: 40
-        }]
-      },
-      options: animationOptions
-    });
-  }
+        new Chart(overviewChart, {
+            type: 'bar',
+            data: {
+                labels: overviewLabels,
+                datasets: [{
+                    label: 'Tickets',
+                    data: overviewCounts,
+                    backgroundColor: ['#123692', '#172d69', '#dc3545', '#007bff'],
+                    borderRadius: 6,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                ...animationOptions,
+                onClick: (event, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        const PERIOD_MAP = {
+                          "today": "today",
+                          "this week": "week",
+                          "this month": "month",
+                          "this year": "year",
+                          "day": "day",
+                          "week": "week",
+                          "month": "month",
+                          "year": "year"
+                        };
+
+                        const label = overviewLabels[index].toLowerCase();
+                        const period = PERIOD_MAP[label];
+
+                        if (!period) {
+                          console.warn("Unknown period label:", label);
+                          return;
+                        }
+
+                        fetchAndShowTickets(
+                          `/api/tickets/?period=${period}`,
+                          `${overviewLabels[index]} Tickets`
+                        );
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
 
   const customerChart = document.getElementById('customerChart');
   if (customerChart) {
     destroyExistingChart('customerChart');
+    const customerLabels = CUSTOMER_DATA.map(c => c.customer);
+    const customerCounts = CUSTOMER_DATA.map(c => c.count);
+    
     new Chart(customerChart, {
       type: 'bar',
       data: {
-        labels: CUSTOMER_DATA.map(c => c.customer),
+        labels: customerLabels,
         datasets: [{
           label: 'Tickets',
-          data: CUSTOMER_DATA.map(c => c.count),
-          backgroundColor: COLOR_MAP.secondary,
-          borderRadius: 4,
-          barThickness: 30
+          data: customerCounts,
+          backgroundColor: customerLabels.map((_, i) => {
+            const colors = ['#123692', '#dc3545', '#172d69'];
+            return colors[i % colors.length];
+          }),
+          borderRadius: 8,
+          barThickness: 30,
+          hoverBackgroundColor: customerLabels.map((_, i) => {
+            const colors = ['#172d69', '#b02a37', '#123692'];
+            return colors[i % colors.length];
+          })
         }]
       },
-      options: animationOptions
+      options: {
+        ...animationOptions,
+        onClick: (event, elements) => {
+          if (elements.length > 0) {
+            const index = elements[0].index;
+            const customer = customerLabels[index];
+            fetchAndShowTickets(`/api/tickets/?customer=${encodeURIComponent(customer)}`, `Tickets for ${customer}`);
+          }
+        }
+      }
     });
   }
 
   console.log("ticketing_dashboard.js executed successfully. Chart.js available:", typeof Chart !== "undefined");
+
+  function renderTicketsTable(tickets, page = 1, perPage = 10) {
+    const modalBody = document.querySelector('.modal-tickets');
+    modalBody.innerHTML = '';
+
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    const paginatedTickets = tickets.slice(start, end);
+
+    let tableHTML = `
+      <div class="table-responsive">
+        <table class="tickets-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Created By</th>
+              <th>Assigned To</th>
+              <th>Created At</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
+
+    paginatedTickets.forEach(t => {
+      const statusClass = {
+        open: 'status-open',
+        in_progress: 'status-in_progress',
+        resolved: 'status-resolved',
+        closed: 'status-closed'
+      }[t.status] || 'status-open';
+
+      const priorityClass = {
+        low: 'priority-low',
+        medium: 'priority-medium',
+        high: 'priority-high',
+        critical: 'priority-critical'
+      }[t.priority] || 'priority-medium';
+
+      tableHTML += `
+        <tr class="ticket-row" data-id="${t.id}">
+          <td>#${t.id}</td>
+          <td title="${t.title || 'Untitled'}">${t.title?.length > 25 ? t.title.slice(0, 25) + '…' : t.title || 'Untitled'}</td>
+          <td><span class="badge badge-status ${statusClass}">${t.status || 'Unknown'}</span></td>
+          <td><span class="badge badge-priority ${priorityClass}">${t.priority || 'Unknown'}</span></td>
+          <td title="${t.created_by || 'Unknown'}">${t.created_by?.length > 15 ? t.created_by.slice(0, 15) + '…' : t.created_by || 'Unknown'}</td>
+          <td title="${t.assigned_to || '-'}">${t.assigned_to?.length > 15 ? t.assigned_to.slice(0, 15) + '…' : t.assigned_to || '-'}</td>
+          <td>${t.created_at}</td>
+        </tr>
+      `;
+    });
+
+    tableHTML += `</tbody></table></div>`;
+
+    // Pagination controls with only First, Previous, Next, Last
+    const totalPages = Math.ceil(tickets.length / perPage);
+    let paginationHTML = `<div class="pagination">`;
+
+    if (page > 1) {
+      paginationHTML += `<button class="page-btn first-btn" data-page="1">First</button>`;
+      paginationHTML += `<button class="page-btn prev-btn" data-page="${page - 1}">Previous</button>`;
+    }
+
+    if (page < totalPages) {
+      paginationHTML += `<button class="page-btn next-btn" data-page="${page + 1}">Next</button>`;
+      paginationHTML += `<button class="page-btn last-btn" data-page="${totalPages}">Last</button>`;
+    }
+
+    paginationHTML += `</div>`;
+
+    //modalBody.innerHTML = tableHTML + paginationHTML;
+    modalBody.innerHTML = `
+    <p>Total Tickets: ${tickets.length}</p>
+      <div class="table-responsive">
+        ${tableHTML}
+        ${paginationHTML}
+      </div>
+    `;
+
+
+    // Attach pagination events
+    modalBody.querySelectorAll('.page-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        renderTicketsTable(tickets, parseInt(btn.dataset.page), perPage);
+      });
+    });
+
+    // Attach row click events
+    modalBody.querySelectorAll('.ticket-row').forEach(row => {
+      row.addEventListener('click', () => {
+        const ticketId = row.dataset.id;
+        window.location.href = `/tickets/${ticketId}/`;
+      });
+    });
+  }
 
 });

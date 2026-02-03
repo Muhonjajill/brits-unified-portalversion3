@@ -78,6 +78,11 @@ urlpatterns = [
     path('tickets/period/<str:period>/', views.show_tickets, name='show_tickets_by_period'),
     path('tickets/', views.show_tickets, name='ticket_list'),
     path('create_ticket/', views.create_ticket, name= 'create_ticket'),
+
+    # JSON endpoints (AJAX)
+    path('api/tickets/', views.api_tickets),
+
+
     path('comments/<int:comment_id>/edit/', views.edit_comment, name='edit_comment'),
     path('comments/<int:comment_id>/delete/', views.delete_comment, name='delete_comment'),
     path('ticket/<int:ticket_id>/resolve/', views.resolve_ticket_view, name='resolve_ticket'),
