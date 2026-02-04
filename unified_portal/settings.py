@@ -114,7 +114,8 @@ SITE_PROTOCOL = 'https'
 #if DEBUG:
 #    SITE_URL = 'http://127.0.0.1:8000'  
 #else:
-SITE_URL = f'{SITE_PROTOCOL}://{SITE_DOMAIN.rstrip("/")}'  
+#SITE_URL = f'{SITE_PROTOCOL}://{SITE_DOMAIN.rstrip("/")}'  
+SITE_URL = f'{SITE_PROTOCOL}://{SITE_DOMAIN}'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
