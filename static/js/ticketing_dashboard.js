@@ -510,10 +510,10 @@ window.addEventListener('DOMContentLoaded', () => {
         const timeData = data.time_data || {};
 
         // Show totals
-        document.getElementById("dailyCount").textContent = timeData.day;
+        /*document.getElementById("dailyCount").textContent = timeData.day;
         document.getElementById("weeklyCount").textContent = timeData.week;
         document.getElementById("monthlyCount").textContent = timeData.month;
-        document.getElementById("yearlyCount").textContent = timeData.year;
+        document.getElementById("yearlyCount").textContent = timeData.year;*/
 
         if (tickets.length === 0) {
           emptyEl.style.display = 'flex';
