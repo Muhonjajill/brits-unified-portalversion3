@@ -1,39 +1,39 @@
-/* General Page Container */
+/* ==================== GENERAL PAGE CONTAINER ==================== */
 .detail-page-container {
   background: #ffffff;
-  padding: 2.5rem; /* Increased padding */
-  border-radius: 16px; /* More rounded */
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); /* Stronger, softer shadow */
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
   margin-top: 2.5rem;
   color: #343a40;
-  animation: fadeIn 0.6s ease-out; /* Slightly faster fade-in */
+  animation: fadeIn 0.6s ease-out;
 }
 
 .detail-header {
-  font-size: 2rem; /* Larger header */
+  font-size: 2rem;
   color: #2c3e50;
-  margin-bottom: 1.8rem; /* More space */
+  margin-bottom: 1.8rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   animation: slideInLeft 0.8s ease-out;
 }
 
-/* Version Details Card (Table Container) */
+/* ==================== VERSION DETAILS CARD ==================== */
 .version-details-card {
-  background-color: #f8f9fa; /* Light background for the card */
+  background-color: #f8f9fa;
   border-radius: 12px;
   padding: 2rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* Subtle inner shadow */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
   margin-bottom: 2.5rem;
-  animation: fadeInUp 0.7s ease-out 0.2s forwards; /* Animated appearance */
-  opacity: 0; /* Start hidden for animation */
+  animation: fadeInUp 0.7s ease-out 0.2s forwards;
+  opacity: 0;
 }
 
 .version-detail-table {
   width: 100%;
-  border-collapse: separate; /* Allows border-radius on cells */
-  border-spacing: 0; /* Remove default spacing */
+  border-collapse: separate;
+  border-spacing: 0;
   font-size: 1.05rem;
 }
 
@@ -41,45 +41,49 @@
 .version-detail-table td {
   padding: 1.1rem 1.5rem;
   text-align: left;
-  border-bottom: 1px solid #e9ecef; /* Light separator */
+  border-bottom: 1px solid #e9ecef;
   color: #495057;
 }
 
 .version-detail-table th {
-  background-color: #e2e6ea; /* Slightly darker header background */
+  background-color: #e2e6ea;
   font-weight: 600;
   color: #212529;
-  width: 30%; /* Allocate width for labels */
+  width: 30%;
 }
 
 .version-detail-table tr:first-child th {
-  border-top-left-radius: 8px; /* Rounded corners for first header cell */
+  border-top-left-radius: 8px;
 }
+
 .version-detail-table tr:first-child td {
   border-top-right-radius: 8px;
 }
+
 .version-detail-table tr:last-child th {
-  border-bottom-left-radius: 8px; /* Rounded corners for last header cell */
+  border-bottom-left-radius: 8px;
+  border-bottom: none;
 }
+
 .version-detail-table tr:last-child td {
   border-bottom-right-radius: 8px;
+  border-bottom: none;
 }
 
 .version-detail-table tbody tr:hover {
-  background-color: #f1f3f5; /* Light hover effect for rows */
+  background-color: #f1f3f5;
   transition: background-color 0.2s ease-in-out;
 }
 
-
-/* Comments Section */
+/* ==================== COMMENTS SECTION ==================== */
 .comments-section {
   margin-top: 2.5rem;
   background-color: #ffffff;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  animation: fadeInUp 0.7s ease-out 0.3s forwards; /* Animated appearance */
-  opacity: 0; /* Start hidden for animation */
+  animation: fadeInUp 0.7s ease-out 0.3s forwards;
+  opacity: 0;
 }
 
 .comments-header {
@@ -98,12 +102,15 @@
   font-size: 1rem;
   min-height: 100px;
   transition: all 0.3s ease-in-out;
+  width: 100%;
+  border: 1px solid #ced4da;
 }
 
 .comment-form textarea.form-control:focus {
   border-color: #123692;
   box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.25), 0 2px 8px rgba(0, 123, 255, 0.1);
   transform: translateY(-2px);
+  outline: none;
 }
 
 .comment-submit-btn {
@@ -115,6 +122,8 @@
   font-weight: 500;
   transition: all 0.3s ease-in-out;
   box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+  border: none;
+  cursor: pointer;
 }
 
 .comment-submit-btn:hover {
@@ -127,7 +136,7 @@
 .comments-divider {
   margin-top: 2rem;
   margin-bottom: 2rem;
-  border-top: 1px dashed #e0e0e0; /* Dashed separator */
+  border-top: 1px dashed #e0e0e0;
 }
 
 .comments-list {
@@ -144,14 +153,21 @@
   margin-bottom: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  animation: fadeInRight 0.6s ease-out forwards; /* Animated appearance */
-  opacity: 0; /* Start hidden for animation */
+  animation: fadeInRight 0.6s ease-out forwards;
+  opacity: 0;
 }
-.comment-item:nth-child(even) { /* Alternate animation delay for a staggered effect */
-    animation-delay: 0.1s;
+
+.comment-item:nth-child(even) {
+  animation-delay: 0.1s;
 }
+
 .comment-item:nth-child(odd) {
-    animation-delay: 0.2s;
+  animation-delay: 0.2s;
+}
+
+.comment-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .comment-item p {
@@ -176,16 +192,15 @@
   border-radius: 8px;
 }
 
-
-/* Action Buttons */
+/* ==================== ACTION BUTTONS ==================== */
 .action-buttons {
-  margin-top: 3rem; /* More space above buttons */
+  margin-top: 3rem;
   text-align: center;
-  display: flex; /* Use flexbox for button alignment */
+  display: flex;
   justify-content: center;
-  gap: 1rem; /* Space between buttons */
-  animation: fadeInUp 0.7s ease-out 0.4s forwards; /* Animated appearance */
-  opacity: 0; /* Start hidden for animation */
+  gap: 1rem;
+  animation: fadeInUp 0.7s ease-out 0.4s forwards;
+  opacity: 0;
 }
 
 .action-btn {
@@ -194,22 +209,27 @@
   font-weight: 500;
   transition: all 0.3s ease-in-out;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
 }
 
 .action-btn:hover {
-  transform: translateY(-3px) scale(1.03); /* More pronounced lift and scale */
+  transform: translateY(-3px) scale(1.03);
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
-/* Specific button styles (override Bootstrap defaults if needed for consistency) */
 .btn-warning {
   background-color: #ffc107;
   border-color: #ffc107;
   color: #212529;
 }
+
 .btn-warning:hover {
   background-color: #e0a800;
   border-color: #e0a800;
+  color: #212529;
 }
 
 .btn-danger {
@@ -217,9 +237,11 @@
   border-color: #dc3545;
   color: #fff;
 }
+
 .btn-danger:hover {
   background-color: #bb2d3b;
   border-color: #bb2d3b;
+  color: #fff;
 }
 
 .btn-secondary {
@@ -227,12 +249,92 @@
   border-color: #6c757d;
   color: #fff;
 }
+
 .btn-secondary:hover {
   background-color: #5a6268;
   border-color: #5a6268;
+  color: #fff;
 }
 
-/* Animations */
+/* ==================== DELETE CONFIRMATION MODAL ==================== */
+.modal-backdrop.show {
+  opacity: 0.6;
+  animation: modalBackdropFadeIn 0.3s ease-out forwards;
+}
+
+.modal-dialog {
+  transform: translateY(-50px) scale(0.9);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s ease-out;
+}
+
+.modal.show .modal-dialog {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.modal-header.alert-danger {
+  background-color: #f8d7da;
+  border-bottom: 2px solid #dc3545;
+}
+
+.modal-header.alert-danger .modal-title {
+  color: #721c24;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modal-header .btn-close {
+  font-size: 1.25rem;
+  transition: transform 0.2s ease-in-out;
+}
+
+.modal-header .btn-close:hover {
+  transform: rotate(90deg);
+}
+
+.delete-confirm-body {
+  padding: 1.5rem;
+}
+
+.delete-confirm-body p {
+  margin-bottom: 0.75rem;
+  color: #212529;
+}
+
+.delete-confirm-body .version-details {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  border-left: 4px solid #dc3545;
+  margin: 1rem 0;
+}
+
+.delete-confirm-body .version-details strong {
+  color: #495057;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.delete-confirm-body .text-danger {
+  color: #dc3545;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #dee2e6;
+}
+
+/* ==================== ANIMATIONS ==================== */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -262,7 +364,7 @@
 
 @keyframes fadeInRight {
   from {
-    transform: translateX(-20px); /* Come in from left for comments */
+    transform: translateX(-20px);
     opacity: 0;
   }
   to {
@@ -271,32 +373,318 @@
   }
 }
 
-/* Responsive Adjustments */
+@keyframes modalBackdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 0.6; }
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+  .detail-page-container {
+    padding: 2rem;
+  }
+
+  .version-details-card,
+  .comments-section {
+    padding: 1.75rem;
+  }
+
+  .version-detail-table th,
+  .version-detail-table td {
+    padding: 1rem 1.25rem;
+  }
+}
+
+/* Mobile (768px and below) */
 @media (max-width: 768px) {
+  /* Container */
   .detail-page-container {
     padding: 1.5rem;
+    margin-top: 2rem;
+    border-radius: 12px;
   }
+
+  /* Header */
   .detail-header {
     font-size: 1.6rem;
     margin-bottom: 1.2rem;
+    flex-wrap: wrap;
   }
+
+  /* Details Card */
   .version-details-card,
   .comments-section {
     padding: 1.5rem;
+    border-radius: 10px;
   }
+
+  /* Details Table - Stack on Mobile */
+  .version-detail-table {
+    font-size: 1rem;
+  }
+
   .version-detail-table th,
   .version-detail-table td {
+    display: block;
+    width: 100%;
     padding: 0.8rem 1rem;
-    font-size: 0.95rem;
   }
+
+  .version-detail-table th {
+    background-color: transparent;
+    font-weight: 700;
+    color: #123692;
+    border-bottom: none;
+    padding-bottom: 0.3rem;
+  }
+
+  .version-detail-table td {
+    padding-top: 0.3rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .version-detail-table tr {
+    display: block;
+    margin-bottom: 1rem;
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 0.5rem;
+  }
+
+  .version-detail-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Comments */
   .comments-header {
     font-size: 1.4rem;
   }
+
+  .comment-form textarea.form-control {
+    font-size: 0.95rem;
+    padding: 0.85rem;
+  }
+
+  .comment-submit-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+  }
+
+  .comment-item {
+    padding: 1rem;
+  }
+
+  .comment-item p {
+    font-size: 0.95rem;
+  }
+
+  /* Action Buttons - Stack vertically */
   .action-buttons {
     flex-direction: column;
     gap: 0.8rem;
+    margin-top: 2rem;
   }
+
   .action-btn {
     width: 100%;
+    padding: 0.85rem 1.2rem;
+  }
+
+  /* Modal */
+  .modal-dialog {
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+  }
+
+  .modal-content {
+    border-radius: 10px;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 1.25rem;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+  }
+
+  /* Reduce animations */
+  * {
+    animation-duration: 0.3s !important;
+  }
+}
+
+/* Small Mobile (576px and below) */
+@media (max-width: 576px) {
+  .detail-page-container {
+    padding: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  .detail-header {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .version-details-card,
+  .comments-section {
+    padding: 1rem;
+  }
+
+  .version-detail-table {
+    font-size: 0.95rem;
+  }
+
+  .version-detail-table th,
+  .version-detail-table td {
+    padding: 0.65rem 0.85rem;
+  }
+
+  .comments-header {
+    font-size: 1.25rem;
+  }
+
+  .comment-form textarea.form-control {
+    font-size: 0.9rem;
+    padding: 0.75rem;
+    min-height: 80px;
+  }
+
+  .comment-submit-btn {
+    font-size: 0.95rem;
+    padding: 0.7rem 1rem;
+  }
+
+  .comment-item {
+    padding: 0.85rem;
+  }
+
+  .comment-item p {
+    font-size: 0.9rem;
+  }
+
+  .comment-meta {
+    font-size: 0.85rem;
+  }
+
+  .action-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .modal-dialog {
+    margin: 0.25rem;
+    max-width: calc(100% - 0.5rem);
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 1rem;
+  }
+
+  .modal-title {
+    font-size: 1.1rem;
+  }
+}
+
+/* Very Small Mobile (480px and below) */
+@media (max-width: 480px) {
+  .detail-page-container {
+    padding: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .detail-header {
+    font-size: 1.25rem;
+  }
+
+  .version-details-card,
+  .comments-section {
+    padding: 0.85rem;
+  }
+
+  .version-detail-table {
+    font-size: 0.9rem;
+  }
+
+  .version-detail-table th,
+  .version-detail-table td {
+    padding: 0.6rem 0.75rem;
+  }
+
+  .comments-header {
+    font-size: 1.15rem;
+  }
+
+  .comment-form textarea.form-control {
+    font-size: 0.85rem;
+    padding: 0.7rem;
+  }
+
+  .comment-submit-btn {
+    font-size: 0.9rem;
+  }
+
+  .action-btn {
+    font-size: 0.9rem;
+  }
+}
+
+/* Landscape mode on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .detail-page-container {
+    margin-top: 1.5rem;
+  }
+
+  .modal-dialog {
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) {
+  .action-btn:hover,
+  .comment-submit-btn:hover,
+  .comment-item:hover {
+    transform: none;
+  }
+
+  .action-btn:active {
+    transform: scale(0.97);
+  }
+
+  .comment-submit-btn:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Print styles */
+@media print {
+  .detail-page-container {
+    box-shadow: none;
+    padding: 1rem;
+  }
+
+  .action-buttons,
+  .comment-form,
+  .modal,
+  .modal-backdrop {
+    display: none !important;
+  }
+
+  .comments-section {
+    page-break-inside: avoid;
   }
 }

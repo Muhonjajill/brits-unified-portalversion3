@@ -152,41 +152,54 @@ h1 {
     white-space: nowrap;
 }
 
-/* Priority colors */
-.priority-low { 
-    color: #17b845; 
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 4px;
-    background-color: #d4edda;
+/* ==========================
+   PRIORITY BADGES
+========================== */
+
+.priority-low {
+    color: #17b845;
+    background-color: rgba(23, 184, 69, 0.15);
 }
 
-.priority-medium { 
-    color: #007bff; 
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 4px;
-    background: #fdecea;
+.priority-medium {
+    color: #007bff;
+    background-color: rgba(0, 123, 255, 0.15);
 }
 
 .priority-high {
-    background: #fdecea;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 4px;
     color: #dc9c35;
+    background-color: rgba(220, 156, 53, 0.15);
 }
 
-.priority-critical { 
-    color: #dc2626; 
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 4px;
-    background-color: #f8d7da;
+.priority-critical {
+    color: #dc2626;
+    background-color: rgba(220, 38, 38, 0.15);
+}
+
+
+/* ==========================
+   STATUS BADGES
+========================== */
+
+.status-open {
+    color: #17b845;
+    background-color: rgba(23, 184, 69, 0.15);
+}
+
+.status-in_progress,
+.status-inprogress {
+    color: #007bff;
+    background-color: rgba(0, 123, 255, 0.15);
 }
 
 .status-escalated {
-    border: 1px solid #e74c3c;
+    color: #dc9c35;
+    background-color: rgba(220, 156, 53, 0.15);
+}
+
+.status-closed {
+    color: #6c757d;
+    background-color: rgba(108, 117, 125, 0.15);
 }
 
 /* Empty State */
