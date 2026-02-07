@@ -894,6 +894,390 @@ body {
   }
 }
 
+/* ==================== NOTIFICATION MODALS ==================== */
+.notification-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 2500;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.notification-modal.show {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.notification-modal .notification-modal-content {
+  position: relative;
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.4s ease-out;
+  text-align: center;
+}
+
+/* Success Modal Header */
+.notification-modal .success-header {
+  border-bottom: 2px solid #28a745;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.notification-modal .success-header i {
+  font-size: 4rem;
+  color: #28a745;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.notification-modal .success-header h3 {
+  color: #155724;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Error Modal Header */
+.notification-modal .error-header {
+  border-bottom: 2px solid #dc3545;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.notification-modal .error-header i {
+  font-size: 4rem;
+  color: #dc3545;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.notification-modal .error-header h3 {
+  color: #721c24;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.notification-modal .notification-modal-body {
+  margin-bottom: 1.75rem;
+}
+
+.notification-modal .notification-modal-body p {
+  font-size: 1.05rem;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.notification-modal .notification-modal-footer {
+  display: flex;
+  justify-content: center;
+}
+
+.notification-modal .btn-notification-ok {
+  background-color: #28a745;
+  color: white;
+  padding: 0.75rem 2.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.notification-modal .btn-notification-ok:hover {
+  background-color: #218838;
+  transform: scale(1.05);
+}
+
+.notification-modal .btn-notification-ok.error-btn {
+  background-color: #dc3545;
+}
+
+.notification-modal .btn-notification-ok.error-btn:hover {
+  background-color: #c82333;
+}
+
+.notification-modal .close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 1.8rem;
+  color: #aaa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.notification-modal .close:hover {
+  color: #333;
+  transform: rotate(90deg);
+}
+
+/* Responsive Notification Modals */
+@media (max-width: 768px) {
+  .notification-modal .notification-modal-content {
+    width: 92%;
+    max-width: 92%;
+    padding: 1.75rem;
+  }
+
+  .notification-modal .success-header i,
+  .notification-modal .error-header i {
+    font-size: 3.5rem;
+  }
+
+  .notification-modal .success-header h3,
+  .notification-modal .error-header h3 {
+    font-size: 1.45rem;
+  }
+
+  .notification-modal .notification-modal-body p {
+    font-size: 1rem;
+  }
+
+  .notification-modal .btn-notification-ok {
+    width: 100%;
+    padding: 0.7rem 2rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .notification-modal .notification-modal-content {
+    width: 95%;
+    max-width: 95%;
+    padding: 1.5rem;
+  }
+
+  .notification-modal .success-header i,
+  .notification-modal .error-header i {
+    font-size: 3.25rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .notification-modal .success-header h3,
+  .notification-modal .error-header h3 {
+    font-size: 1.35rem;
+  }
+
+  .notification-modal .success-header,
+  .notification-modal .error-header {
+    padding-bottom: 0.85rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .notification-modal .notification-modal-body {
+    margin-bottom: 1.5rem;
+  }
+
+  .notification-modal .notification-modal-body p {
+    font-size: 0.95rem;
+  }
+
+  .notification-modal .btn-notification-ok {
+    padding: 0.65rem 1.75rem;
+    font-size: 0.9rem;
+  }
+
+  .notification-modal .close {
+    top: 10px;
+    right: 10px;
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-modal .notification-modal-content {
+    width: 98%;
+    max-width: 98%;
+    padding: 1.25rem;
+  }
+
+  .notification-modal .success-header i,
+  .notification-modal .error-header i {
+    font-size: 3rem;
+  }
+
+  .notification-modal .success-header h3,
+  .notification-modal .error-header h3 {
+    font-size: 1.25rem;
+  }
+
+  .notification-modal .notification-modal-body p {
+    font-size: 0.9rem;
+  }
+
+  .notification-modal .btn-notification-ok {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.85rem;
+  }
+
+  .notification-modal .close {
+    top: 8px;
+    right: 8px;
+    font-size: 1.5rem;
+  }
+}
+
+/* Touch device optimization for notification buttons */
+@media (hover: none) {
+  .notification-modal .btn-notification-ok:hover {
+    transform: none;
+  }
+
+  .notification-modal .btn-notification-ok:active {
+    transform: scale(0.97);
+  }
+}
+
+/* Delete Confirmation Modal Styles */
+.delete-confirm-modal {
+  max-width: 500px;
+}
+
+.delete-modal-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #dc3545;
+}
+
+.delete-modal-header i {
+  font-size: 3rem;
+  color: #dc3545;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.delete-modal-header h3 {
+  color: #721c24;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.delete-modal-body {
+  margin-bottom: 1.5rem;
+}
+
+.delete-modal-body > p:first-child {
+  font-size: 1rem;
+  color: #495057;
+  margin-bottom: 1.25rem;
+  text-align: center;
+}
+
+.file-details-box {
+  background-color: #f8f9fa;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  border-left: 4px solid #dc3545;
+  margin-bottom: 1.25rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row strong {
+  color: #495057;
+  font-weight: 600;
+  flex: 0 0 40%;
+}
+
+.detail-row span {
+  color: #212529;
+  flex: 1;
+  text-align: right;
+  word-wrap: break-word;
+}
+
+.text-danger {
+  color: #dc3545;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.delete-modal-footer {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.btn-cancel {
+  flex: 1;
+  background-color: #6c757d;
+  color: white;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-cancel:hover {
+  background-color: #5a6268;
+  transform: scale(1.02);
+}
+
+.btn-confirm-delete {
+  flex: 1;
+  background-color: #dc3545;
+  color: white;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-confirm-delete:hover {
+  background-color: #c82333;
+  transform: scale(1.02);
+}
+
 /* Disable hover effects on mobile */
 @media (max-width: 768px) {
   .btn:hover {
@@ -910,5 +1294,99 @@ body {
 
   .file-row:hover .file-title {
     color: #212529;
+  }
+
+  /* Delete modal responsive */
+  .delete-confirm-modal {
+    width: 92%;
+    max-width: 92%;
+  }
+
+  .delete-modal-header i {
+    font-size: 2.5rem;
+  }
+
+  .delete-modal-header h3 {
+    font-size: 1.2rem;
+  }
+
+  .delete-modal-footer {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .btn-cancel,
+  .btn-confirm-delete {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .delete-confirm-modal {
+    width: 95%;
+    max-width: 95%;
+    padding: 1.25rem;
+  }
+
+  .delete-modal-header i {
+    font-size: 2.25rem;
+  }
+
+  .delete-modal-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .file-details-box {
+    padding: 0.85rem 1rem;
+  }
+
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+
+  .detail-row strong {
+    flex: none;
+  }
+
+  .detail-row span {
+    text-align: left;
+  }
+
+  .btn-cancel,
+  .btn-confirm-delete {
+    font-size: 0.95rem;
+    padding: 0.7rem 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .delete-confirm-modal {
+    width: 98%;
+    max-width: 98%;
+    padding: 1rem;
+  }
+
+  .delete-modal-header i {
+    font-size: 2rem;
+  }
+
+  .delete-modal-header h3 {
+    font-size: 1rem;
+  }
+
+  .delete-modal-body > p:first-child {
+    font-size: 0.95rem;
+  }
+
+  .text-danger {
+    font-size: 0.9rem;
+  }
+
+  .btn-cancel,
+  .btn-confirm-delete {
+    font-size: 0.9rem;
+    padding: 0.65rem 0.75rem;
   }
 }

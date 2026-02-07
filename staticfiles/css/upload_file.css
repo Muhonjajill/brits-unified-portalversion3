@@ -1,12 +1,14 @@
+/* ==================== GENERAL STYLES ==================== */
 body {
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #eef1f5, #dbe2ef);
     margin: 0;
     padding: 0;
     color: #333;
+    min-height: 100vh;
 }
 
-/* Upload container */
+/* ==================== UPLOAD CONTAINER ==================== */
 .upload-container {
     max-width: 650px;
     margin: 3rem auto;
@@ -16,6 +18,7 @@ body {
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+
 .upload-container:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
@@ -29,12 +32,17 @@ body {
     font-weight: 700;
 }
 
-/* Form styles */
+/* ==================== FORM STYLES ==================== */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
 form label {
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.5rem;
     font-weight: 600;
     color: #222;
-    display: inline-block;
+    display: block;
+    font-size: 0.95rem;
 }
 
 form input[type="text"],
@@ -46,7 +54,6 @@ form textarea {
     border: 1px solid #ccc;
     border-radius: 10px;
     background-color: #fafafa;
-    margin-bottom: 1.3rem;
     font-size: 1rem;
     transition: all 0.2s ease;
     box-sizing: border-box;
@@ -60,6 +67,11 @@ form textarea:focus {
     border-color: #123692;
     background-color: #fff;
     box-shadow: 0 0 6px rgba(18, 54, 146, 0.3);
+}
+
+form textarea {
+    min-height: 100px;
+    resize: vertical;
 }
 
 form input[type="submit"],
@@ -84,14 +96,33 @@ form input[type="submit"]:hover,
     transform: translateY(-2px);
 }
 
-/* Modal styles */
+/* ==================== ALERT STYLES ==================== */
+.alert {
+    padding: 1.25rem;
+    margin: 2rem auto;
+    max-width: 650px;
+    border-radius: 10px;
+    font-size: 1rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+/* ==================== MODAL STYLES ==================== */
 .modal {
     display: none;
     position: fixed;
     z-index: 1000;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.55);
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
     justify-content: center;
     align-items: center;
     animation: fadeIn 0.3s ease;
@@ -101,13 +132,12 @@ form input[type="submit"]:hover,
     display: flex;
 }
 
-/* Modal content */
 .modal-content {
     background: #fff;
     border-radius: 12px;
     padding: 2rem;
     width: 480px;
-    max-width: 95%;
+    max-width: 90%;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
     animation: zoomIn 0.4s ease-out;
     position: relative;
@@ -123,7 +153,6 @@ form input[type="submit"]:hover,
     margin-bottom: 1.5rem;
 }
 
-/* Close button */
 .close {
     position: absolute;
     top: 15px;
@@ -132,33 +161,554 @@ form input[type="submit"]:hover,
     font-size: 28px;
     font-weight: bold;
     cursor: pointer;
-    transition: color 0.2s ease;
-}
-.close:hover {
-    color: #333;
+    transition: color 0.2s ease, transform 0.2s ease;
 }
 
-/* Animations */
+.close:hover {
+    color: #333;
+    transform: rotate(90deg);
+}
+
+/* ==================== SUCCESS MODAL STYLES ==================== */
+.success-modal .modal-content {
+    max-width: 500px;
+}
+
+.success-modal-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #28a745;
+}
+
+.success-modal-header i {
+    font-size: 3.5rem;
+    color: #28a745;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.success-modal-header h2 {
+    color: #155724;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    border: none;
+    padding: 0;
+}
+
+.success-modal-body {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.success-modal-body p {
+    font-size: 1.05rem;
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+.file-success-details {
+    background-color: #d4edda;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #28a745;
+    text-align: left;
+    margin: 1rem 0;
+}
+
+.file-success-details p {
+    margin: 0.5rem 0;
+    color: #155724;
+    font-size: 0.95rem;
+}
+
+.file-success-details strong {
+    font-weight: 600;
+}
+
+.success-modal-footer {
+    display: flex;
+    justify-content: center;
+}
+
+.btn-success-ok {
+    background-color: #28a745;
+    color: white;
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-success-ok:hover {
+    background-color: #218838;
+    transform: scale(1.05);
+}
+
+/* ==================== ANIMATIONS ==================== */
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
 @keyframes zoomIn {
-    from { transform: scale(0.85); opacity: 0.7; }
-    to { transform: scale(1); opacity: 1; }
+    from { 
+        transform: scale(0.85); 
+        opacity: 0.7; 
+    }
+    to { 
+        transform: scale(1); 
+        opacity: 1; 
+    }
 }
 
-/* Responsive */
-@media (max-width: 600px) {
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
     .upload-container {
-        padding: 1.5rem;
-        margin: 1rem;
+        max-width: 600px;
+        padding: 2.25rem;
+        margin: 2.5rem auto;
     }
-    form input[type="submit"] {
+
+    .upload-container h2 {
+        font-size: 1.5rem;
+    }
+
+    .modal-content {
+        width: 450px;
+    }
+}
+
+/* Mobile (768px and below) */
+@media (max-width: 768px) {
+    body {
+        background: #eef1f5;
+    }
+
+    .upload-container {
+        max-width: 100%;
+        margin: 2rem 1rem;
+        padding: 2rem;
+        border-radius: 12px;
+    }
+
+    .upload-container:hover {
+        transform: none;
+    }
+
+    .upload-container h2 {
+        font-size: 1.4rem;
+        margin-bottom: 1.75rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    form label {
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
+    }
+
+    form input[type="text"],
+    form input[type="file"],
+    form select,
+    form textarea {
+        padding: 0.75rem 0.9rem;
+        font-size: 0.95rem;
+        border-radius: 8px;
+    }
+
+    form textarea {
+        min-height: 90px;
+    }
+
+    form input[type="submit"],
+    .btn-primary {
+        padding: 0.8rem 1.25rem;
         font-size: 0.95rem;
     }
+
+    .alert {
+        margin: 1.5rem 1rem;
+        padding: 1rem;
+        font-size: 0.95rem;
+    }
+
+    /* Modal adjustments */
     .modal-content {
-        width: 90%;
+        width: 92%;
+        max-width: 92%;
+        padding: 1.75rem;
+        border-radius: 10px;
+    }
+
+    .modal-content h2 {
+        font-size: 1.3rem;
+        padding-bottom: 0.65rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .close {
+        top: 12px;
+        right: 15px;
+        font-size: 26px;
+    }
+
+    /* Success modal mobile */
+    .success-modal-header i {
+        font-size: 3rem;
+    }
+
+    .success-modal-header h2 {
+        font-size: 1.3rem;
+    }
+
+    .success-modal-body p {
+        font-size: 1rem;
+    }
+
+    .file-success-details {
+        padding: 0.85rem;
+    }
+
+    .file-success-details p {
+        font-size: 0.9rem;
+    }
+
+    .btn-success-ok {
+        width: 100%;
+        padding: 0.7rem 1.5rem;
+        font-size: 0.95rem;
+    }
+}
+
+/* Small Mobile (576px and below) */
+@media (max-width: 576px) {
+    .upload-container {
+        margin: 1.5rem 0.75rem;
+        padding: 1.75rem;
+    }
+
+    .upload-container h2 {
+        font-size: 1.3rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    form label {
+        font-size: 0.85rem;
+    }
+
+    form input[type="text"],
+    form input[type="file"],
+    form select,
+    form textarea {
+        padding: 0.7rem 0.85rem;
+        font-size: 0.9rem;
+    }
+
+    form textarea {
+        min-height: 80px;
+    }
+
+    form input[type="submit"],
+    .btn-primary {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .alert {
+        margin: 1rem 0.75rem;
+        padding: 0.9rem;
+        font-size: 0.9rem;
+    }
+
+    /* Modal */
+    .modal-content {
+        width: 95%;
+        max-width: 95%;
         padding: 1.5rem;
+    }
+
+    .modal-content h2 {
+        font-size: 1.2rem;
+        padding-bottom: 0.6rem;
+        margin-bottom: 1rem;
+    }
+
+    .close {
+        top: 10px;
+        right: 12px;
+        font-size: 24px;
+    }
+
+    /* Success modal */
+    .success-modal-header {
+        padding-bottom: 0.85rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .success-modal-header i {
+        font-size: 2.75rem;
+        margin-bottom: 0.65rem;
+    }
+
+    .success-modal-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .success-modal-body {
+        margin-bottom: 1.25rem;
+    }
+
+    .success-modal-body p {
+        font-size: 0.95rem;
+    }
+
+    .file-success-details {
+        padding: 0.75rem;
+    }
+
+    .file-success-details p {
+        font-size: 0.85rem;
+    }
+
+    .btn-success-ok {
+        padding: 0.65rem 1.25rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Very Small Mobile (480px and below) */
+@media (max-width: 480px) {
+    .upload-container {
+        margin: 1.25rem 0.5rem;
+        padding: 1.5rem;
+        border-radius: 10px;
+    }
+
+    .upload-container h2 {
+        font-size: 1.2rem;
+        margin-bottom: 1.25rem;
+    }
+
+    form label {
+        font-size: 0.8rem;
+    }
+
+    form input[type="text"],
+    form input[type="file"],
+    form select,
+    form textarea {
+        padding: 0.65rem 0.8rem;
+        font-size: 0.85rem;
+        border-radius: 7px;
+    }
+
+    form textarea {
+        min-height: 75px;
+    }
+
+    form input[type="submit"],
+    .btn-primary {
+        padding: 0.7rem 0.9rem;
+        font-size: 0.85rem;
+    }
+
+    .alert {
+        margin: 0.75rem 0.5rem;
+        padding: 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    /* Modal */
+    .modal-content {
+        width: 98%;
+        max-width: 98%;
+        padding: 1.25rem;
+        border-radius: 8px;
+    }
+
+    .modal-content h2 {
+        font-size: 1.1rem;
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .close {
+        top: 8px;
+        right: 10px;
+        font-size: 22px;
+    }
+
+    /* Success modal */
+    .success-modal-header i {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .success-modal-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .success-modal-body p {
+        font-size: 0.9rem;
+    }
+
+    .file-success-details {
+        padding: 0.65rem;
+    }
+
+    .file-success-details p {
+        font-size: 0.8rem;
+        margin: 0.4rem 0;
+    }
+
+    .btn-success-ok {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* Extra Small Mobile (360px and below) */
+@media (max-width: 360px) {
+    .upload-container {
+        margin: 1rem 0.35rem;
+        padding: 1.25rem;
+    }
+
+    .upload-container h2 {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    form label {
+        font-size: 0.75rem;
+    }
+
+    form input[type="text"],
+    form input[type="file"],
+    form select,
+    form textarea {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    form input[type="submit"],
+    .btn-primary {
+        padding: 0.65rem 0.8rem;
+        font-size: 0.8rem;
+    }
+
+    .modal-content {
+        padding: 1rem;
+    }
+
+    .modal-content h2 {
+        font-size: 1rem;
+    }
+
+    .success-modal-header i {
+        font-size: 2.25rem;
+    }
+
+    .success-modal-header h2 {
+        font-size: 1rem;
+    }
+
+    .success-modal-body p {
+        font-size: 0.85rem;
+    }
+
+    .file-success-details p {
+        font-size: 0.75rem;
+    }
+
+    .btn-success-ok {
+        font-size: 0.8rem;
+    }
+}
+
+/* Landscape mode on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .upload-container {
+        margin: 1.5rem auto;
+        max-width: 90%;
+    }
+
+    .modal-content {
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+}
+
+/* Touch device optimizations */
+@media (hover: none) {
+    .upload-container:hover {
+        transform: none;
+    }
+
+    form input[type="submit"]:hover,
+    .btn-primary:hover {
+        transform: none;
+    }
+
+    .btn-success-ok:hover {
+        transform: none;
+    }
+
+    form input[type="submit"]:active,
+    .btn-primary:active {
+        transform: scale(0.98);
+    }
+
+    .btn-success-ok:active {
+        transform: scale(0.98);
+    }
+}
+
+/* Print styles */
+@media print {
+    .modal {
+        display: none !important;
+    }
+
+    .upload-container {
+        box-shadow: none;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    form input[type="submit"],
+    .btn-primary {
+        display: none;
+    }
+}
+
+/* Accessibility - Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .modal,
+    .modal-content,
+    .upload-container {
+        animation: none;
+        transition: none;
+    }
+
+    .close:hover {
+        transform: none;
     }
 }

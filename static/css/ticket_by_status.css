@@ -1,17 +1,17 @@
-/* Container */
+/* ==================== CONTAINER ==================== */
 .container.ticket-status-container {
   max-width: 100%;
   width: 100%;
-  margin: 0;
+  margin: 0 auto;
   margin-top: 4rem;
-  padding: 0 20px;
+  padding: 2rem 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
-/* Heading */
+/* ==================== HEADING ==================== */
 h2 {
   font-size: 2.4rem;
   color: #2c3e50;
@@ -22,17 +22,18 @@ h2 {
   text-transform: uppercase;
 }
 
-/* Table */
+/* ==================== TABLE ==================== */
 .table.ticket-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
 }
 
-/* Table Head */
+/* ==================== TABLE HEAD ==================== */
 .table thead {
   background: linear-gradient(90deg, #4a90e2, #357ABD);
   color: #fff;
@@ -47,19 +48,20 @@ h2 {
   letter-spacing: 0.05em;
 }
 
-/* Table Body */
+/* ==================== TABLE BODY ==================== */
 .table tbody tr {
   transition: background-color 0.25s ease, transform 0.15s ease;
-  cursor: default;
+  cursor: pointer;
+  background-color: #fff;
 }
 
 .table tbody tr:hover {
   background-color: #f0f7ff;
-  transform: scale(1.02);
+  transform: scale(1.01);
   box-shadow: 0 4px 10px rgba(53, 122, 189, 0.15);
 }
 
-/* Table Cells */
+/* ==================== TABLE CELLS ==================== */
 .table td {
   padding: 14px 16px;
   font-size: 1rem;
@@ -70,7 +72,6 @@ h2 {
   word-wrap: break-word;
 }
 
-/* Title cell aligned left for readability */
 .table td.title-cell {
   text-align: left;
   font-weight: 600;
@@ -81,15 +82,15 @@ h2 {
   text-overflow: ellipsis;
 }
 
-/* No record row */
 .table td.no-record {
   color: #999;
   font-style: italic;
   font-size: 1.1rem;
-  padding: 40px 0;
+  padding: 40px 20px;
+  text-align: center;
 }
 
-/* Status label with colored badges */
+/* ==================== STATUS LABELS ==================== */
 .status-label {
   display: inline-block;
   padding: 6px 14px;
@@ -99,66 +100,456 @@ h2 {
   color: #fff;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
-/* Different status colors */
 .status-open {
-  background-color: #123692;  
-}
-.status-in_progress {
-  background-color: #c0392b;  
-}
-.status-closed {
-  background-color: rgb(25, 164, 25);  
+  background-color: #123692;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+.status-in_progress {
+  background-color: #c0392b;
+}
+
+.status-closed {
+  background-color: rgb(25, 164, 25);
+}
+
+.status-resolved {
+  background-color: #27ae60;
+}
+
+/* ==================== PAGINATION ==================== */
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.pagination-container nav {
+  display: flex;
+  justify-content: center;
+}
+
+.pagination {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.page-item {
+  display: inline-block;
+}
+
+.page-link {
+  display: block;
+  padding: 0.75rem 1rem;
+  color: #4a90e2;
+  text-decoration: none;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  min-width: 44px;
+  text-align: center;
+}
+
+.page-link:hover {
+  background-color: #4a90e2;
+  color: #fff;
+  border-color: #4a90e2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
+}
+
+.page-item.active .page-link {
+  background-color: #357ABD;
+  color: #fff;
+  border-color: #357ABD;
+  cursor: default;
+  font-weight: 600;
+}
+
+.page-item.active .page-link:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* ==================== RESPONSIVE DESIGN ==================== */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
   .container.ticket-status-container {
-    margin-top: 4rem;
+    padding: 1.75rem 18px;
   }
 
   h2 {
-    font-size: 1.8rem;
-    margin-bottom: 25px;
+    font-size: 2rem;
+    margin-bottom: 30px;
   }
 
-  .table thead {
-    display: none; 
-  }
-
-  .table tbody tr {
-    display: block;
-    margin-bottom: 20px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    border-radius: 10px;
-    background: #fff;
-    padding: 15px 20px;
-  }
-
-  .table tbody tr:hover {
-    transform: none;
-    box-shadow: 0 3px 15px rgba(53, 122, 189, 0.2);
+  .table thead th {
+    font-size: 1rem;
+    padding: 12px 14px;
   }
 
   .table td {
+    font-size: 0.95rem;
+    padding: 12px 14px;
+  }
+}
+
+/* Mobile (768px and below) */
+@media (max-width: 768px) {
+  /* Container */
+  .container.ticket-status-container {
+    margin-top: 3rem;
+    padding: 1.5rem 15px;
+    border-radius: 10px;
+  }
+
+  /* Heading */
+  h2 {
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Hide table header on mobile */
+  .table thead {
+    display: none;
+  }
+
+  /* Transform table rows to cards */
+  .table tbody tr {
+    display: block;
+    margin-bottom: 20px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    background: #fff;
+    padding: 15px 18px;
+    border: 1px solid #e0e4e8;
+  }
+
+  .table tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(53, 122, 189, 0.2);
+  }
+
+  /* Table cells as flex rows */
+  .table td {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     padding: 10px 0;
     border: none;
-    font-size: 1rem;
+    font-size: 0.95rem;
+    text-align: right;
   }
 
-  .table td.title-cell {
-    max-width: 60%;
-    white-space: normal;
+  .table td:not(:last-child) {
+    border-bottom: 1px solid #f0f0f0;
   }
 
+  /* Add labels before content */
   .table td::before {
     content: attr(data-label);
     font-weight: 700;
     color: #555;
-    flex-basis: 40%;
+    flex-basis: 45%;
     text-transform: uppercase;
+    font-size: 0.85rem;
+    text-align: left;
+    padding-right: 10px;
+  }
+
+  /* Title cell adjustments */
+  .table td.title-cell {
+    max-width: 100%;
+    white-space: normal;
+    word-wrap: break-word;
+    text-align: right;
+  }
+
+  .table td.title-cell::after {
+    content: '';
+    flex-basis: 55%;
+    text-align: right;
+  }
+
+  /* No record styling */
+  .table td.no-record {
+    justify-content: center;
+    text-align: center;
+    padding: 30px 15px;
+  }
+
+  .table td.no-record::before {
+    display: none;
+  }
+
+  /* Status label in mobile */
+  .status-label {
+    font-size: 0.85rem;
+    padding: 5px 12px;
+  }
+
+  /* Pagination */
+  .pagination-container {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .pagination {
+    gap: 0.4rem;
+  }
+
+  .page-link {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.9rem;
+    min-width: 40px;
+  }
+
+  /* Hide text on pagination, keep only arrows */
+  .page-item.active .page-link {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* Small Mobile (576px and below) */
+@media (max-width: 576px) {
+  /* Container */
+  .container.ticket-status-container {
+    margin-top: 2.5rem;
+    padding: 1.25rem 12px;
+  }
+
+  /* Heading */
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    letter-spacing: 0.3px;
+  }
+
+  /* Table cards */
+  .table tbody tr {
+    padding: 12px 15px;
+    margin-bottom: 15px;
+  }
+
+  .table td {
+    font-size: 0.9rem;
+    padding: 8px 0;
+  }
+
+  .table td::before {
+    font-size: 0.8rem;
+    flex-basis: 40%;
+  }
+
+  /* Status label */
+  .status-label {
+    font-size: 0.8rem;
+    padding: 4px 10px;
+  }
+
+  /* Pagination */
+  .pagination {
+    gap: 0.3rem;
+  }
+
+  .page-link {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.85rem;
+    min-width: 36px;
+  }
+
+  .page-item.active .page-link {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Very Small Mobile (480px and below) */
+@media (max-width: 480px) {
+  /* Container */
+  .container.ticket-status-container {
+    margin-top: 2rem;
+    padding: 1rem 10px;
+    border-radius: 8px;
+  }
+
+  /* Heading */
+  h2 {
+    font-size: 1.35rem;
+    margin-bottom: 18px;
+  }
+
+  /* Table cards */
+  .table tbody tr {
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+  }
+
+  .table td {
+    font-size: 0.85rem;
+    padding: 7px 0;
+  }
+
+  .table td::before {
+    font-size: 0.75rem;
+  }
+
+  /* Status label */
+  .status-label {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+  }
+
+  /* Pagination - make more compact */
+  .pagination-container {
+    margin-top: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .pagination {
+    gap: 0.25rem;
+  }
+
+  .page-link {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.8rem;
+    min-width: 32px;
+  }
+
+  .page-item.active .page-link {
+    padding: 0.45rem 0.5rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+}
+
+/* Very Small Mobile (360px and below) */
+@media (max-width: 360px) {
+  .container.ticket-status-container {
+    padding: 0.85rem 8px;
+  }
+
+  h2 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+  }
+
+  .table tbody tr {
+    padding: 10px;
+  }
+
+  .table td {
+    font-size: 0.8rem;
+    padding: 6px 0;
+  }
+
+  .table td::before {
+    font-size: 0.7rem;
+    flex-basis: 38%;
+  }
+
+  .status-label {
+    font-size: 0.7rem;
+    padding: 3px 7px;
+  }
+
+  .page-link {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
+    min-width: 30px;
+  }
+
+  .page-item.active .page-link {
+    font-size: 0.7rem;
+  }
+}
+
+/* Landscape mode on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .container.ticket-status-container {
+    margin-top: 2rem;
+  }
+
+  h2 {
+    font-size: 1.6rem;
+    margin-bottom: 20px;
+  }
+
+  .table tbody tr {
+    padding: 12px 15px;
+    margin-bottom: 15px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) {
+  .table tbody tr:hover {
+    transform: none;
+  }
+
+  .table tbody tr:active {
+    transform: scale(0.98);
+    background-color: #e8f4fd;
+  }
+
+  .page-link:hover {
+    transform: none;
+  }
+
+  .page-link:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Print styles */
+@media print {
+  .container.ticket-status-container {
+    box-shadow: none;
+    padding: 1rem;
+  }
+
+  .pagination-container {
+    display: none;
+  }
+
+  .table tbody tr {
+    page-break-inside: avoid;
+  }
+
+  .table tbody tr:hover {
+    transform: none;
+    box-shadow: none;
+    background-color: transparent;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .table tbody tr,
+  .page-link {
+    transition: none;
+  }
+
+  .table tbody tr:hover {
+    transform: none;
   }
 }

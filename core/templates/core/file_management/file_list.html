@@ -153,9 +153,17 @@
 
         {% if file.uploaded_by == request.user or request.user.is_superuser %}
         <div>
-          <form method="post" action="{% url 'delete_file' file.id %}" onsubmit="return confirm('Are you sure you want to delete this file?');">
+          <form method="post" action="{% url 'delete_file' file.id %}" id="delete-form-{{ file.id }}">
             {% csrf_token %}
-            <button type="submit" class="btn delete-link">Delete</button>
+            <button 
+              type="button" 
+              class="btn delete-link btn-delete-file"
+              data-file-id="{{ file.id }}"
+              data-file-title="{{ file.title|default:'No title available' }}"
+              data-file-size="{{ file.file.size|filesizeformat }}"
+              data-file-access="{{ file.access_level|title }}">
+              Delete
+            </button>
           </form>
         </div>
         {% else %}
@@ -182,12 +190,132 @@
     {% endif %}
   </span>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmModal" class="passcode-modal">
+  <div class="passcode-modal-content delete-confirm-modal">
+    <span class="close" onclick="closeDeleteModal()">&times;</span>
+    <div class="delete-modal-header">
+      <i class="fas fa-exclamation-triangle"></i>
+      <h3>Confirm File Deletion</h3>
+    </div>
+    <div class="delete-modal-body">
+      <p>Are you sure you want to permanently delete this file?</p>
+      
+      <div class="file-details-box">
+        <div class="detail-row">
+          <strong>File Name:</strong>
+          <span id="delete-file-title"></span>
+        </div>
+        <div class="detail-row">
+          <strong>Size:</strong>
+          <span id="delete-file-size"></span>
+        </div>
+        <div class="detail-row">
+          <strong>Access Level:</strong>
+          <span id="delete-file-access"></span>
+        </div>
+      </div>
+
+      <p class="text-danger">
+        <i class="fas fa-exclamation-circle"></i> This action cannot be undone!
+      </p>
+    </div>
+    <div class="delete-modal-footer">
+      <button type="button" class="btn btn-cancel" onclick="closeDeleteModal()">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+      <button type="button" class="btn btn-confirm-delete" id="confirmDeleteBtn">
+        <i class="fas fa-trash-alt"></i> Delete File
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Modals -->
+<!-- Success Modal -->
+<div id="successNotificationModal" class="notification-modal">
+  <div class="notification-modal-content">
+    <span class="close" onclick="closeSuccessNotification()">&times;</span>
+    <div class="notification-modal-header success-header">
+      <i class="fas fa-check-circle"></i>
+      <h3 id="successNotificationTitle">Success</h3>
+    </div>
+    <div class="notification-modal-body">
+      <p id="successNotificationMessage"></p>
+    </div>
+    <div class="notification-modal-footer">
+      <button type="button" class="btn-notification-ok" onclick="closeSuccessNotification()">
+        <i class="fas fa-check"></i> OK
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Error Modal -->
+<div id="errorNotificationModal" class="notification-modal">
+  <div class="notification-modal-content">
+    <span class="close" onclick="closeErrorNotification()">&times;</span>
+    <div class="notification-modal-header error-header">
+      <i class="fas fa-exclamation-circle"></i>
+      <h3 id="errorNotificationTitle">Error</h3>
+    </div>
+    <div class="notification-modal-body">
+      <p id="errorNotificationMessage"></p>
+    </div>
+    <div class="notification-modal-footer">
+      <button type="button" class="btn-notification-ok error-btn" onclick="closeErrorNotification()">
+        <i class="fas fa-times"></i> OK
+      </button>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
 const validatedFiles = {{ validated_files|default:"[]"|safe }};
 let pendingRedirect = null;
+let deleteFormToSubmit = null;
+
+// Notification Modal Functions
+function showSuccessNotification(title, message) {
+  document.getElementById('successNotificationTitle').textContent = title || 'Success';
+  document.getElementById('successNotificationMessage').textContent = message;
+  document.getElementById('successNotificationModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSuccessNotification() {
+  document.getElementById('successNotificationModal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function showErrorNotification(title, message) {
+  document.getElementById('errorNotificationTitle').textContent = title || 'Error';
+  document.getElementById('errorNotificationMessage').textContent = message;
+  document.getElementById('errorNotificationModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeErrorNotification() {
+  document.getElementById('errorNotificationModal').classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+  const successModal = document.getElementById('successNotificationModal');
+  const errorModal = document.getElementById('errorNotificationModal');
+  
+  if (event.target === successModal) {
+    closeSuccessNotification();
+  }
+  if (event.target === errorModal) {
+    closeErrorNotification();
+  }
+};
 
 function getCookie(name) {
   let cookieValue = null;
@@ -228,12 +356,14 @@ function showPasscodeModal(fileId, targetUrl, action) {
     const allowDownload = allowDownloadCheckbox.checked;
 
     if (action === 'preview' && !allowPreview) {
-      alert("This file cannot be previewed.");
+      // ✅ Use modal instead of alert
+      showErrorNotification('Preview Not Allowed', 'This file cannot be previewed.');
       return false;
     }
 
     if (action === 'download' && !allowDownload) {
-      alert("This file cannot be downloaded.");
+      // ✅ Use modal instead of alert
+      showErrorNotification('Download Not Allowed', 'This file cannot be downloaded.');
       return false;
     }
   }
@@ -280,7 +410,11 @@ function checkPasscode(fileId) {
     closePasscodeModal(fileId);
     window.location.href = targetUrl;
   })
-  .catch(err=>{ console.error(err); alert('❌ Failed to validate passcode'); });
+  .catch(err=>{ 
+    console.error(err); 
+    // ✅ Use modal instead of alert
+    showErrorNotification('Validation Error', 'Failed to validate passcode. Please try again.');
+  });
 }
 
 function updatePasscode(fileId){
@@ -296,20 +430,74 @@ function updatePasscode(fileId){
   })
   .then(r=>r.json())
   .then(data=>{
-    if(data.success){ alert('✅ Passcode & permissions updated'); closePasscodeModal(fileId); } 
-    else alert('❌ Failed to update passcode/permissions');
+    if(data.success){ 
+      // ✅ Use modal instead of alert
+      showSuccessNotification('Update Successful', 'Passcode & permissions updated successfully!');
+      closePasscodeModal(fileId); 
+    } else {
+      // ✅ Use modal instead of alert
+      showErrorNotification('Update Failed', 'Failed to update passcode/permissions. Please try again.');
+    }
   })
-  .catch(err=>{ console.error(err); alert('❌ Failed to update passcode'); });
+  .catch(err=>{ 
+    console.error(err); 
+    // ✅ Use modal instead of alert
+    showErrorNotification('Update Error', 'Failed to update passcode. Please try again.');
+  });
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    const highlightId = "{{ highlight_file_id }}";
-    if (highlightId) {
-        const el = document.getElementById("file-" + highlightId);
-        if (el) {
-            el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+// Delete confirmation modal functions
+function showDeleteModal(fileId, fileTitle, fileSize, fileAccess) {
+  deleteFormToSubmit = document.getElementById('delete-form-' + fileId);
+  
+  document.getElementById('delete-file-title').textContent = fileTitle;
+  document.getElementById('delete-file-size').textContent = fileSize;
+  document.getElementById('delete-file-access').textContent = fileAccess;
+  
+  const modal = document.getElementById('deleteConfirmModal');
+  modal.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+  const modal = document.getElementById('deleteConfirmModal');
+  modal.classList.remove('show');
+  document.body.style.overflow = '';
+  deleteFormToSubmit = null;
+}
+
+// Attach delete button listeners
+document.addEventListener('DOMContentLoaded', function() {
+  const deleteButtons = document.querySelectorAll('.btn-delete-file');
+  
+  deleteButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const fileId = this.dataset.fileId;
+      const fileTitle = this.dataset.fileTitle;
+      const fileSize = this.dataset.fileSize;
+      const fileAccess = this.dataset.fileAccess;
+      
+      showDeleteModal(fileId, fileTitle, fileSize, fileAccess);
+    });
+  });
+
+  // Confirm delete button
+  document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (deleteFormToSubmit) {
+      deleteFormToSubmit.submit();
     }
+  });
+
+  // Highlight file if needed
+  const highlightId = "{{ highlight_file_id }}";
+  if (highlightId) {
+      const el = document.getElementById("file-" + highlightId);
+      if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+  }
 });
 </script>
 {% endblock %}

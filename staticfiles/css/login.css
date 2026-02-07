@@ -373,6 +373,147 @@ body {
   100% { transform: rotate(360deg); }
 }
 
+/* ==================== NOTIFICATION MODALS ==================== */
+.notification-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10000;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.notification-modal.show {
+  display: flex;
+}
+
+.notification-modal-content {
+  background: #ffffff;
+  padding: 2.5rem;
+  border-radius: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+  width: 92%;
+  max-width: 450px;
+  text-align: center;
+  position: relative;
+  animation: zoomIn 0.4s ease-out;
+}
+
+/* Error Modal (default) */
+.notification-modal .notification-modal-header {
+  border-bottom: 2px solid #dc2626;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.notification-modal .notification-modal-header i {
+  font-size: 4rem;
+  color: #dc2626;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.notification-modal .notification-modal-header h3 {
+  color: #991b1b;
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Success Modal */
+.notification-modal.success .notification-modal-header {
+  border-bottom: 2px solid #16a34a;
+}
+
+.notification-modal.success .notification-modal-header i {
+  color: #16a34a;
+}
+
+.notification-modal.success .notification-modal-header h3 {
+  color: #15803d;
+}
+
+.notification-modal-body {
+  margin-bottom: 1.75rem;
+}
+
+.notification-modal-body p {
+  font-size: 1.05rem;
+  color: #374151;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.notification-modal-footer {
+  display: flex;
+  justify-content: center;
+}
+
+.btn-modal-ok {
+  background-color: #dc2626;
+  color: white;
+  padding: 0.75rem 2.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-modal-ok:hover {
+  background-color: #b91c1c;
+  transform: scale(1.05);
+}
+
+.btn-modal-ok:active {
+  transform: scale(0.98);
+}
+
+/* Close button */
+.notification-modal .close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  color: #9ca3af;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.notification-modal .close:hover {
+  color: #4b5563;
+  transform: rotate(90deg);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zoomIn {
+  from { 
+    transform: scale(0.85); 
+    opacity: 0.7; 
+  }
+  to { 
+    transform: scale(1); 
+    opacity: 1; 
+  }
+}
+
 /* ===============================
    Responsive Design
 ================================== */
@@ -480,6 +621,30 @@ body {
     width: 100%;
     padding: 12px;
   }
+
+  /* Notification Modal */
+  .notification-modal-content {
+    padding: 2rem 1.5rem;
+    width: 94%;
+  }
+
+  .notification-modal .notification-modal-header i {
+    font-size: 3.5rem;
+  }
+
+  .notification-modal-header h3 {
+    font-size: 1.45rem;
+  }
+
+  .notification-modal-body p {
+    font-size: 1rem;
+  }
+
+  .btn-modal-ok {
+    width: 100%;
+    padding: 0.7rem 2rem;
+    font-size: 0.95rem;
+  }
 }
 
 /* Small Mobile */
@@ -577,6 +742,46 @@ body {
     font-size: 0.95rem;
   }
 
+  /* Notification Modal */
+  .notification-modal-content {
+    padding: 1.75rem 1.25rem;
+    width: 96%;
+    border-radius: 12px;
+  }
+
+  .notification-modal .notification-modal-header i {
+    font-size: 3.25rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .notification-modal-header h3 {
+    font-size: 1.35rem;
+  }
+
+  .notification-modal-header {
+    padding-bottom: 0.85rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .notification-modal-body {
+    margin-bottom: 1.5rem;
+  }
+
+  .notification-modal-body p {
+    font-size: 0.95rem;
+  }
+
+  .btn-modal-ok {
+    padding: 0.65rem 1.75rem;
+    font-size: 0.9rem;
+  }
+
+  .notification-modal .close {
+    top: 12px;
+    right: 15px;
+    font-size: 26px;
+  }
+
   /* Shrink blobs on small screens */
   .blob1 { width: 200px; height: 200px; }
   .blob2 { width: 180px; height: 180px; }
@@ -657,6 +862,36 @@ body {
   .btn-verify {
     padding: 10px;
     font-size: 0.9rem;
+  }
+
+  /* Notification Modal */
+  .notification-modal-content {
+    padding: 1.5rem 1rem;
+    width: 98%;
+    border-radius: 10px;
+  }
+
+  .notification-modal .notification-modal-header i {
+    font-size: 3rem;
+  }
+
+  .notification-modal-header h3 {
+    font-size: 1.25rem;
+  }
+
+  .notification-modal-body p {
+    font-size: 0.9rem;
+  }
+
+  .btn-modal-ok {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.85rem;
+  }
+
+  .notification-modal .close {
+    top: 10px;
+    right: 12px;
+    font-size: 24px;
   }
 
   /* Further shrink blobs */
@@ -746,12 +981,17 @@ body {
 /* Disable hover lift on touch */
 @media (max-width: 768px) {
   .btn-login:hover,
-  .btn-verify:hover {
+  .btn-verify:hover,
+  .btn-modal-ok:hover {
     transform: none;
   }
 
   .btn-login:active,
   .btn-verify:active {
+    transform: scale(0.97);
+  }
+
+  .btn-modal-ok:active {
     transform: scale(0.97);
   }
 }

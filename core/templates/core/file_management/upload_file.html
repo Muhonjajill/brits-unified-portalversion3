@@ -3,38 +3,6 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/upload_file.css' %}">
-<style>
-/* Simple modal styling */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    background-color: rgba(0,0,0,0.6);
-}
-.modal.show {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.modal-content {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    width: 400px;
-    max-width: 90%;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-}
-.modal-content h2 {
-    margin-top: 0;
-}
-.modal .close {
-    float: right;
-    font-size: 20px;
-    cursor: pointer;
-}
-</style>
 {% endblock %}
 
 {% block title %}Upload File{% endblock %} 
@@ -88,6 +56,28 @@
     </div>
 </div>
 
+<!-- Success Confirmation Modal -->
+<div id="success-modal" class="modal success-modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeSuccessModal()">&times;</span>
+        <div class="success-modal-header">
+            <i class="fas fa-check-circle"></i>
+            <h2>File Uploaded Successfully!</h2>
+        </div>
+        <div class="success-modal-body">
+            <p>Your file has been uploaded and is now available in the file list.</p>
+            <div class="file-success-details" id="success-file-details">
+                <!-- File details will be populated here -->
+            </div>
+        </div>
+        <div class="success-modal-footer">
+            <button type="button" class="btn-success-ok" onclick="redirectToFileList()">
+                <i class="fas fa-check"></i> View Files
+            </button>
+        </div>
+    </div>
+</div>
+
 {% else %}
 <div class="alert alert-warning">
     🚫 You do not have permission to upload files.
@@ -100,11 +90,14 @@
 document.addEventListener("DOMContentLoaded", function() {
     const uploadForm = document.getElementById("upload-form");
     const accessLevelSelect = document.getElementById("id_access_level");
-    const modal = document.getElementById("passcode-modal");
+    const passcodeModal = document.getElementById("passcode-modal");
+    const successModal = document.getElementById("success-modal");
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     let uploadedFileId = null;
+    let uploadedFileData = null;
 
-    modal.classList.remove("show");
+    passcodeModal.classList.remove("show");
+    successModal.classList.remove("show");
 
     // AJAX upload
     uploadForm.addEventListener("submit", function(event) {
@@ -120,11 +113,13 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(data => {
             if (data.success) {
                 uploadedFileId = data.file_id;
+                uploadedFileData = data;
+                
                 if (accessLevelSelect.value === "restricted") {
-                    modal.classList.add("show");
+                    passcodeModal.classList.add("show");
+                    document.body.style.overflow = 'hidden';
                 } else {
-                    alert("✅ File uploaded successfully!");
-                    window.location.href = "{% url 'file_list' %}";
+                    showSuccessModal(data);
                 }
             } else {
                 alert("❌ Upload failed.");
@@ -135,6 +130,39 @@ document.addEventListener("DOMContentLoaded", function() {
             alert("❌ Error uploading file.");
         });
     });
+
+    // Show success modal
+    window.showSuccessModal = function(data) {
+        const detailsContainer = document.getElementById('success-file-details');
+        
+        // Build file details HTML
+        let detailsHTML = '';
+        if (data.file_title) {
+            detailsHTML += `<p><strong>Title:</strong> ${data.file_title}</p>`;
+        }
+        if (data.file_category) {
+            detailsHTML += `<p><strong>Category:</strong> ${data.file_category}</p>`;
+        }
+        if (data.file_access_level) {
+            detailsHTML += `<p><strong>Access Level:</strong> ${data.file_access_level}</p>`;
+        }
+        
+        detailsContainer.innerHTML = detailsHTML || '<p>File uploaded successfully!</p>';
+        
+        successModal.classList.add("show");
+        document.body.style.overflow = 'hidden';
+    };
+
+    // Close success modal
+    window.closeSuccessModal = function() {
+        successModal.classList.remove("show");
+        document.body.style.overflow = '';
+    };
+
+    // Redirect to file list
+    window.redirectToFileList = function() {
+        window.location.href = "{% url 'file_list' %}";
+    };
 
     // Passcode AJAX submit
     window.submitPasscode = function() {
@@ -151,9 +179,8 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert("✅ Passcode set successfully!");
                 closeModal();
-                window.location.href = "{% url 'file_list' %}";
+                showSuccessModal(uploadedFileData);
             } else {
                 alert("❌ Failed to set passcode.");
             }
@@ -164,19 +191,26 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // Close modal
+    // Close passcode modal
     window.closeModal = function() {
-        modal.classList.remove("show");
+        passcodeModal.classList.remove("show");
+        document.body.style.overflow = '';
     };
 
     // Prevent accidental close if restricted
     window.addEventListener("click", function(event) {
-        if (event.target === modal) {
+        if (event.target === passcodeModal) {
             if (accessLevelSelect.value === "restricted") {
                 alert("⚠️ Passcode required for restricted files.");
             } else {
-                modal.classList.remove("show");
+                passcodeModal.classList.remove("show");
+                document.body.style.overflow = '';
             }
+        }
+        
+        // Allow closing success modal by clicking outside
+        if (event.target === successModal) {
+            closeSuccessModal();
         }
     });
 });

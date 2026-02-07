@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const otpModal = document.getElementById('otpModal');
   const otpForm = document.getElementById('otpForm');
   const otpMessage = document.getElementById('otpMessage');
-  const loader = document.getElementById('loader'); // ✅ Define loader here
+  const loader = document.getElementById('loader'); 
 
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -26,10 +26,12 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log("OTP modal triggered");
       otpModal.style.display = 'flex';
     } else {
-      alert(data.message || 'Login failed');
+      // ✅ Use modal instead of alert
+      showErrorModal('Login Failed', data.message || 'Login failed. Please try again.');
     }
   } catch (error){
-    alert('An error occurred. Please try again.');
+    // ✅ Use modal instead of alert
+    showErrorModal('Connection Error', 'An error occurred. Please try again.');
   }finally {
       loader.style.display = 'none'; 
     }
