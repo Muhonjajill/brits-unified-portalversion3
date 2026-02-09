@@ -254,22 +254,14 @@ def create_ticket_notifications(sender, instance, created, **kwargs):
         
         operations_emails = getattr(settings, 'OPERATIONS_TICKET_RECIPIENTS', [])
         for email in operations_emails:
-            try:
-                operations_user = User.objects.get(email=email)
-                users_to_notify.add(operations_user)
-                logger.info(f"Added operations support user: {email}")
-            except User.DoesNotExist:
+            operations_users = User.objects.filter(email=email)
+            
+            if operations_users.exists():
+                users_to_notify.update(operations_users)
+                logger.info(f"Added {operations_users.count()} operations support user(s) with email: {email}")
+            else:
                 logger.warning(f"Operations support user ({email}) not found in database")
     else:
-        """operations_emails = getattr(settings, 'OPERATIONS_TICKET_RECIPIENTS', [])
-        for email in operations_emails:
-            try:
-                operations_user = User.objects.get(email=email)
-                users_to_notify.add(operations_user)
-                logger.info(f"Added operations support user: {email}")
-            except User.DoesNotExist:
-                logger.warning(f"Operations support user ({email}) not found in database")"""
-                
         staff_users = User.objects.filter(
             groups__name__in=['Admin', 'Director', 'Manager', 'Staff']
         ).distinct()

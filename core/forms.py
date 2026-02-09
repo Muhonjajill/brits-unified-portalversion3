@@ -4,6 +4,10 @@ from .models import File, ProblemCategory, Ticket,TicketComment, Customer, Regio
 from django.contrib.auth.models import User
 from .models import Profile, Terminal, VersionControl
 from core.priority_rules import determine_priority
+from django.utils import timezone
+import pytz
+from datetime import timezone as dt_timezone
+
 
 class LoginForm(forms.Form):
     username = forms.CharField()
@@ -149,153 +153,6 @@ class ProfileUpdateForm(forms.ModelForm):
             self.fields['terminal'].widget = forms.HiddenInput()
 
 
-
-"""class TicketForm(forms.ModelForm):
-    problem_category = forms.ModelChoiceField(
-        queryset=ProblemCategory.objects.all(),
-        empty_label="Select Category",
-        required=True,
-        widget=forms.Select(attrs={"class": "form-control"})
-    )
-    title = forms.ChoiceField(
-        choices=[("", "Select Issue")],
-        required=True,
-        widget=forms.Select(attrs={"class": "form-control"})
-    )
-    terminal = forms.ModelChoiceField(
-        queryset=Terminal.objects.all(),
-        required=True,
-        empty_label="Select Terminal",
-        widget=forms.Select(attrs={'class': 'form-control'})
-    )
-    custom_created_at = forms.DateTimeField(
-        required=False,
-        widget=forms.DateTimeInput(attrs={
-            'type': 'datetime-local',
-            'class': 'form-control'
-        })
-    )
-    class Meta:
-        model = Ticket
-        fields = [
-            "brts_unit",
-            "problem_category",
-            "title",
-            "terminal",
-            "customer",
-            "region",
-            "description",
-            "status",
-        ] 
-        exclude = ['created_by', 'assigned_to', 'created_at', 'updated_at']
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'brts_unit': forms.Select(attrs={'class': 'form-control'}),
-            'problem_category': forms.Select(attrs={'class': 'form-control'}),
-            'terminal': forms.Select(attrs={'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
-        }
-    # Override to make them required and visible
-    customer = forms.ModelChoiceField(queryset=Customer.objects.all(), required=True)
-    region = forms.ModelChoiceField(queryset=Region.objects.all(), required=True)
-
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)  
-        terminal_id = kwargs.pop('terminal_id', None)
-        super().__init__(*args, **kwargs)
-
-        # Default queryset (all terminals)
-        self.fields['terminal'].queryset = Terminal.objects.all()
-        self.fields['terminal'].label_from_instance = lambda obj: (
-            f"{obj.cdm_name} (Inactive)" if not obj.is_active else obj.cdm_name
-        )
-
-        # Autofill if instance has a terminal
-        if self.instance and getattr(self.instance, 'terminal', None):
-            terminal = self.instance.terminal
-            self.fields['customer'].initial = terminal.customer
-            self.fields['region'].initial = terminal.region
-        elif terminal_id:
-            try:
-                terminal = Terminal.objects.get(id=terminal_id)
-                self.fields['customer'].initial = terminal.customer
-                self.fields['region'].initial = terminal.region
-            except Terminal.DoesNotExist:
-                pass
-
-        # Populate issue choices based on selected category
-        selected = self.data.get("problem_category") or self.initial.get("problem_category")
-        if selected:
-            try:
-                cat = ProblemCategory.objects.get(pk=selected)
-                issues = ISSUE_MAPPING.get(cat.name, [])
-                self.fields["title"].choices = [("", "Select Issue")] + [(i, i) for i in issues]
-                self.fields["title"].widget.attrs.pop("disabled", None)
-            except ProblemCategory.DoesNotExist:
-                self.fields["title"].widget.attrs["disabled"] = True
-        else:
-            self.fields["title"].widget.attrs["disabled"] = True
-
-        # Role-based restrictions
-        if self.user:
-            profile = getattr(self.user, "profile", None)
-
-            # If user is custodian → only his terminal, customer, and region
-            if profile and getattr(profile, "terminal", None):
-                assigned_terminal = profile.terminal
-                assigned_customer = assigned_terminal.customer
-                assigned_region = assigned_terminal.region
-
-                self.fields['terminal'].queryset = Terminal.objects.filter(id=assigned_terminal.id)
-                self.fields['customer'].queryset = Customer.objects.filter(id=assigned_customer.id)
-                self.fields['region'].queryset = Region.objects.filter(id=assigned_region.id)
-
-                # Lock customer and region fields (but don't disable them)
-                self.fields['customer'].initial = assigned_customer
-                self.fields['region'].initial = assigned_region
-                self.fields['terminal'].disabled = True
-                self.fields['customer'].disabled = True
-                self.fields['region'].disabled = True
-
-            # If user is overseer → all terminals of his customer, customer locked, region limited
-            elif Customer.objects.filter(overseer=self.user).exists():
-                assigned_customer = Customer.objects.filter(overseer=self.user).first()
-
-                self.fields['customer'].queryset = Customer.objects.filter(id=assigned_customer.id)
-                self.fields['terminal'].queryset = Terminal.objects.filter(customer=assigned_customer)
-                self.fields['region'].queryset = Region.objects.filter(
-                    id__in=self.fields['terminal'].queryset.values_list("region_id", flat=True)
-                )
-
-                # Lock customer, region/terminal remain selectable
-                self.fields['customer'].initial = assigned_customer
-                self.fields['customer'].disabled = True
-
-
-    def save(self, commit=True):
-        # Always compute priority here (never included on the form)
-        ticket = super().save(commit=False)
-        cat = self.cleaned_data.get("problem_category")
-        issue = self.cleaned_data.get("title") or ""
-        desc = self.cleaned_data.get("description") or ""
-        ticket.priority = determine_priority(
-            cat.name if cat else "",
-            issue,
-            desc
-        )
-
-        if hasattr(self, 'user') and hasattr(self.user, 'profile'):
-            profile = self.user.profile
-            if profile.terminal:
-                ticket.terminal = profile.terminal
-                ticket.customer = profile.terminal.customer
-                ticket.region = profile.terminal.region
-                
-        if commit:
-            ticket.save()
-        return ticket"""
-
 class TicketForm(forms.ModelForm):
     problem_category = forms.ModelChoiceField(
         queryset=ProblemCategory.objects.all(),
@@ -318,7 +175,7 @@ class TicketForm(forms.ModelForm):
         required=False,
         widget=forms.DateTimeInput(attrs={
             'type': 'datetime-local',
-            'class': 'form-control'
+            'class': 'form-control',
         })
     )
     class Meta:
@@ -349,6 +206,15 @@ class TicketForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)  
         terminal_id = kwargs.pop('terminal_id', None)
         super().__init__(*args, **kwargs)
+
+        current_datetime = timezone.localtime(
+            timezone.now()
+        ).strftime('%Y-%m-%dT%H:%M')
+        self.fields['custom_created_at'].widget.attrs['max'] = current_datetime
+        if not self.instance.pk: 
+            self.fields['custom_created_at'].initial = timezone.localtime(
+                timezone.now()
+            ).strftime('%Y-%m-%dT%H:%M')
 
         self.fields['terminal'].queryset = Terminal.objects.all()
         self.fields['terminal'].label_from_instance = lambda obj: (
@@ -413,6 +279,21 @@ class TicketForm(forms.ModelForm):
 
                 self.fields['customer'].initial = assigned_customer
                 self.fields['customer'].disabled = True
+
+    def clean_custom_created_at(self):
+        custom_datetime = self.cleaned_data.get('custom_created_at')
+
+        if not custom_datetime:
+            return None
+
+        user_tz = pytz.timezone("Africa/Nairobi")
+
+        if timezone.is_naive(custom_datetime):
+            custom_datetime = user_tz.localize(custom_datetime)
+        else:
+            custom_datetime = custom_datetime.astimezone(user_tz)
+
+        return custom_datetime.astimezone(dt_timezone.utc)
 
     def clean_terminal(self):
         """

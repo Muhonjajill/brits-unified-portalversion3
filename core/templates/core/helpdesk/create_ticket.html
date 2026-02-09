@@ -212,6 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const terminalSelect = document.getElementById("id_terminal");
     const customerSelect = document.getElementById("id_customer");
     const regionSelect   = document.getElementById("id_region");
+    const datetimeInput  = document.getElementById("id_custom_created_at");
 
     const form = document.querySelector(".ticket-form");
     const overlay = document.getElementById("loadingOverlay");
@@ -220,6 +221,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const success = overlay.querySelector(".success");
 
     overlay.classList.add("hidden");
+
+    if (datetimeInput) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        const currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+        
+        datetimeInput.setAttribute('placeholder', currentDateTime);
+        
+        datetimeInput.setAttribute('max', currentDateTime);
+    }
 
     if (terminalSelect) {
         // Check if terminal is readonly (custodian) - don't attach change listener
