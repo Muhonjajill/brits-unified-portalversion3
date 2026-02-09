@@ -358,6 +358,7 @@ class Ticket(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
     resolution = models.TextField(null=True, blank=True)
+    job_card_number = models.CharField(max_length=100, null=True, blank=True, help_text="Required for all units except Remote Support")
     resolved_by = models.ForeignKey(User, related_name='resolved_tickets', null=True, blank=True, on_delete=models.SET_NULL)
     resolved_at = models.DateTimeField(null=True, blank=True)
     due_date = models.DateTimeField(null=True, blank=True)
@@ -498,4 +499,4 @@ class ActivityLog(models.Model):
 
 
     def _str_(self):
-        return f'{self.ticket.title if self.ticket else "Unknown Ticket"} - {self.action}' 
+        return f'{self.ticket.title if self.ticket else "Unknown Ticket"} - {self.action}' 

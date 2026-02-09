@@ -3518,7 +3518,6 @@ def delete_comment(request, comment_id):
         messages.success(request, "Comment deleted.")
         return redirect('ticket_detail', ticket_id=ticket_id)
 
-
 @login_required
 def resolve_ticket_view(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
@@ -3531,7 +3530,17 @@ def resolve_ticket_view(request, ticket_id):
         return render(request, 'core/helpdesk/error.html')
 
     resolution = request.POST.get('resolution', '').strip()
+    job_card_number = request.POST.get('job_card_number', '').strip()
     resolved_at = request.POST.get('resolved_at', '').strip()
+
+    if not resolution:
+        messages.error(request, "Resolution statement is required.")
+        return render(request, 'core/helpdesk/error.html')
+    
+    is_remote_support = ticket.brts_unit and ticket.brts_unit.name == "Remote Support"
+    if not is_remote_support and not job_card_number:
+        messages.error(request, "Job Card Number is required for this unit.")
+        return render(request, 'core/helpdesk/error.html')
 
     if is_director(request.user) or is_manager(request.user) or is_staff(request.user):
         if ticket.status != 'closed':
@@ -3549,12 +3558,17 @@ def resolve_ticket_view(request, ticket_id):
                 ticket.due_date = timezone.make_aware(ticket.due_date)
 
             ticket.resolution = resolution
+            if not is_remote_support:
+                ticket.job_card_number = job_card_number
             ticket.status = 'closed'
             ticket.resolved_by = request.user
             ticket.resolved_at = resolved_at
             ticket.save()
 
-            messages.success(request, 'Ticket resolved successfully!')
+            if job_card_number:
+                messages.success(request, f'Ticket resolved successfully! Job Card: {job_card_number}')
+            else:
+                messages.success(request, 'Ticket resolved successfully!')
             return redirect('tickets')
         else:
             messages.error(request, 'Ticket already resolved')
@@ -3565,23 +3579,28 @@ def resolve_ticket_view(request, ticket_id):
             if resolved_at:
                 try:
                     resolved_at = datetime.strptime(resolved_at, "%Y-%m-%dT%H:%M")
-                    resolved_at = timezone.make_aware(resolved_at)  # Make it timezone-aware
+                    resolved_at = timezone.make_aware(resolved_at)  
                 except ValueError:
                     messages.error(request, "Invalid date format for 'Resolved At'. Please try again.")
                     return render(request, 'core/helpdesk/error.html')
             else:
                 resolved_at = timezone.now() 
 
-            # Ensure due_date is aware if it is naive
             if ticket.due_date and ticket.due_date.tzinfo is None:
                 ticket.due_date = timezone.make_aware(ticket.due_date)
 
+            ticket.resolution = resolution
+            if not is_remote_support:
+                ticket.job_card_number = job_card_number
             ticket.status = 'closed'
             ticket.resolved_by = request.user
             ticket.resolved_at = resolved_at
             ticket.save()
 
-            messages.success(request, 'Ticket resolved successfully!')
+            if job_card_number:
+                messages.success(request, f'Ticket resolved successfully! Job Card: {job_card_number}')
+            else:
+                messages.success(request, 'Ticket resolved successfully!')
             return redirect('tickets')
         else:
             messages.error(request, 'Ticket already resolved!')

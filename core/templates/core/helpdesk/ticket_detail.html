@@ -56,9 +56,12 @@
           {% endif %}
       </div>
       <div><strong>Created At:</strong> {{ ticket.created_at|date:"Y-m-d H:i" }}</div>
-      <div><strong>Updated At:</strong> {{ ticket.updated_at|date:"Y-m-d H:i" }}</div>
+      <div><strong>Updated At:</strong> {{ ticket.updated_at|date:"Y-m-d H:i" }}</div>
       <div><strong>Resolved By:</strong> {% if ticket.resolved_by %}{{ ticket.resolved_by.username }}{% else %}Not resolved yet{% endif %}</div>
       <div><strong>Resolved At:</strong> {% if ticket.resolved_at %}{{ ticket.resolved_at|date:"Y-m-d H:i" }}{% else %}Not resolved yet{% endif %}</div>
+      {% if ticket.job_card_number %}
+        <div><strong>Job Card Number:</strong> {{ ticket.job_card_number }}</div>
+      {% endif %}
       {% if ticket.resolution %}
         <div><strong>Resolution Statement:</strong><br><p class="description">{{ ticket.resolution }}</p></div>
       {% endif %}
@@ -244,7 +247,6 @@
 </div>
 
 <!-- Modal: Resolve Ticket with Resolution -->
-<!-- Modal: Resolve Ticket with Resolution -->
 <div class="modal fade" id="resolveTicketModal" tabindex="-1" aria-labelledby="resolveTicketModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content">
@@ -257,13 +259,21 @@
         <div class="modal-body">
           <!-- Resolution Statement -->
           <div class="form-group">
-            <label for="resolution">Resolution Statement</label>
+            <label for="resolution">Resolution Statement <span class="text-danger">*</span></label>
             <textarea class="form-control" name="resolution" id="resolution" rows="5" placeholder="Describe how the issue was resolved..." required></textarea>
           </div>
 
-          <!-- Resolved At Date and Time Picker (New Field) -->
+          <!-- Job Card Number - Only for non-Remote Support units -->
+          {% if ticket.brts_unit.name != "Remote Support" %}
           <div class="form-group mt-3">
-            <label for="resolved_at">Resolved At</label>
+            <label for="job_card_number">Job Card Number <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="job_card_number" id="job_card_number" placeholder="Enter job card number" required>
+          </div>
+          {% endif %}
+
+          <!-- Resolved At Date and Time Picker -->
+          <div class="form-group mt-3">
+            <label for="resolved_at">Resolved At <span class="text-danger">*</span></label>
             <input type="datetime-local" class="form-control" name="resolved_at" id="resolved_at" required>
           </div>
         </div>
