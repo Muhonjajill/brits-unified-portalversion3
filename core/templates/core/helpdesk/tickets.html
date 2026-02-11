@@ -58,7 +58,7 @@
       </thead>
       <tbody>
         {% for ticket in tickets %}
-        <tr onclick="window.location='{% url 'ticket_detail' ticket.id %}'" style="cursor:pointer;">
+        <tr onclick="window.location='{% url 'ticket_detail' ticket.id %}?{{ request.GET.urlencode }}'" style="cursor:pointer;">
           <td>{{ ticket.id }}</td>
           <td>{{ ticket.terminal.branch_name }}</td>
           <td>

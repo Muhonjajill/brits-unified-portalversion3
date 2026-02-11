@@ -87,7 +87,10 @@
           </button>
           {% endif %}
 
-          <a href="{% url 'tickets' %}" class="btn btn-back" style="background-color: #007bff; color: #fff;">← Back to Tickets</a>
+          <a href="{% url 'tickets' %}?{{ request.GET.urlencode }}" 
+            class="btn btn-back">
+            ← Back to Tickets
+          </a>
 
 
       {% if can_resolve %}

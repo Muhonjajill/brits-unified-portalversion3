@@ -81,6 +81,7 @@ urlpatterns = [
 
     # JSON endpoints (AJAX)
     path('api/tickets/', views.api_tickets),
+    path('assign-role/', views.assign_role, name='assign_role'), 
 
 
     path('comments/<int:comment_id>/edit/', views.edit_comment, name='edit_comment'),

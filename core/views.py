@@ -96,7 +96,6 @@ class CustomPasswordResetView(PasswordResetView):
 @login_required(login_url='login')    
 def admin_dashboard(request):
     query = request.GET.get('q', '').strip()
-    #users_qs = User.objects.all()
     users_qs = User.objects.select_related('profile')
     customers_qs = Customer.objects.all()
     terminals_qs = Terminal.objects.select_related('custodian').all()
@@ -110,12 +109,8 @@ def admin_dashboard(request):
             Q(profile__phone_number__icontains=query)|
             Q(profile__id_number__icontains=query)
         )
-        customers_qs = customers_qs.filter(
-            Q(name__icontains=query)
-        )
-        terminals_qs = terminals_qs.filter(
-            Q(branch_name__icontains=query)
-        )
+        customers_qs = customers_qs.filter(Q(name__icontains=query))
+        terminals_qs = terminals_qs.filter(Q(branch_name__icontains=query))
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -126,15 +121,13 @@ def admin_dashboard(request):
 
             customer = get_object_or_404(Customer, id=customer_id)
 
-            # Assign overseer
             if overseer_id:
                 overseer = get_object_or_404(User, id=overseer_id)
                 overseer.groups.add(Group.objects.get(name='Customer'))
                 customer.overseer = overseer
                 customer.save()
-                print(f"Assigned overseer: {overseer.username}")
                 messages.success(request, f"Overseer updated for {customer.name}.")
-                send_role_assigned_email(overseer, 'Customer', request)
+                send_role_assigned_email(overseer, 'Overseer', request, customer=customer)
             else:
                 messages.warning(request, f"No overseer selected for {customer.name}.")
 
@@ -147,15 +140,11 @@ def admin_dashboard(request):
             terminal = get_object_or_404(Terminal, id=terminal_id)
             custodian = get_object_or_404(User, id=custodian_id)
 
-            # Assign custodian to terminal
             terminal.custodian = custodian
             terminal.save()
-            
 
-            # Ensure custodian is part of the right group
             custodian.groups.add(Group.objects.get(name='Customer'))
 
-            # Update profile
             profile, _ = Profile.objects.get_or_create(user=custodian)
             profile.terminal = terminal
             profile.customer = customer
@@ -167,7 +156,7 @@ def admin_dashboard(request):
                 custodian.profile.refresh_from_db()
 
             messages.success(request, f"Custodian {custodian.username} assigned to {terminal.branch_name}.")
-            send_role_assigned_email(custodian, 'Customer', request)
+            send_role_assigned_email(custodian, 'Custodian', request, customer=customer, terminal=terminal)
 
         elif action == 'update_role':
             user_id = request.POST.get('user_id')
@@ -176,7 +165,6 @@ def admin_dashboard(request):
             if user_id and new_role:
                 user = get_object_or_404(User, id=user_id)
 
-                # Check if user is a customer (overseer or custodian)
                 is_overseer = Customer.objects.filter(overseer=user).exists()
                 is_custodian = Terminal.objects.filter(custodian=user).exists()
                 is_customer = is_overseer or is_custodian
@@ -255,29 +243,24 @@ def admin_dashboard(request):
                     messages.success(request, f"Roles removed from user {user.username}.")
                     send_role_removed_email(user, 'Role', request)
 
-
-
         elif action == 'delete_user':
             user_id = request.POST.get('user_id')
             if user_id:
                 try:
                     user = User.objects.get(id=user_id)
+                    username = user.username
                     user.delete()
-                    messages.success(request, f"User {user.username} deleted successfully.")
+                    messages.success(request, f"User {username} deleted successfully.")
                 except User.DoesNotExist:
                     messages.error(request, "User not found.")
             else:
                 messages.error(request, "No user ID provided for deletion.")
 
-
-    # ========================
     # Access filtering logic
-    # ========================
     tickets_qs = Ticket.objects.none()
     files_qs = File.objects.none()
 
     if request.user.is_superuser or request.user.groups.filter(name__in=['Director', 'Manager', 'Staff']).exists():
-        print("Admin/staff user: showing all data.")
         tickets_qs = Ticket.objects.all()
         files_qs = File.objects.all()
     else:
@@ -285,80 +268,499 @@ def admin_dashboard(request):
 
         customer = Customer.objects.filter(overseer=request.user).first()
         if customer:
-            print(f"{request.user.username} is Overseer of {customer.name}")
             tickets_qs = Ticket.objects.filter(customer=customer)
-            files_qs = File.objects.filter(customer=customer)
+            files_qs = File.objects.filter(customer=customer) if hasattr(File, 'customer') else File.objects.none()
 
         elif profile and profile.terminal and profile.customer:
-            customer = Customer.objects.filter(custodian=request.user).first()
-            if customer:
-                print(f"{request.user.username} is Custodian for {profile.terminal} under {customer.name}")
-                tickets_qs = Ticket.objects.filter(customer=customer, terminal=profile.terminal)
-                files_qs = File.objects.filter(customer=customer, terminal=profile.terminal)
-            else:
-                print(f"{request.user.username} is a custodian but not linked to any customer.")
-        else:
-            print(f"{request.user.username} has no access to dashboard data.")
+            tickets_qs = Ticket.objects.filter(customer=profile.customer, terminal=profile.terminal)
+            files_qs = File.objects.filter(customer=profile.customer, terminal=profile.terminal) if hasattr(File, 'customer') else File.objects.none()
 
-    # Role categorization
-    overseer_ids = Customer.objects.filter(overseer__isnull=False).values_list('overseer', flat=True)
-    #custodian_ids = Customer.objects.filter(custodian__isnull=False).values_list('custodian', flat=True)
-    custodian_ids = Terminal.objects.filter(custodian__isnull=False).values_list('custodian', flat=True).distinct()
-
-
-    overseer_users = User.objects.filter(id__in=overseer_ids)
-    custodian_users = User.objects.filter(id__in=custodian_ids)
-    users_without_roles = User.objects.exclude(id__in=list(overseer_ids) + list(custodian_ids))
-
-    # Prefetch custodian → profile → terminal
-    profile_prefetch = Prefetch(
-        'custodian__profile',
-        queryset=Profile.objects.select_related('terminal')
-    )
+    # Separate in-house users from customer users
+    inhouse_groups = ['Director', 'Manager', 'Staff']
+    inhouse_users = users_qs.filter(
+        Q(groups__name__in=inhouse_groups) | Q(is_superuser=True)
+    ).distinct()
     
-    #terminals_prefetch = Prefetch('terminal_set', queryset=Terminal.objects.all(), to_attr='terminals')
-    terminals_prefetch = Prefetch('terminal_set', queryset=Terminal.objects.select_related('custodian'), to_attr='terminals')
+    # Get customer users by checking assignments
+    overseer_ids = Customer.objects.filter(overseer__isnull=False).values_list('overseer_id', flat=True)
+    custodian_ids = Terminal.objects.filter(custodian__isnull=False).values_list('custodian_id', flat=True).distinct()
+    
+    customer_user_ids = set(overseer_ids) | set(custodian_ids)
+    customer_users = users_qs.filter(id__in=customer_user_ids)
+    
+    # Build customer assignments structure
+    customer_assignments = []
+    for customer in customers_qs.prefetch_related(
+        Prefetch('terminal_set', queryset=Terminal.objects.select_related('custodian'))
+    ):
+        assignment = {
+            'customer': customer,
+            'overseer': customer.overseer,
+            'custodians': []
+        }
+        
+        for terminal in customer.terminal_set.all():
+            if terminal.custodian:
+                assignment['custodians'].append({
+                    'user': terminal.custodian,
+                    'terminal': terminal
+                })
+        
+        customer_assignments.append(assignment)
+    
+    # Get all customers and terminals for dropdowns
+    all_customers = Customer.objects.all()
+    all_terminals = Terminal.objects.select_related('customer').all()
+    
+    # Build structured lists for "All Users Overview" section
+    # Overseers list with customer info
+    overseers = []
+    for customer in Customer.objects.filter(overseer__isnull=False).select_related('overseer__profile'):
+        overseers.append({
+            'user': customer.overseer,
+            'customer': customer
+        })
+    
+    # Custodians list with terminal and customer info
+    custodians = []
+    for terminal in Terminal.objects.filter(custodian__isnull=False).select_related('custodian__profile', 'customer'):
+        custodians.append({
+            'user': terminal.custodian,
+            'terminal': terminal,
+            'customer': terminal.customer
+        })
+    
+    # Users without any role assignment
+    all_assigned_ids = customer_user_ids | set(inhouse_users.values_list('id', flat=True))
+    users_without_roles = users_qs.exclude(id__in=all_assigned_ids)
 
     context = {
-        'users': users_qs,
-        #'customers': Customer.objects.prefetch_related(terminals_prefetch),
-        'customers': customers_qs.prefetch_related(terminals_prefetch),
+        'inhouse_users': inhouse_users,
+        'customer_users': customer_users,
+        'customer_assignments': customer_assignments,
+        'customers': customers_qs,
+        'all_customers': all_customers,
+        'all_terminals': all_terminals,
         'terminals': terminals_qs,
         'total_users': User.objects.count(),
         'total_files': files_qs.count(),
         'open_tickets': tickets_qs.filter(status='open').count(),
-        'overseers': overseer_users,
-        'custodians': custodian_users,
-        'users_without_roles': users_without_roles,
+        'overseers': overseers,  
+        'custodians': custodians,  
+        'users_without_roles': users_without_roles,  
     }
 
     return render(request, 'accounts/admin_dashboard.html', context)
 
-def send_role_assigned_email(user, new_role, request):
+
+@user_passes_test(is_director)
+def create_user(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        first_name = request.POST.get('first_name') 
+        last_name = request.POST.get('last_name') 
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        id_number = request.POST.get('id_number')
+        password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+        user_type = request.POST.get('user_type')
+        role = request.POST.get('role')
+        
+        customer_id = request.POST.get('customer_id')
+        terminal_id = request.POST.get('terminal_id')
+
+        # Validation
+        if password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+            return redirect('admin_dashboard')
+
+        if not re.match(r"^(?:\+254|07)\d{8}$", phone):
+            messages.error(request, 'Invalid phone number format. Please enter a valid Kenyan phone number.')
+            return redirect('admin_dashboard')
+
+        if len(id_number) < 8:
+            messages.error(request, 'ID number must be at least 8 characters long.')
+            return redirect('admin_dashboard')
+
+        if User.objects.filter(username=username).exists():
+            messages.error(request, 'Username already exists.')
+            return redirect('admin_dashboard')
+
+        # Create user
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name
+        )
+
+        # Create/update profile
+        profile, created = Profile.objects.get_or_create(user=user)
+        profile.phone_number = phone
+        profile.id_number = id_number
+
+        # Handle role assignment based on user type
+        if user_type == 'inhouse':
+            if role == 'SuperAdmin':
+                user.is_superuser = True
+                user.is_staff = True
+                user.save()
+            else:
+                group, _ = Group.objects.get_or_create(name=role)
+                user.groups.add(group)
+                
+                if role == 'Director':
+                    assign_director_permissions(user)
+                elif role == 'Manager':
+                    assign_manager_permissions(user)
+                elif role == 'Staff':
+                    assign_staff_permissions(user)
+            
+            profile.save()
+            send_inhouse_user_email(request, user, password, role)
+            messages.success(request, f"In-house user ({role}) created successfully.")
+            
+        elif user_type == 'customer':
+            customer_group, _ = Group.objects.get_or_create(name='Customer')
+            user.groups.add(customer_group)
+            
+            if role == 'Overseer':
+                if customer_id:
+                    customer = get_object_or_404(Customer, id=customer_id)
+                    customer.overseer = user
+                    customer.save()
+                    profile.customer = customer
+                    profile.save()
+                    
+                    send_overseer_email(request, user, password, customer)
+                    messages.success(request, f"Overseer created and assigned to {customer.name}.")
+                else:
+                    messages.error(request, "Customer must be selected for Overseer role.")
+                    user.delete()
+                    return redirect('admin_dashboard')
+                    
+            elif role == 'Custodian':
+                if customer_id and terminal_id:
+                    customer = get_object_or_404(Customer, id=customer_id)
+                    terminal = get_object_or_404(Terminal, id=terminal_id)
+                    
+                    terminal.custodian = user
+                    terminal.save()
+                    
+                    profile.customer = customer
+                    profile.terminal = terminal
+                    profile.save()
+                    
+                    send_custodian_email(request, user, password, customer, terminal)
+                    messages.success(request, f"Custodian created and assigned to {customer.name} - {terminal.branch_name}.")
+                else:
+                    messages.error(request, "Both Customer and Terminal must be selected for Custodian role.")
+                    user.delete()
+                    return redirect('admin_dashboard')
+
+        return redirect('admin_dashboard')
+
+    return render(request, 'accounts/admin_dashboard.html')
+
+
+@login_required(login_url='login')
+@user_passes_test(is_director)
+def update_user(request):
+    """Enhanced update view with email notifications"""
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        user = get_object_or_404(User, id=user_id)
+        
+        # Track what changed
+        changes = []
+        
+        # Update basic info
+        old_email = user.email
+        user.first_name = request.POST.get('first_name')
+        user.last_name = request.POST.get('last_name')
+        user.email = request.POST.get('email')
+        
+        if old_email != user.email:
+            changes.append(f"Email: {old_email} → {user.email}")
+        
+        # Update profile
+        profile = user.profile
+        old_phone = profile.phone_number
+        old_id = profile.id_number
+        profile.phone_number = request.POST.get('phone')
+        profile.id_number = request.POST.get('id_number')
+        
+        if old_phone != profile.phone_number:
+            changes.append(f"Phone: {old_phone} → {profile.phone_number}")
+        if old_id != profile.id_number:
+            changes.append(f"ID Number: {old_id} → {profile.id_number}")
+        
+        # Handle user type and role changes
+        user_type = request.POST.get('user_type')
+        new_role = request.POST.get('role')
+        
+        old_role = None
+        if user.is_superuser:
+            old_role = "SuperAdmin"
+        elif user.groups.exists():
+            old_role = user.groups.first().name
+        
+        if user_type == 'inhouse':
+            # Remove any customer assignments
+            Customer.objects.filter(overseer=user).update(overseer=None)
+            Terminal.objects.filter(custodian=user).update(custodian=None)
+            profile.customer = None
+            profile.terminal = None
+            
+            # Remove customer group, add new role
+            user.groups.clear()
+            
+            if new_role == 'SuperAdmin':
+                user.is_superuser = True
+                user.is_staff = True
+            else:
+                user.is_superuser = False
+                group, _ = Group.objects.get_or_create(name=new_role)
+                user.groups.add(group)
+                
+                if new_role == 'Director':
+                    assign_director_permissions(user)
+                elif new_role == 'Manager':
+                    assign_manager_permissions(user)
+                elif new_role == 'Staff':
+                    assign_staff_permissions(user)
+            
+            if old_role != new_role:
+                changes.append(f"Role: {old_role} → {new_role}")
+                    
+        elif user_type == 'customer':
+            # Remove in-house groups
+            user.groups.clear()
+            user.is_superuser = False
+            
+            # Add customer group
+            customer_group, _ = Group.objects.get_or_create(name='Customer')
+            user.groups.add(customer_group)
+            
+            customer_id = request.POST.get('customer_id')
+            terminal_id = request.POST.get('terminal_id')
+            
+            if new_role == 'Overseer':
+                # Remove old assignments
+                Customer.objects.filter(overseer=user).update(overseer=None)
+                Terminal.objects.filter(custodian=user).update(custodian=None)
+                
+                # Assign new overseer
+                customer = get_object_or_404(Customer, id=customer_id)
+                customer.overseer = user
+                customer.save()
+                
+                profile.customer = customer
+                profile.terminal = None
+                
+                if old_role != 'Overseer':
+                    changes.append(f"Role: {old_role} → Overseer for {customer.name}")
+                
+            elif new_role == 'Custodian':
+                # Remove old assignments
+                Customer.objects.filter(overseer=user).update(overseer=None)
+                Terminal.objects.filter(custodian=user).update(custodian=None)
+                
+                # Assign new custodian
+                customer = get_object_or_404(Customer, id=customer_id)
+                terminal = get_object_or_404(Terminal, id=terminal_id)
+                
+                terminal.custodian = user
+                terminal.save()
+                
+                profile.customer = customer
+                profile.terminal = terminal
+                
+                if old_role != 'Custodian':
+                    changes.append(f"Role: {old_role} → Custodian for {terminal.branch_name}")
+        
+        user.save()
+        profile.save()
+        
+        # Send update notification email
+        if changes:
+            send_user_updated_email(request, user, changes, new_role, profile)
+        
+        messages.success(request, f"User {user.username} updated successfully.")
+        return redirect('admin_dashboard')
+    
+    return redirect('admin_dashboard')
+
+
+@login_required(login_url='login')
+@user_passes_test(is_director)
+def assign_role(request):
+    """Assign role to unassigned users"""
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        user_type = request.POST.get('user_type')
+        role = request.POST.get('role')
+        
+        user = get_object_or_404(User, id=user_id)
+        profile = user.profile
+        
+        if user_type == 'inhouse':
+            # Assign in-house role
+            if role == 'SuperAdmin':
+                user.is_superuser = True
+                user.is_staff = True
+            else:
+                group, _ = Group.objects.get_or_create(name=role)
+                user.groups.add(group)
+                
+                if role == 'Director':
+                    assign_director_permissions(user)
+                elif role == 'Manager':
+                    assign_manager_permissions(user)
+                elif role == 'Staff':
+                    assign_staff_permissions(user)
+            
+            user.save()
+            messages.success(request, f"{role} role assigned to {user.username}.")
+            send_role_assigned_email(user, role, request)
+            
+        elif user_type == 'customer':
+            customer_id = request.POST.get('customer_id')
+            terminal_id = request.POST.get('terminal_id')
+            
+            customer_group, _ = Group.objects.get_or_create(name='Customer')
+            user.groups.add(customer_group)
+            
+            if role == 'Overseer':
+                customer = get_object_or_404(Customer, id=customer_id)
+                customer.overseer = user
+                customer.save()
+                
+                profile.customer = customer
+                profile.save()
+                
+                messages.success(request, f"Overseer role assigned to {user.username} for {customer.name}.")
+                send_role_assigned_email(user, 'Overseer', request, customer=customer)
+                
+            elif role == 'Custodian':
+                customer = get_object_or_404(Customer, id=customer_id)
+                terminal = get_object_or_404(Terminal, id=terminal_id)
+                
+                terminal.custodian = user
+                terminal.save()
+                
+                profile.customer = customer
+                profile.terminal = terminal
+                profile.save()
+                
+                messages.success(request, f"Custodian role assigned to {user.username} for {terminal.branch_name}.")
+                send_role_assigned_email(user, 'Custodian', request, customer=customer, terminal=terminal)
+    
+    return redirect('admin_dashboard')
+
+
+# Email notification functions
+
+def send_inhouse_user_email(request, user, password, role):
+    """Send welcome email to in-house users"""
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    reset_url = request.build_absolute_uri(
+        reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+    )
+    
+    context = {
+        'user': user,
+        'password': password,
+        'role': role,
+        'user_type': 'In-house',
+        'reset_url': reset_url,
+        'site_url': getattr(settings, 'SITE_URL', 'localhost'),
+    }
+    
+    subject = f"Welcome to BRITS Ticketing System - {role} Account Created"
+    message = render_to_string('email/inhouse_user_created.html', context)
+    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
+
+
+def send_overseer_email(request, user, password, customer):
+    """Send welcome email to overseer"""
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    reset_url = request.build_absolute_uri(
+        reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+    )
+    
+    context = {
+        'user': user,
+        'password': password,
+        'role': 'Overseer',
+        'user_type': 'Customer',
+        'customer': customer,
+        'reset_url': reset_url,
+        'site_url': getattr(settings, 'SITE_URL', 'localhost'),
+    }
+    
+    subject = f"Welcome to BRITS Ticketing System - Overseer Account for {customer.name}"
+    message = render_to_string('email/overseer_created.html', context)
+    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
+
+
+def send_custodian_email(request, user, password, customer, terminal):
+    """Send welcome email to custodian"""
+    token = default_token_generator.make_token(user)
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    reset_url = request.build_absolute_uri(
+        reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+    )
+    
+    context = {
+        'user': user,
+        'password': password,
+        'role': 'Custodian',
+        'user_type': 'Customer',
+        'customer': customer,
+        'terminal': terminal,
+        'reset_url': reset_url,
+        'site_url': getattr(settings, 'SITE_URL', 'localhost'),
+    }
+    
+    subject = f"Welcome to BRITS Ticketing System - Custodian Account for {customer.name} - {terminal.branch_name}"
+    message = render_to_string('email/custodian_created.html', context)
+    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
+
+
+def send_role_assigned_email(user, new_role, request, customer=None, terminal=None):
+    """Send role assignment notification email"""
     subject = f"Your Role Has Been Updated: {new_role}"
 
     customer_name = None
     terminal_name = None
 
-    if new_role == 'Overseer':
-        customer = Customer.objects.filter(overseer=user).first()
-        if customer:
-            customer_name = customer.name
+    if new_role == 'Overseer' and customer:
+        customer_name = customer.name
+    elif new_role == 'Custodian' and terminal:
+        terminal_name = terminal.branch_name
+        customer_name = terminal.customer.name if terminal.customer else None
 
-    if new_role == 'Custodian':
-        terminal = Terminal.objects.filter(custodian=user).first()
-        if terminal:
-            terminal_name = terminal.branch_name
+    # Fallback if not provided
+    if not customer_name and new_role == 'Overseer':
+        customer_obj = Customer.objects.filter(overseer=user).first()
+        if customer_obj:
+            customer_name = customer_obj.name
+
+    if not terminal_name and new_role == 'Custodian':
+        terminal_obj = Terminal.objects.filter(custodian=user).first()
+        if terminal_obj:
+            terminal_name = terminal_obj.branch_name
+            customer_name = terminal_obj.customer.name if terminal_obj.customer else None
 
     try:
-        current_site = Site.objects.get(id=1) 
-    except ObjectDoesNotExist:
-        current_site = None
-
-    if current_site:
-        domain = current_site.domain
-    else:
-        domain = 'localhost'  
+        domain = getattr(settings, 'SITE_URL', 'localhost')
+    except:
+        domain = 'localhost'
 
     message = render_to_string('email/role_assigned_notification.html', {
         'user': user,
@@ -377,10 +779,11 @@ def send_role_assigned_email(user, new_role, request):
             html_message=message 
         )
     except Exception as e:
-        print(f"Error sending email: {e}")  
-        messages.error(request, "There was an error sending the email.") 
+        messages.error(request, "There was an error sending the email.")
+
 
 def send_role_removed_email(user, role, request):
+    """Send role removal notification email"""
     subject = f"Your Role Has Been Removed: {role}"
 
     if role == 'Overseer':
@@ -404,8 +807,43 @@ def send_role_removed_email(user, role, request):
             html_message=message
         )
     except Exception as e:
-        print(f"Error sending email: {e}")
         messages.error(request, "There was an error sending the email.")
+
+
+def send_user_updated_email(request, user, changes, new_role, profile):
+    """Send email notification when user details are updated"""
+    subject = "Your Account Has Been Updated - BRITS Ticketing System"
+    
+    customer_name = None
+    terminal_name = None
+    
+    if profile.customer:
+        customer_name = profile.customer.name
+    if profile.terminal:
+        terminal_name = profile.terminal.branch_name
+    
+    context = {
+        'user': user,
+        'changes': changes,
+        'new_role': new_role,
+        'customer_name': customer_name,
+        'terminal_name': terminal_name,
+        'site_url': getattr(settings, 'SITE_URL', 'localhost'),
+    }
+    
+    message = render_to_string('email/user_updated_notification.html', context)
+    
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            html_message=message
+        )
+    except Exception as e:
+        messages.error(request, "There was an error sending the update notification email.")
+
 
 
 @user_passes_test(is_director)
@@ -450,112 +888,6 @@ def manage_file_categories(request):
         'categories': categories,
         'can_view_logs': can_view_logs
     })
-
-
-@user_passes_test(is_director)
-def create_user(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        first_name = request.POST.get('first_name') 
-        last_name = request.POST.get('last_name') 
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        id_number = request.POST.get('id_number')
-        password = request.POST.get('password')
-        confirm_password = request.POST.get('confirm_password')
-        role = request.POST.get('role')
-
-        # Check if passwords match
-        if password != confirm_password:
-            messages.error(request, 'Passwords do not match.')
-            return redirect('create_user')
-
-        # Validate Kenyan phone number (e.g., +254711234567 or 0711234567)
-        if not re.match(r"^(?:\+254|07)\d{8}$", phone):
-            messages.error(request, 'Invalid phone number format. Please enter a valid Kenyan phone number.')
-            return redirect('create_user')
-
-        # Validate ID number length (at least 8 characters)
-        if len(id_number) < 8:
-            messages.error(request, 'ID number must be at least 8 characters long.')
-            return redirect('create_user')
-
-        # Check if username already exists
-        if User.objects.filter(username=username).exists():
-            messages.error(request, 'Username already exists.')
-            return redirect('create_user')
-
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password
-        )
-
-        user.first_name = first_name
-        user.last_name = last_name
-        user.save()
-
-        # Create or update the profile with phone and id_number
-        profile, created = Profile.objects.get_or_create(user=user)
-        profile.phone_number = phone
-        profile.id_number = id_number
-        profile.save()
-
-        group, _ = Group.objects.get_or_create(name=role)
-        user.groups.add(group)
-
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-
-        reset_url = request.build_absolute_uri(
-            reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
-        ) 
-        
-        site_url = settings.SITE_URL
-
-        context = {
-            'user': user,
-            'password': password,
-            'role': role,
-            'reset_url': reset_url,
-            'site_url': site_url,
-        }
-        subject = "Welcome to the Platform - Your Account Details"
-        message = render_to_string('email/new_created_user.html', context)
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
-
-        messages.success(request, f"{role} user created successfully.")
-        return redirect('admin_dashboard')
-
-    return render(request, 'accounts/admin_dashboard.html')
-
-@login_required
-def update_user(request):
-    if request.method == 'POST':
-        user_id = request.POST.get('user_id')
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        id_number = request.POST.get('id_number')
-
-        # Get the user object and update their details
-        user = get_object_or_404(User, id=user_id)
-        user.first_name = first_name
-        user.last_name = last_name
-        user.email = email
-        user.save()
-
-        # Update the profile information
-        profile = user.profile
-        profile.phone_number = phone
-        profile.id_number = id_number
-        profile.save()
-
-        messages.success(request, f"User {user.username} updated successfully.")
-        return redirect('admin_dashboard')
-
-    return redirect('admin_dashboard')
 
 class RegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)

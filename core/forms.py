@@ -173,7 +173,8 @@ class TicketForm(forms.ModelForm):
     )
     custom_created_at = forms.DateTimeField(
         required=False,
-        widget=forms.DateTimeInput(attrs={
+        input_formats=['%Y-%m-%dT%H:%M'],
+        widget=forms.DateTimeInput(format='%Y-%m-%dT%H:%M', attrs={
             'type': 'datetime-local',
             'class': 'form-control',
         })

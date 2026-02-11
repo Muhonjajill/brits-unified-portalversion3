@@ -3,15 +3,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Admin Dashboard</title>
+  <title>Admin Dashboard - BRITS</title>
   <link rel="icon" type="image/x-icon" href="{% static 'icons/favicon.ico' %}">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {% load static %}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}">
   <link rel="stylesheet" href="{% static 'css/admin_dashboard_tabs.css' %}">
 </head>
 <body>
+  <!-- Loading Spinner Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner-container">
+      <div class="spinner"></div>
+      <p class="loading-text">Processing...</p>
+    </div>
+  </div>
+
   <!-- TOP NAVBAR -->
   <header class="top-navbar">
     <button class="hamburger-btn" onclick="document.querySelector('.sidebar').classList.toggle('active'); document.querySelector('.sidebar-overlay').classList.toggle('active');">
@@ -45,18 +52,18 @@
     <aside class="sidebar">
       <nav class="sidebar-nav">
         <div class="nav-section">
-          <h3 class="nav-section-title">Management</h3>
-          <a href="#manage-users" class="nav-item active" data-section="manage-users">
+          <h3 class="nav-section-title">User Management</h3>
+          <a href="#inhouse-users" class="nav-item active" data-section="inhouse-users">
+            <i class="fas fa-users-cog"></i>
+            <span>In-House Users</span>
+          </a>
+          <a href="#customer-users" class="nav-item" data-section="customer-users">
+            <i class="fas fa-building"></i>
+            <span>Customer Users</span>
+          </a>
+          <a href="#all-users" class="nav-item" data-section="all-users">
             <i class="fas fa-users"></i>
-            <span>Manage User Roles</span>
-          </a>
-          <a href="#manage-customers" class="nav-item" data-section="manage-customers">
-            <i class="fas fa-sitemap"></i>
-            <span>Manage Customers</span>
-          </a>
-          <a href="#user-lists" class="nav-item" data-section="user-lists">
-            <i class="fas fa-list"></i>
-            <span>User Lists</span>
+            <span>All Users Overview</span>
           </a>
         </div>
 
@@ -79,12 +86,16 @@
             <div class="stat-value">{{ total_users }}</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">Total Files</div>
-            <div class="stat-value">{{ total_files }}</div>
+            <div class="stat-label">In-House Users</div>
+            <div class="stat-value">{{ inhouse_users|length }}</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">Open Tickets</div>
-            <div class="stat-value">{{ open_tickets }}</div>
+            <div class="stat-label">Customer Users</div>
+            <div class="stat-value">{{ customer_users|length }}</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Unassigned Users</div>
+            <div class="stat-value">{{ users_without_roles|length }}</div>
           </div>
         </div>
       </nav>
@@ -96,7 +107,7 @@
       <section class="welcome-banner">
         <div>
           <h1>Welcome, <span class="highlight">{{ user.username }}</span></h1>
-          <p>Manage users, customers, and system assignments</p>
+          <p>Comprehensive user and customer management dashboard</p>
         </div>
       </section>
 
@@ -112,28 +123,20 @@
         </div>
       {% endif %}
 
-      {% if request.GET.q %}
-        <div class="search-summary">
-          <i class="fas fa-search"></i>
-          <span>Search results for "<strong>{{ request.GET.q }}</strong>":</span>
-          <span class="badge">{{ users|length }} users</span>
-          <span class="badge">{{ customers|length }} customers</span>
-          <span class="badge">{{ terminals|length }} terminals</span>
-        </div>
-      {% endif %}
-
-      <!-- SECTION: MANAGE USER ROLES -->
-      <section id="manage-users" class="content-section active">
+      <!-- SECTION: IN-HOUSE USERS -->
+      <section id="inhouse-users" class="content-section active">
         <div class="section-header">
-          <h2><i class="fas fa-users-cog"></i> Manage User Roles</h2>
-          <p>Create new users and manage their roles and permissions</p>
+          <h2><i class="fas fa-users-cog"></i> In-House User Management</h2>
+          <p>Create and manage internal staff users (Directors, Managers, Staff)</p>
         </div>
 
-        <!-- CREATE NEW USER FORM -->
+        <!-- CREATE NEW IN-HOUSE USER FORM -->
         <div class="card create-user-card">
-          <h3><i class="fas fa-user-plus"></i> Create New User</h3>
-          <form method="post" action="{% url 'create_user' %}" class="form-grid">
+          <h3><i class="fas fa-user-plus"></i> Create New In-House User</h3>
+          <form method="post" action="{% url 'create_user' %}" class="form-grid" id="createInhouseForm">
             {% csrf_token %}
+            <input type="hidden" name="user_type" value="inhouse">
+            
             <div class="form-row">
               <input type="text" name="first_name" placeholder="First Name" required>
               <input type="text" name="last_name" placeholder="Last Name" required>
@@ -143,7 +146,7 @@
               <input type="email" name="email" placeholder="Email" required>
             </div>
             <div class="form-row">
-              <input type="text" name="phone" placeholder="Phone" required>
+              <input type="text" name="phone" placeholder="Phone (e.g., 0711234567)" required>
               <input type="text" name="id_number" placeholder="ID Number" required>
             </div>
             <div class="form-row">
@@ -156,38 +159,41 @@
                 <option value="Director">Director</option>
                 <option value="Manager">Manager</option>
                 <option value="Staff">Staff</option>
+                <option value="SuperAdmin">Super Admin</option>
               </select>
               <button type="submit" class="btn btn-primary">
-                <i class="fas fa-user-plus"></i> Create User
+                <i class="fas fa-user-plus"></i> Create In-House User
               </button>
             </div>
           </form>
         </div>
 
-        <!-- USERS TABLE -->
+        <!-- IN-HOUSE USERS TABLE -->
         <div class="card users-table-card">
-          <h3>User Management</h3>
+          <h3>In-House Users</h3>
           <div class="table-wrapper">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>ID</th>
+                  <th>Name</th>
                   <th>Username</th>
                   <th>Email</th>
                   <th>Phone</th>
-                  <th>Current Role</th>
+                  <th>Role</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {% for user in users %}
+                {% for user in inhouse_users %}
                   <tr>
-                    <td data-label="ID"><small>{{ user.profile.id_number }}</small></td>
-                    <td data-label="Username"><strong>{{ user.username }}</strong></td>
+                    <td data-label="Name"><strong>{{ user.get_full_name }}</strong></td>
+                    <td data-label="Username">{{ user.username }}</td>
                     <td data-label="Email">{{ user.email }}</td>
                     <td data-label="Phone">{{ user.profile.phone_number }}</td>
-                    <td data-label="Current Role">
-                      {% if user.groups.first %}
+                    <td data-label="Role">
+                      {% if user.is_superuser %}
+                        <span class="badge-role">Super Admin</span>
+                      {% elif user.groups.first %}
                         <span class="badge-role">{{ user.groups.first.name }}</span>
                       {% else %}
                         <span class="badge-none">No Role</span>
@@ -195,35 +201,32 @@
                     </td>
                     <td data-label="Actions">
                       <div class="action-buttons">
-                        <form method="post" action="{% url 'admin_dashboard' %}" class="inline-form">
-                          {% csrf_token %}
-                          <input type="hidden" name="user_id" value="{{ user.id }}">
-                          <input type="hidden" name="action" value="update_role">
-                          <select name="new_role" required class="role-select">
-                            <option value="">--Select--</option>
-                            <option value="Director" {% if user.groups.first.name == "Director" %}selected{% endif %}>Director</option>
-                            <option value="Manager" {% if user.groups.first.name == "Manager" %}selected{% endif %}>Manager</option>
-                            <option value="Staff" {% if user.groups.first.name == "Staff" %}selected{% endif %}>Staff</option>
-                          </select>
-                          <button type="submit" class="btn btn-sm btn-secondary">Update</button>
-                        </form>
-
-                        <button type="button" class="btn btn-sm btn-info btn-edit" 
+                        <button type="button" class="btn btn-sm btn-info btn-edit-inhouse" 
                           data-id="{{ user.id }}" 
                           data-username="{{ user.username }}"
                           data-first_name="{{ user.first_name }}" 
                           data-last_name="{{ user.last_name }}"
                           data-email="{{ user.email }}" 
                           data-phone="{{ user.profile.phone_number }}"
-                          data-id_number="{{ user.profile.id_number }}">
+                          data-id_number="{{ user.profile.id_number }}"
+                          data-role="{% if user.is_superuser %}SuperAdmin{% elif user.groups.first %}{{ user.groups.first.name }}{% endif %}">
                           <i class="fas fa-edit"></i> Edit
                         </button>
 
-                        <button type="button" class="btn btn-sm btn-warning btn-remove-role" 
+                        {% if not user.is_superuser %}
+                        <button type="button" class="btn btn-sm btn-warning btn-update-role" 
+                          data-user-id="{{ user.id }}" 
+                          data-username="{{ user.username }}"
+                          data-current-role="{% if user.groups.first %}{{ user.groups.first.name }}{% endif %}">
+                          <i class="fas fa-user-tag"></i> Update Role
+                        </button>
+
+                        <button type="button" class="btn btn-sm btn-danger-outline btn-remove-role" 
                           data-user-id="{{ user.id }}" 
                           data-username="{{ user.username }}">
-                          <i class="fas fa-trash"></i> Remove Role
+                          <i class="fas fa-user-slash"></i> Remove Role
                         </button>
+                        {% endif %}
 
                         <button type="button" class="btn btn-sm btn-danger btn-delete-user" 
                           data-user-id="{{ user.id }}" 
@@ -235,7 +238,7 @@
                   </tr>
                 {% empty %}
                   <tr>
-                    <td colspan="6" class="text-center text-muted">No users found</td>
+                    <td colspan="6" class="text-center text-muted">No in-house users found</td>
                   </tr>
                 {% endfor %}
               </tbody>
@@ -244,127 +247,182 @@
         </div>
       </section>
 
-      <!-- SECTION: MANAGE CUSTOMERS WITH TABS -->
-      <section id="manage-customers" class="content-section">
+      <!-- SECTION: CUSTOMER USERS -->
+      <section id="customer-users" class="content-section">
         <div class="section-header">
-          <h2><i class="fas fa-building"></i> Manage Customers & Assignments</h2>
-          <p>Assign overseers and custodians to customers and terminals</p>
+          <h2><i class="fas fa-building"></i> Customer User Management</h2>
+          <p>Create and manage overseers and custodians for customers and terminals</p>
         </div>
 
-        {% if customers %}
-          <!-- CUSTOMER TABS NAVIGATION -->
+        <!-- CREATE NEW CUSTOMER USER FORM -->
+        <div class="card create-user-card">
+          <h3><i class="fas fa-user-tie"></i> Create New Customer User</h3>
+          <form method="post" action="{% url 'create_user' %}" class="form-grid" id="createCustomerForm">
+            {% csrf_token %}
+            <input type="hidden" name="user_type" value="customer">
+            
+            <div class="form-row">
+              <input type="text" name="first_name" placeholder="First Name" required>
+              <input type="text" name="last_name" placeholder="Last Name" required>
+            </div>
+            <div class="form-row">
+              <input type="text" name="username" placeholder="Username" required>
+              <input type="email" name="email" placeholder="Email" required>
+            </div>
+            <div class="form-row">
+              <input type="text" name="phone" placeholder="Phone (e.g., 0711234567)" required>
+              <input type="text" name="id_number" placeholder="ID Number" required>
+            </div>
+            <div class="form-row">
+              <input type="password" name="password" placeholder="Password" required>
+              <input type="password" name="confirm_password" placeholder="Confirm Password" required>
+            </div>
+            <div class="form-row">
+              <select name="role" id="customerRole" required>
+                <option value="">Select Role</option>
+                <option value="Overseer">Overseer</option>
+                <option value="Custodian">Custodian</option>
+              </select>
+              <select name="customer_id" id="customerSelect" required>
+                <option value="">Select Customer</option>
+                {% for customer in all_customers %}
+                  <option value="{{ customer.id }}">{{ customer.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-row" id="terminalRow" style="display: none;">
+              <select name="terminal_id" id="terminalSelect">
+                <option value="">Select Terminal/Branch</option>
+              </select>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Create Customer User
+              </button>
+            </div>
+            <div class="form-row" id="submitRowOverseer" style="display: none;">
+              <div></div>
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> Create Overseer
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- CUSTOMER TABS WRAPPER -->
+        {% if customer_assignments %}
           <div class="customer-tabs-wrapper">
+            <!-- Tabs Navigation -->
             <div class="customer-tabs-nav">
-              {% for customer in customers %}
+              {% for assignment in customer_assignments %}
                 <button class="customer-tab-btn {% if forloop.first %}active{% endif %}" 
-                        data-customer-id="customer-{{ forloop.counter }}">
+                  data-tab="customer-{{ assignment.customer.id }}">
                   <i class="fas fa-building"></i>
-                  <span>{{ customer.name }}</span>
+                  <span>{{ assignment.customer.name }}</span>
                 </button>
               {% endfor %}
             </div>
 
-            <!-- CUSTOMER TAB PANELS -->
+            <!-- Tabs Content -->
             <div class="customer-tabs-content">
-              {% for customer in customers %}
+              {% for assignment in customer_assignments %}
                 <div class="customer-tab-panel {% if forloop.first %}active{% endif %}" 
-                     id="customer-{{ forloop.counter }}">
+                  id="customer-{{ assignment.customer.id }}">
+                  
                   <div class="card customer-card">
                     <div class="customer-header">
-                      <h3>{{ customer.name }}</h3>
+                      <h3><i class="fas fa-building"></i> {{ assignment.customer.name }}</h3>
                       <span class="badge-customer">Customer</span>
                     </div>
 
-                    <!-- Overseer Assignment -->
+                    <!-- Overseer Section -->
                     <div class="assignment-section">
-                      <h4><i class="fas fa-user-tie"></i> Overseer Assignment</h4>
-                      <form method="post" action="{% url 'admin_dashboard' %}" class="assignment-form">
-                        {% csrf_token %}
-                        <input type="hidden" name="customer_id" value="{{ customer.id }}">
-                        <input type="hidden" name="action" value="assign_overseer_or_custodian">
-                        
-                        <div class="form-group-inline">
-                          <select name="overseer_id" required>
-                            <option value="">-- Select Overseer --</option>
-                            {% for user in users %}
-                              <option value="{{ user.id }}" {% if customer.overseer and customer.overseer.id == user.id %}selected{% endif %}>
-                                {{ user.get_full_name }} ({{ user.username }})
-                              </option>
-                            {% endfor %}
-                          </select>
-                          <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="fas fa-save"></i> Update Overseer
-                          </button>
+                      <h4><i class="fas fa-user-tie"></i> Overseer</h4>
+                      {% if assignment.overseer %}
+                        <div class="user-assignment-item">
+                          <div class="user-info">
+                            <strong>{{ assignment.overseer.get_full_name }}</strong>
+                            <small>({{ assignment.overseer.username }})</small>
+                            <br>
+                            <small class="text-muted">{{ assignment.overseer.email }}</small>
+                          </div>
+                          <div class="action-buttons">
+                            <button type="button" class="btn btn-sm btn-info btn-edit-customer" 
+                              data-id="{{ assignment.overseer.id }}" 
+                              data-username="{{ assignment.overseer.username }}"
+                              data-first_name="{{ assignment.overseer.first_name }}" 
+                              data-last_name="{{ assignment.overseer.last_name }}"
+                              data-email="{{ assignment.overseer.email }}" 
+                              data-phone="{{ assignment.overseer.profile.phone_number }}"
+                              data-id_number="{{ assignment.overseer.profile.id_number }}"
+                              data-role="Overseer"
+                              data-customer_id="{{ assignment.customer.id }}"
+                              data-customer_name="{{ assignment.customer.name }}">
+                              <i class="fas fa-edit"></i> Edit
+                            </button>
+                            <button type="button" class="btn btn-sm btn-warning btn-remove-overseer" 
+                              data-customer-id="{{ assignment.customer.id }}" 
+                              data-customer-name="{{ assignment.customer.name }}">
+                              <i class="fas fa-unlink"></i> Remove
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger btn-delete-user" 
+                              data-user-id="{{ assignment.overseer.id }}" 
+                              data-username="{{ assignment.overseer.username }}">
+                              <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                          </div>
                         </div>
-                      </form>
-
-                      {% if customer.overseer %}
-                        <div class="assignment-info">
-                          <span class="badge-assigned">
-                            <i class="fas fa-check"></i> Assigned: {{ customer.overseer.get_full_name }}
-                          </span>
-                          <button type="button" class="btn btn-sm btn-warning btn-remove-overseer" 
-                            data-customer-id="{{ customer.id }}" 
-                            data-customer-name="{{ customer.name }}">
-                            <i class="fas fa-unlink"></i> Remove
-                          </button>
-                        </div>
+                      {% else %}
+                        <p class="text-muted"><em>No overseer assigned</em></p>
                       {% endif %}
                     </div>
 
-                    <!-- Custodian Assignments (Terminals) -->
-                    {% if customer.terminals %}
-                      <div class="assignment-section">
-                        <h4><i class="fas fa-key"></i> Custodian Assignments by Terminal</h4>
+                    <!-- Custodians Section -->
+                    <div class="assignment-section">
+                      <h4><i class="fas fa-key"></i> Custodians</h4>
+                      {% if assignment.custodians %}
                         <div class="table-wrapper">
                           <table class="data-table compact">
                             <thead>
                               <tr>
-                                <th>Branch / Terminal</th>
-                                <th>Custodian</th>
+                                <th>Name</th>
+                                <th>Username</th>
+                                <th>Terminal/Branch</th>
                                 <th>Actions</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {% for terminal in customer.terminals %}
+                              {% for custodian_data in assignment.custodians %}
                                 <tr>
-                                  <td data-label="Branch"><strong>{{ terminal.branch_name }}</strong></td>
-                                  <td data-label="Custodian">
-                                    {% if terminal.custodian %}
-                                      <span class="badge-assigned">
-                                        <i class="fas fa-check"></i> {{ terminal.custodian.get_full_name }}
-                                      </span>
-                                    {% else %}
-                                      <span class="badge-none">Not assigned</span>
-                                    {% endif %}
-                                  </td>
+                                  <td data-label="Name"><strong>{{ custodian_data.user.get_full_name }}</strong></td>
+                                  <td data-label="Username">{{ custodian_data.user.username }}</td>
+                                  <td data-label="Terminal">{{ custodian_data.terminal.branch_name }}</td>
                                   <td data-label="Actions">
-                                    <div class="terminal-action-group">
-                                      <form method="post" action="{% url 'admin_dashboard' %}" class="assignment-form inline">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="assign_custodian">
-                                        <input type="hidden" name="customer_id" value="{{ customer.id }}">
-                                        <input type="hidden" name="terminal_id" value="{{ terminal.id }}">
-                                        
-                                        <select name="custodian_id" required>
-                                          <option value="">-- Select Custodian --</option>
-                                          {% for user in users %}
-                                            <option value="{{ user.id }}" {% if terminal.custodian and terminal.custodian.id == user.id %}selected{% endif %}>
-                                              {{ user.get_full_name }} ({{ user.username }})
-                                            </option>
-                                          {% endfor %}
-                                        </select>
-                                        <button type="submit" class="btn btn-primary btn-sm">Update</button>
-                                      </form>
-
-                                      {% if terminal.custodian %}
-                                        <button type="button" class="btn btn-sm btn-warning btn-remove-custodian" 
-                                          data-customer-id="{{ customer.id }}" 
-                                          data-terminal-id="{{ terminal.id }}"
-                                          data-terminal-name="{{ terminal.branch_name }}">
-                                          <i class="fas fa-unlink"></i> Remove
-                                        </button>
-                                      {% endif %}
+                                    <div class="action-buttons">
+                                      <button type="button" class="btn btn-sm btn-info btn-edit-customer" 
+                                        data-id="{{ custodian_data.user.id }}" 
+                                        data-username="{{ custodian_data.user.username }}"
+                                        data-first_name="{{ custodian_data.user.first_name }}" 
+                                        data-last_name="{{ custodian_data.user.last_name }}"
+                                        data-email="{{ custodian_data.user.email }}" 
+                                        data-phone="{{ custodian_data.user.profile.phone_number }}"
+                                        data-id_number="{{ custodian_data.user.profile.id_number }}"
+                                        data-role="Custodian"
+                                        data-customer_id="{{ assignment.customer.id }}"
+                                        data-customer_name="{{ assignment.customer.name }}"
+                                        data-terminal_id="{{ custodian_data.terminal.id }}"
+                                        data-terminal_name="{{ custodian_data.terminal.branch_name }}">
+                                        <i class="fas fa-edit"></i> Edit
+                                      </button>
+                                      <button type="button" class="btn btn-sm btn-warning btn-remove-custodian" 
+                                        data-customer-id="{{ assignment.customer.id }}" 
+                                        data-terminal-id="{{ custodian_data.terminal.id }}"
+                                        data-terminal-name="{{ custodian_data.terminal.branch_name }}">
+                                        <i class="fas fa-unlink"></i> Remove
+                                      </button>
+                                      <button type="button" class="btn btn-sm btn-danger btn-delete-user" 
+                                        data-user-id="{{ custodian_data.user.id }}" 
+                                        data-username="{{ custodian_data.user.username }}">
+                                        <i class="fas fa-trash-alt"></i> Delete
+                                      </button>
                                     </div>
                                   </td>
                                 </tr>
@@ -372,10 +430,10 @@
                             </tbody>
                           </table>
                         </div>
-                      </div>
-                    {% else %}
-                      <p class="text-muted"><i class="fas fa-info-circle"></i> No terminals defined for this customer.</p>
-                    {% endif %}
+                      {% else %}
+                        <p class="text-muted"><em>No custodians assigned</em></p>
+                      {% endif %}
+                    </div>
                   </div>
                 </div>
               {% endfor %}
@@ -384,67 +442,201 @@
         {% else %}
           <div class="empty-state">
             <i class="fas fa-inbox"></i>
-            <p>No customers available</p>
+            <p>No customer assignments available</p>
           </div>
         {% endif %}
       </section>
 
-      <!-- SECTION: USER LISTS -->
-      <section id="user-lists" class="content-section">
+      <!-- SECTION: ALL USERS OVERVIEW -->
+      <section id="all-users" class="content-section">
         <div class="section-header">
-          <h2><i class="fas fa-clipboard-list"></i> User Role Summary</h2>
-          <p>Quick overview of all users by role</p>
+          <h2><i class="fas fa-users"></i> All Users Overview</h2>
+          <p>Comprehensive view of overseers, custodians, and unassigned users</p>
         </div>
 
-        <div class="grid-2col">
-          <div class="card">
-            <h3><i class="fas fa-user-shield"></i> Overseers</h3>
-            {% if overseers %}
-              <ul class="user-list">
-                {% for user in overseers %}
-                  <li>
-                    <i class="fas fa-circle-check" style="color: #27ae60;"></i>
-                    {{ user.get_full_name }} 
-                    <small>({{ user.username }})</small>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <p class="text-muted"><em>No overseers defined</em></p>
-            {% endif %}
-          </div>
-
-          <div class="card">
-            <h3><i class="fas fa-key"></i> Custodians</h3>
-            {% if custodians %}
-              <ul class="user-list">
-                {% for user in custodians %}
-                  <li>
-                    <i class="fas fa-circle-check" style="color: #3498db;"></i>
-                    {{ user.get_full_name }} 
-                    <small>({{ user.username }})</small>
-                  </li>
-                {% endfor %}
-              </ul>
-            {% else %}
-              <p class="text-muted"><em>No custodians defined</em></p>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="card">
-          <h3><i class="fas fa-exclamation-circle" style="color: #f39c12;"></i> Users Without Customer Roles</h3>
-          {% if users_without_roles %}
-            <ul class="user-list">
-              {% for user in users_without_roles %}
-                <li>
-                  {{ user.get_full_name }} 
-                  <small>({{ user.username }})</small>
-                </li>
-              {% endfor %}
-            </ul>
+        <!-- Overseers Table -->
+        <div class="card users-table-card">
+          <h3><i class="fas fa-user-tie"></i> Overseers by Customer</h3>
+          {% if overseers %}
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Customer</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for overseer_data in overseers %}
+                    <tr>
+                      <td data-label="Name"><strong>{{ overseer_data.user.get_full_name }}</strong></td>
+                      <td data-label="Username">{{ overseer_data.user.username }}</td>
+                      <td data-label="Email">{{ overseer_data.user.email }}</td>
+                      <td data-label="Phone">{{ overseer_data.user.profile.phone_number }}</td>
+                      <td data-label="Customer">
+                        <span class="badge-customer-inline">{{ overseer_data.customer.name }}</span>
+                      </td>
+                      <td data-label="Actions">
+                        <div class="action-buttons">
+                          <button type="button" class="btn btn-sm btn-info btn-edit-customer" 
+                            data-id="{{ overseer_data.user.id }}" 
+                            data-username="{{ overseer_data.user.username }}"
+                            data-first_name="{{ overseer_data.user.first_name }}" 
+                            data-last_name="{{ overseer_data.user.last_name }}"
+                            data-email="{{ overseer_data.user.email }}" 
+                            data-phone="{{ overseer_data.user.profile.phone_number }}"
+                            data-id_number="{{ overseer_data.user.profile.id_number }}"
+                            data-role="Overseer"
+                            data-customer_id="{{ overseer_data.customer.id }}"
+                            data-customer_name="{{ overseer_data.customer.name }}">
+                            <i class="fas fa-edit"></i> Edit
+                          </button>
+                          <button type="button" class="btn btn-sm btn-warning btn-remove-overseer" 
+                            data-customer-id="{{ overseer_data.customer.id }}" 
+                            data-customer-name="{{ overseer_data.customer.name }}">
+                            <i class="fas fa-unlink"></i> Remove
+                          </button>
+                          <button type="button" class="btn btn-sm btn-danger btn-delete-user" 
+                            data-user-id="{{ overseer_data.user.id }}" 
+                            data-username="{{ overseer_data.user.username }}">
+                            <i class="fas fa-trash-alt"></i> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
           {% else %}
-            <p class="text-muted"><em>All users have roles assigned</em></p>
+            <p class="text-muted"><em>No overseers assigned</em></p>
+          {% endif %}
+        </div>
+
+        <!-- Custodians Table -->
+        <div class="card users-table-card">
+          <h3><i class="fas fa-key"></i> Custodians by Terminal</h3>
+          {% if custodians %}
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Customer</th>
+                    <th>Terminal</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for custodian_data in custodians %}
+                    <tr>
+                      <td data-label="Name"><strong>{{ custodian_data.user.get_full_name }}</strong></td>
+                      <td data-label="Username">{{ custodian_data.user.username }}</td>
+                      <td data-label="Email">{{ custodian_data.user.email }}</td>
+                      <td data-label="Phone">{{ custodian_data.user.profile.phone_number }}</td>
+                      <td data-label="Customer">
+                        <span class="badge-customer-inline">{{ custodian_data.customer.name }}</span>
+                      </td>
+                      <td data-label="Terminal">
+                        <span class="badge-terminal">{{ custodian_data.terminal.branch_name }}</span>
+                      </td>
+                      <td data-label="Actions">
+                        <div class="action-buttons">
+                          <button type="button" class="btn btn-sm btn-info btn-edit-customer" 
+                            data-id="{{ custodian_data.user.id }}" 
+                            data-username="{{ custodian_data.user.username }}"
+                            data-first_name="{{ custodian_data.user.first_name }}" 
+                            data-last_name="{{ custodian_data.user.last_name }}"
+                            data-email="{{ custodian_data.user.email }}" 
+                            data-phone="{{ custodian_data.user.profile.phone_number }}"
+                            data-id_number="{{ custodian_data.user.profile.id_number }}"
+                            data-role="Custodian"
+                            data-customer_id="{{ custodian_data.customer.id }}"
+                            data-customer_name="{{ custodian_data.customer.name }}"
+                            data-terminal_id="{{ custodian_data.terminal.id }}"
+                            data-terminal_name="{{ custodian_data.terminal.branch_name }}">
+                            <i class="fas fa-edit"></i> Edit
+                          </button>
+                          <button type="button" class="btn btn-sm btn-warning btn-remove-custodian" 
+                            data-customer-id="{{ custodian_data.customer.id }}" 
+                            data-terminal-id="{{ custodian_data.terminal.id }}"
+                            data-terminal-name="{{ custodian_data.terminal.branch_name }}">
+                            <i class="fas fa-unlink"></i> Remove
+                          </button>
+                          <button type="button" class="btn btn-sm btn-danger btn-delete-user" 
+                            data-user-id="{{ custodian_data.user.id }}" 
+                            data-username="{{ custodian_data.user.username }}">
+                            <i class="fas fa-trash-alt"></i> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted"><em>No custodians assigned</em></p>
+          {% endif %}
+        </div>
+
+        <!-- Unassigned Users Table -->
+        <div class="card users-table-card">
+          <h3><i class="fas fa-user-circle"></i> Users Without Roles</h3>
+          {% if users_without_roles %}
+            <div class="table-wrapper">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>ID Number</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for user in users_without_roles %}
+                    <tr>
+                      <td data-label="Name"><strong>{{ user.get_full_name }}</strong></td>
+                      <td data-label="Username">{{ user.username }}</td>
+                      <td data-label="Email">{{ user.email }}</td>
+                      <td data-label="Phone">{{ user.profile.phone_number }}</td>
+                      <td data-label="ID Number">{{ user.profile.id_number }}</td>
+                      <td data-label="Status">
+                        <span class="badge-unassigned">Unassigned</span>
+                      </td>
+                      <td data-label="Actions">
+                        <div class="action-buttons">
+                          <button type="button" class="btn btn-sm btn-primary btn-assign-role" 
+                            data-user-id="{{ user.id }}" 
+                            data-username="{{ user.username }}"
+                            data-name="{{ user.get_full_name }}">
+                            <i class="fas fa-user-tag"></i> Assign Role
+                          </button>
+                          <button type="button" class="btn btn-sm btn-danger btn-delete-user" 
+                            data-user-id="{{ user.id }}" 
+                            data-username="{{ user.username }}">
+                            <i class="fas fa-trash-alt"></i> Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted"><em>All users have assigned roles</em></p>
           {% endif %}
         </div>
       </section>
@@ -453,64 +645,235 @@
 
   <!-- ==================== MODALS ==================== -->
 
-  <!-- Edit User Modal -->
-  <div class="modal fade" id="editUserModal" tabindex="-1" role="dialog">
+  <!-- Edit In-House User Modal -->
+  <div class="modal fade" id="editInhouseUserModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Edit User Details</h5>
+          <h5 class="modal-title">Edit In-House User</h5>
           <button type="button" class="btn-close" data-dismiss="modal">&times;</button>
         </div>
-        <form method="POST" action="{% url 'update_user' %}" id="editUserForm">
+        <form method="POST" action="{% url 'update_user' %}" id="editInhouseUserForm">
           {% csrf_token %}
           <div class="modal-body">
-            <input type="hidden" name="user_id" id="user_id">
+            <input type="hidden" name="user_id" id="inhouse_user_id">
+            <input type="hidden" name="user_type" value="inhouse">
             
             <div class="form-group">
-              <label for="first_name">First Name</label>
-              <input type="text" class="form-control" id="first_name" name="first_name" required>
+              <label for="inhouse_first_name">First Name</label>
+              <input type="text" class="form-control" id="inhouse_first_name" name="first_name" required>
             </div>
             <div class="form-group">
-              <label for="last_name">Last Name</label>
-              <input type="text" class="form-control" id="last_name" name="last_name" required>
+              <label for="inhouse_last_name">Last Name</label>
+              <input type="text" class="form-control" id="inhouse_last_name" name="last_name" required>
             </div>
             <div class="form-group">
-              <label for="email">Email</label>
-              <input type="email" class="form-control" id="email" name="email" required>
+              <label for="inhouse_email">Email</label>
+              <input type="email" class="form-control" id="inhouse_email" name="email" required>
             </div>
             <div class="form-group">
-              <label for="phone">Phone Number</label>
-              <input type="text" class="form-control" id="phone" name="phone" required>
+              <label for="inhouse_phone">Phone Number</label>
+              <input type="text" class="form-control" id="inhouse_phone" name="phone" required>
             </div>
             <div class="form-group">
-              <label for="id_number">ID Number</label>
-              <input type="text" class="form-control" id="id_number" name="id_number" required>
+              <label for="inhouse_id_number">ID Number</label>
+              <input type="text" class="form-control" id="inhouse_id_number" name="id_number" required>
+            </div>
+            <div class="form-group">
+              <label for="inhouse_role">Role</label>
+              <select class="form-control" id="inhouse_role" name="role" required>
+                <option value="Director">Director</option>
+                <option value="Manager">Manager</option>
+                <option value="Staff">Staff</option>
+                <option value="SuperAdmin">Super Admin</option>
+              </select>
             </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Save Changes
+            </button>
           </div>
         </form>
       </div>
     </div>
   </div>
 
-  <!-- Confirm Remove Role Modal -->
-  <div class="modal fade" id="confirmRemoveRoleModal" tabindex="-1" role="dialog">
+  <!-- Edit Customer User Modal -->
+  <div class="modal fade" id="editCustomerUserModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Customer User</h5>
+          <button type="button" class="btn-close" data-dismiss="modal">&times;</button>
+        </div>
+        <form method="POST" action="{% url 'update_user' %}" id="editCustomerUserForm">
+          {% csrf_token %}
+          <div class="modal-body">
+            <input type="hidden" name="user_id" id="customer_user_id">
+            <input type="hidden" name="user_type" value="customer">
+            
+            <div class="form-group">
+              <label for="customer_first_name">First Name</label>
+              <input type="text" class="form-control" id="customer_first_name" name="first_name" required>
+            </div>
+            <div class="form-group">
+              <label for="customer_last_name">Last Name</label>
+              <input type="text" class="form-control" id="customer_last_name" name="last_name" required>
+            </div>
+            <div class="form-group">
+              <label for="customer_email">Email</label>
+              <input type="email" class="form-control" id="customer_email" name="email" required>
+            </div>
+            <div class="form-group">
+              <label for="customer_phone">Phone Number</label>
+              <input type="text" class="form-control" id="customer_phone" name="phone" required>
+            </div>
+            <div class="form-group">
+              <label for="customer_id_number">ID Number</label>
+              <input type="text" class="form-control" id="customer_id_number" name="id_number" required>
+            </div>
+            <div class="form-group">
+              <label for="customer_role">Role</label>
+              <select class="form-control" id="customer_role" name="role" required>
+                <option value="Overseer">Overseer</option>
+                <option value="Custodian">Custodian</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="customer_customer_id">Customer</label>
+              <select class="form-control" id="customer_customer_id" name="customer_id" required>
+                {% for customer in all_customers %}
+                  <option value="{{ customer.id }}">{{ customer.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group" id="edit_terminal_group" style="display: none;">
+              <label for="customer_terminal_id">Terminal/Branch</label>
+              <select class="form-control" id="customer_terminal_id" name="terminal_id">
+                <option value="">Select Terminal</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Role Modal -->
+  <div class="modal fade" id="updateRoleModal" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-sm" role="document">
       <div class="modal-content">
-        <div class="modal-header alert-warning">
-          <h5 class="modal-title"><i class="fas fa-exclamation-triangle"></i> Confirm Action</h5>
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-user-tag"></i> Update User Role</h5>
           <button type="button" class="btn-close" data-dismiss="modal">&times;</button>
         </div>
         <div class="modal-body">
-          <p>Are you sure you want to remove the role assignment from <strong id="removeRoleUsername"></strong>?</p>
-          <p class="text-muted"><small>This user will no longer have any role assigned.</small></p>
+          <p>Update role for <strong id="updateRoleUsername"></strong>?</p>
+          <div class="form-group">
+            <label for="new_role_select">Select New Role</label>
+            <select class="form-control" id="new_role_select">
+              <option value="Director">Director</option>
+              <option value="Manager">Manager</option>
+              <option value="Staff">Staff</option>
+            </select>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-warning" id="confirmRemoveRoleBtn">Remove Role</button>
+          <button type="button" class="btn btn-primary" id="confirmUpdateRoleBtn">
+            <i class="fas fa-check"></i> Update Role
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Assign Role Modal (for unassigned users) -->
+  <div class="modal fade" id="assignRoleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-user-tag"></i> Assign Role</h5>
+          <button type="button" class="btn-close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Assign role for <strong id="assignRoleUserName"></strong></p>
+          <div class="form-group">
+            <label>Select User Type</label>
+            <select class="form-control" id="assign_user_type">
+              <option value="">Choose Type...</option>
+              <option value="inhouse">In-House User</option>
+              <option value="customer">Customer User</option>
+            </select>
+          </div>
+          <div id="inhouse_role_group" class="form-group" style="display: none;">
+            <label>In-House Role</label>
+            <select class="form-control" id="assign_inhouse_role">
+              <option value="Director">Director</option>
+              <option value="Manager">Manager</option>
+              <option value="Staff">Staff</option>
+            </select>
+          </div>
+          <div id="customer_role_group" style="display: none;">
+            <div class="form-group">
+              <label>Customer Role</label>
+              <select class="form-control" id="assign_customer_role">
+                <option value="Overseer">Overseer</option>
+                <option value="Custodian">Custodian</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Customer</label>
+              <select class="form-control" id="assign_customer_select">
+                <option value="">Select Customer</option>
+                {% for customer in all_customers %}
+                  <option value="{{ customer.id }}">{{ customer.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group" id="assign_terminal_group" style="display: none;">
+              <label>Terminal</label>
+              <select class="form-control" id="assign_terminal_select">
+                <option value="">Select Terminal</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="confirmAssignRoleBtn">
+            <i class="fas fa-check"></i> Assign Role
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Remove Role Modal -->
+  <div class="modal fade" id="removeRoleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+      <div class="modal-content">
+        <div class="modal-header alert-warning">
+          <h5 class="modal-title"><i class="fas fa-user-slash"></i> Remove Role</h5>
+          <button type="button" class="btn-close" data-dismiss="modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Remove role from <strong id="removeRoleUsername"></strong>?</p>
+          <p class="text-muted"><small>This user will lose all associated permissions.</small></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-warning" id="confirmRemoveRoleBtn">
+            <i class="fas fa-check"></i> Remove Role
+          </button>
         </div>
       </div>
     </div>
@@ -530,7 +893,9 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-danger" id="confirmDeleteUserBtn">Delete User</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteUserBtn">
+            <i class="fas fa-trash-alt"></i> Delete User
+          </button>
         </div>
       </div>
     </div>
@@ -550,7 +915,9 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-warning" id="confirmRemoveOverseerBtn">Remove</button>
+          <button type="button" class="btn btn-warning" id="confirmRemoveOverseerBtn">
+            <i class="fas fa-check"></i> Remove
+          </button>
         </div>
       </div>
     </div>
@@ -570,7 +937,9 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-warning" id="confirmRemoveCustodianBtn">Remove</button>
+          <button type="button" class="btn btn-warning" id="confirmRemoveCustodianBtn">
+            <i class="fas fa-check"></i> Remove
+          </button>
         </div>
       </div>
     </div>
@@ -580,61 +949,495 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Customer Tabs Script -->
-  <script src="{% static 'js/admin_dashboard_tabs_script.js' %}"></script>
+  <!-- Replace the entire <script> section at the bottom of admin_dashboard.html with this -->
+<!-- This should go just before </body> tag -->
 
-  <script>
-    // ========== SECTION NAVIGATION ==========
-    document.querySelectorAll('.nav-item[data-section]').forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.preventDefault();
+<script>
+// ==================== SCROLL POSITION PERSISTENCE ====================
+function saveScrollPosition() {
+  const scrollData = {
+    y: window.scrollY,
+    section: document.querySelector('.content-section.active')?.id || 'inhouse-users',
+    timestamp: Date.now()
+  };
+  sessionStorage.setItem('adminDashboardScroll', JSON.stringify(scrollData));
+}
+
+function restoreScrollPosition() {
+  const savedData = sessionStorage.getItem('adminDashboardScroll');
+  if (savedData) {
+    try {
+      const scrollData = JSON.parse(savedData);
+      if (Date.now() - scrollData.timestamp < 5000) {
+        if (scrollData.section) {
+          document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+          document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+          
+          const section = document.getElementById(scrollData.section);
+          const navItem = document.querySelector(`[data-section="${scrollData.section}"]`);
+          
+          if (section) section.classList.add('active');
+          if (navItem) navItem.classList.add('active');
+        }
         
-        // Remove active from all nav items and sections
-        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+        setTimeout(() => {
+          window.scrollTo(0, scrollData.y);
+          sessionStorage.removeItem('adminDashboardScroll');
+        }, 100);
+      } else {
+        sessionStorage.removeItem('adminDashboardScroll');
+      }
+    } catch (e) {
+      console.error('Error restoring scroll:', e);
+    }
+  }
+}
+
+// ==================== LOADING OVERLAY ====================
+function showLoading(message = 'Processing...') {
+  document.getElementById('loadingOverlay').classList.add('active');
+  document.querySelector('.loading-text').textContent = message;
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('active');
+}
+
+function showSuccess(message) {
+  hideLoading();
+  const alert = document.createElement('div');
+  alert.className = 'alert alert-success';
+  alert.innerHTML = `
+    <i class="fas fa-check-circle"></i>
+    <span>${message}</span>
+    <button type="button" class="close-alert">&times;</button>
+  `;
+  
+  const container = document.querySelector('.messages-container') || 
+                    document.querySelector('.main-content');
+  
+  if (container.classList.contains('messages-container')) {
+    container.appendChild(alert);
+  } else {
+    container.insertBefore(alert, container.firstChild);
+  }
+  
+  alert.querySelector('.close-alert').addEventListener('click', () => alert.remove());
+  setTimeout(() => alert.remove(), 5000);
+}
+
+// ==================== TERMINALS DATA ====================
+const terminalsData = {
+  {% for terminal in all_terminals %}
+    {{ terminal.id }}: {
+      id: {{ terminal.id }},
+      name: "{{ terminal.branch_name }}",
+      customer_id: {{ terminal.customer.id }}
+    },
+  {% endfor %}
+};
+
+// ==================== MODAL MANAGEMENT ====================
+function openModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+}
+
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('modal') && e.target.classList.contains('show')) {
+    e.target.classList.remove('show');
+    e.target.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+});
+
+document.querySelectorAll('[data-dismiss="modal"]').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const modal = this.closest('.modal');
+    if (modal) {
+      modal.classList.remove('show');
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  });
+});
+
+// ==================== PAGE INITIALIZATION ====================
+document.addEventListener('DOMContentLoaded', function() {
+  restoreScrollPosition();
+  
+  // ========== SECTION NAVIGATION ==========
+  document.querySelectorAll('.nav-item[data-section]').forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+      
+      item.classList.add('active');
+      const sectionId = item.getAttribute('data-section');
+      document.getElementById(sectionId).classList.add('active');
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+
+  // ========== CUSTOMER TABS ==========
+  document.querySelectorAll('.customer-tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.customer-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.customer-tab-panel').forEach(p => p.classList.remove('active'));
+      
+      this.classList.add('active');
+      const tabId = this.getAttribute('data-tab');
+      document.getElementById(tabId).classList.add('active');
+    });
+  });
+
+  // ========== ALERT DISMISSAL ==========
+  document.querySelectorAll('.close-alert').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.target.closest('.alert').remove();
+    });
+  });
+
+  // ========== FORM SUBMISSION WITH LOADING ==========
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      if (!this.hasAttribute('data-no-loading')) {
+        saveScrollPosition();
+        showLoading('Saving...');
+      }
+    });
+  });
+
+  // ========== CUSTOMER USER FORM - ROLE SELECTION ==========
+  const customerRoleSelect = document.getElementById('customerRole');
+  if (customerRoleSelect) {
+    customerRoleSelect.addEventListener('change', function() {
+      const role = this.value;
+      const terminalRow = document.getElementById('terminalRow');
+      const submitRowOverseer = document.getElementById('submitRowOverseer');
+      const terminalSelect = document.getElementById('terminalSelect');
+      
+      if (role === 'Custodian') {
+        terminalRow.style.display = 'grid';
+        submitRowOverseer.style.display = 'none';
+        terminalSelect.required = true;
+      } else if (role === 'Overseer') {
+        terminalRow.style.display = 'none';
+        submitRowOverseer.style.display = 'grid';
+        terminalSelect.required = false;
+      } else {
+        terminalRow.style.display = 'none';
+        submitRowOverseer.style.display = 'none';
+        terminalSelect.required = false;
+      }
+    });
+  }
+
+  // ========== CUSTOMER SELECTION - POPULATE TERMINALS ==========
+  const customerSelect = document.getElementById('customerSelect');
+  if (customerSelect) {
+    customerSelect.addEventListener('change', function() {
+      const customerId = parseInt(this.value);
+      const terminalSelect = document.getElementById('terminalSelect');
+      
+      terminalSelect.innerHTML = '<option value="">Select Terminal/Branch</option>';
+      
+      if (customerId) {
+        Object.values(terminalsData).forEach(terminal => {
+          if (terminal.customer_id === customerId) {
+            const option = document.createElement('option');
+            option.value = terminal.id;
+            option.textContent = terminal.name;
+            terminalSelect.appendChild(option);
+          }
+        });
+      }
+    });
+  }
+
+  // ========== EDIT IN-HOUSE USER ==========
+  document.querySelectorAll('.btn-edit-inhouse').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.getElementById('inhouse_user_id').value = this.dataset.id;
+      document.getElementById('inhouse_first_name').value = this.dataset.first_name;
+      document.getElementById('inhouse_last_name').value = this.dataset.last_name;
+      document.getElementById('inhouse_email').value = this.dataset.email;
+      document.getElementById('inhouse_phone').value = this.dataset.phone;
+      document.getElementById('inhouse_id_number').value = this.dataset.id_number;
+      document.getElementById('inhouse_role').value = this.dataset.role;
+      
+      openModal('editInhouseUserModal');
+    });
+  });
+
+  // ========== EDIT CUSTOMER USER ==========
+  document.querySelectorAll('.btn-edit-customer').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.getElementById('customer_user_id').value = this.dataset.id;
+      document.getElementById('customer_first_name').value = this.dataset.first_name;
+      document.getElementById('customer_last_name').value = this.dataset.last_name;
+      document.getElementById('customer_email').value = this.dataset.email;
+      document.getElementById('customer_phone').value = this.dataset.phone;
+      document.getElementById('customer_id_number').value = this.dataset.id_number;
+      document.getElementById('customer_role').value = this.dataset.role;
+      document.getElementById('customer_customer_id').value = this.dataset.customer_id;
+      
+      const terminalGroup = document.getElementById('edit_terminal_group');
+      const terminalSelect = document.getElementById('customer_terminal_id');
+      
+      if (this.dataset.role === 'Custodian') {
+        terminalGroup.style.display = 'block';
+        terminalSelect.required = true;
         
-        // Add active to clicked item and corresponding section
-        item.classList.add('active');
-        const sectionId = item.getAttribute('data-section');
-        document.getElementById(sectionId).classList.add('active');
-      });
-    });
-
-    // ========== ALERT DISMISSAL ==========
-    document.querySelectorAll('.close-alert').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.target.closest('.alert').remove();
-      });
-    });
-
-    // ========== EDIT USER MODAL ==========
-    document.querySelectorAll('.btn-edit').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.getElementById('user_id').value = this.dataset.id;
-        document.getElementById('first_name').value = this.dataset.first_name;
-        document.getElementById('last_name').value = this.dataset.last_name;
-        document.getElementById('email').value = this.dataset.email;
-        document.getElementById('phone').value = this.dataset.phone;
-        document.getElementById('id_number').value = this.dataset.id_number;
+        const customerId = parseInt(this.dataset.customer_id);
+        terminalSelect.innerHTML = '<option value="">Select Terminal</option>';
         
-        $('#editUserModal').modal('show');
-      });
+        Object.values(terminalsData).forEach(terminal => {
+          if (terminal.customer_id === customerId) {
+            const option = document.createElement('option');
+            option.value = terminal.id;
+            option.textContent = terminal.name;
+            if (this.dataset.terminal_id && terminal.id === parseInt(this.dataset.terminal_id)) {
+              option.selected = true;
+            }
+            terminalSelect.appendChild(option);
+          }
+        });
+      } else {
+        terminalGroup.style.display = 'none';
+        terminalSelect.required = false;
+      }
+      
+      openModal('editCustomerUserModal');
     });
+  });
 
-    // ========== REMOVE ROLE CONFIRMATION ==========
-    let removeRoleData = null;
-    document.querySelectorAll('.btn-remove-role').forEach(btn => {
-      btn.addEventListener('click', function() {
-        removeRoleData = {
-          userId: this.dataset.userId,
-          username: this.dataset.username
-        };
-        document.getElementById('removeRoleUsername').textContent = this.dataset.username;
-        $('#confirmRemoveRoleModal').modal('show');
-      });
+  const editCustomerSelect = document.getElementById('customer_customer_id');
+  if (editCustomerSelect) {
+    editCustomerSelect.addEventListener('change', function() {
+      const customerId = parseInt(this.value);
+      const terminalSelect = document.getElementById('customer_terminal_id');
+      
+      terminalSelect.innerHTML = '<option value="">Select Terminal</option>';
+      
+      if (customerId) {
+        Object.values(terminalsData).forEach(terminal => {
+          if (terminal.customer_id === customerId) {
+            const option = document.createElement('option');
+            option.value = terminal.id;
+            option.textContent = terminal.name;
+            terminalSelect.appendChild(option);
+          }
+        });
+      }
     });
+  }
 
-    document.getElementById('confirmRemoveRoleBtn').addEventListener('click', function() {
+  const editRoleSelect = document.getElementById('customer_role');
+  if (editRoleSelect) {
+    editRoleSelect.addEventListener('change', function() {
+      const terminalGroup = document.getElementById('edit_terminal_group');
+      const terminalSelect = document.getElementById('customer_terminal_id');
+      
+      if (this.value === 'Custodian') {
+        terminalGroup.style.display = 'block';
+        terminalSelect.required = true;
+      } else {
+        terminalGroup.style.display = 'none';
+        terminalSelect.required = false;
+      }
+    });
+  }
+
+  // ========== UPDATE ROLE ==========
+  let updateRoleData = null;
+  document.querySelectorAll('.btn-update-role').forEach(btn => {
+    btn.addEventListener('click', function() {
+      updateRoleData = {
+        userId: this.dataset.userId,
+        username: this.dataset.username,
+        currentRole: this.dataset.currentRole
+      };
+      document.getElementById('updateRoleUsername').textContent = this.dataset.username;
+      document.getElementById('new_role_select').value = this.dataset.currentRole || 'Staff';
+      openModal('updateRoleModal');
+    });
+  });
+
+  const confirmUpdateRoleBtn = document.getElementById('confirmUpdateRoleBtn');
+  if (confirmUpdateRoleBtn) {
+    confirmUpdateRoleBtn.addEventListener('click', function() {
+      saveScrollPosition();
+      showLoading('Updating role...');
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '{% url "admin_dashboard" %}';
+      form.innerHTML = `
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_role">
+        <input type="hidden" name="user_id" value="${updateRoleData.userId}">
+        <input type="hidden" name="new_role" value="${document.getElementById('new_role_select').value}">
+      `;
+      document.body.appendChild(form);
+      form.submit();
+    });
+  }
+
+  // ========== ASSIGN ROLE ==========
+  let assignRoleData = null;
+  document.querySelectorAll('.btn-assign-role').forEach(btn => {
+    btn.addEventListener('click', function() {
+      assignRoleData = {
+        userId: this.dataset.userId,
+        username: this.dataset.username,
+        name: this.dataset.name
+      };
+      document.getElementById('assignRoleUserName').textContent = this.dataset.name;
+      openModal('assignRoleModal');
+    });
+  });
+
+  const assignUserType = document.getElementById('assign_user_type');
+  if (assignUserType) {
+    assignUserType.addEventListener('change', function() {
+      const type = this.value;
+      const inhouseGroup = document.getElementById('inhouse_role_group');
+      const customerGroup = document.getElementById('customer_role_group');
+      
+      if (type === 'inhouse') {
+        inhouseGroup.style.display = 'block';
+        customerGroup.style.display = 'none';
+      } else if (type === 'customer') {
+        inhouseGroup.style.display = 'none';
+        customerGroup.style.display = 'block';
+      } else {
+        inhouseGroup.style.display = 'none';
+        customerGroup.style.display = 'none';
+      }
+    });
+  }
+
+  const assignCustomerRole = document.getElementById('assign_customer_role');
+  if (assignCustomerRole) {
+    assignCustomerRole.addEventListener('change', function() {
+      const terminalGroup = document.getElementById('assign_terminal_group');
+      if (this.value === 'Custodian') {
+        terminalGroup.style.display = 'block';
+      } else {
+        terminalGroup.style.display = 'none';
+      }
+    });
+  }
+
+  const assignCustomerSelect = document.getElementById('assign_customer_select');
+  if (assignCustomerSelect) {
+    assignCustomerSelect.addEventListener('change', function() {
+      const customerId = parseInt(this.value);
+      const terminalSelect = document.getElementById('assign_terminal_select');
+      
+      terminalSelect.innerHTML = '<option value="">Select Terminal</option>';
+      
+      if (customerId) {
+        Object.values(terminalsData).forEach(terminal => {
+          if (terminal.customer_id === customerId) {
+            const option = document.createElement('option');
+            option.value = terminal.id;
+            option.textContent = terminal.name;
+            terminalSelect.appendChild(option);
+          }
+        });
+      }
+    });
+  }
+
+  const confirmAssignRoleBtn = document.getElementById('confirmAssignRoleBtn');
+  if (confirmAssignRoleBtn) {
+    confirmAssignRoleBtn.addEventListener('click', function() {
+      const userType = document.getElementById('assign_user_type').value;
+      
+      if (!userType) {
+        alert('Please select a user type');
+        return;
+      }
+      
+      saveScrollPosition();
+      showLoading('Assigning role...');
+      
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '{% url "assign_role" %}';
+      form.innerHTML = `{% csrf_token %}<input type="hidden" name="user_id" value="${assignRoleData.userId}">`;
+      
+      if (userType === 'inhouse') {
+        const role = document.getElementById('assign_inhouse_role').value;
+        form.innerHTML += `
+          <input type="hidden" name="user_type" value="inhouse">
+          <input type="hidden" name="role" value="${role}">
+        `;
+      } else {
+        const role = document.getElementById('assign_customer_role').value;
+        const customerId = document.getElementById('assign_customer_select').value;
+        const terminalId = document.getElementById('assign_terminal_select').value;
+        
+        if (!customerId) {
+          hideLoading();
+          alert('Please select a customer');
+          return;
+        }
+        
+        if (role === 'Custodian' && !terminalId) {
+          hideLoading();
+          alert('Please select a terminal for custodian role');
+          return;
+        }
+        
+        form.innerHTML += `
+          <input type="hidden" name="user_type" value="customer">
+          <input type="hidden" name="role" value="${role}">
+          <input type="hidden" name="customer_id" value="${customerId}">
+          <input type="hidden" name="terminal_id" value="${terminalId}">
+        `;
+      }
+      
+      document.body.appendChild(form);
+      form.submit();
+    });
+  }
+
+  // ========== REMOVE ROLE ==========
+  let removeRoleData = null;
+  document.querySelectorAll('.btn-remove-role').forEach(btn => {
+    btn.addEventListener('click', function() {
+      removeRoleData = {
+        userId: this.dataset.userId,
+        username: this.dataset.username
+      };
+      document.getElementById('removeRoleUsername').textContent = this.dataset.username;
+      openModal('removeRoleModal');
+    });
+  });
+
+  const confirmRemoveRoleBtn = document.getElementById('confirmRemoveRoleBtn');
+  if (confirmRemoveRoleBtn) {
+    confirmRemoveRoleBtn.addEventListener('click', function() {
+      saveScrollPosition();
+      showLoading('Removing role...');
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = '{% url "admin_dashboard" %}';
@@ -647,21 +1450,26 @@
       document.body.appendChild(form);
       form.submit();
     });
+  }
 
-    // ========== DELETE USER CONFIRMATION ==========
-    let deleteUserData = null;
-    document.querySelectorAll('.btn-delete-user').forEach(btn => {
-      btn.addEventListener('click', function() {
-        deleteUserData = {
-          userId: this.dataset.userId,
-          username: this.dataset.username
-        };
-        document.getElementById('deleteUsername').textContent = this.dataset.username;
-        $('#confirmDeleteUserModal').modal('show');
-      });
+  // ========== DELETE USER ==========
+  let deleteUserData = null;
+  document.querySelectorAll('.btn-delete-user').forEach(btn => {
+    btn.addEventListener('click', function() {
+      deleteUserData = {
+        userId: this.dataset.userId,
+        username: this.dataset.username
+      };
+      document.getElementById('deleteUsername').textContent = this.dataset.username;
+      openModal('confirmDeleteUserModal');
     });
+  });
 
-    document.getElementById('confirmDeleteUserBtn').addEventListener('click', function() {
+  const confirmDeleteUserBtn = document.getElementById('confirmDeleteUserBtn');
+  if (confirmDeleteUserBtn) {
+    confirmDeleteUserBtn.addEventListener('click', function() {
+      saveScrollPosition();
+      showLoading('Deleting user...');
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = '{% url "admin_dashboard" %}';
@@ -673,21 +1481,26 @@
       document.body.appendChild(form);
       form.submit();
     });
+  }
 
-    // ========== REMOVE OVERSEER CONFIRMATION ==========
-    let removeOverseerData = null;
-    document.querySelectorAll('.btn-remove-overseer').forEach(btn => {
-      btn.addEventListener('click', function() {
-        removeOverseerData = {
-          customerId: this.dataset.customerId,
-          customerName: this.dataset.customerName
-        };
-        document.getElementById('removeOverseerCustomer').textContent = this.dataset.customerName;
-        $('#confirmRemoveOverseerModal').modal('show');
-      });
+  // ========== REMOVE OVERSEER ==========
+  let removeOverseerData = null;
+  document.querySelectorAll('.btn-remove-overseer').forEach(btn => {
+    btn.addEventListener('click', function() {
+      removeOverseerData = {
+        customerId: this.dataset.customerId,
+        customerName: this.dataset.customerName
+      };
+      document.getElementById('removeOverseerCustomer').textContent = this.dataset.customerName;
+      openModal('confirmRemoveOverseerModal');
     });
+  });
 
-    document.getElementById('confirmRemoveOverseerBtn').addEventListener('click', function() {
+  const confirmRemoveOverseerBtn = document.getElementById('confirmRemoveOverseerBtn');
+  if (confirmRemoveOverseerBtn) {
+    confirmRemoveOverseerBtn.addEventListener('click', function() {
+      saveScrollPosition();
+      showLoading('Removing overseer...');
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = '{% url "admin_dashboard" %}';
@@ -700,22 +1513,27 @@
       document.body.appendChild(form);
       form.submit();
     });
+  }
 
-    // ========== REMOVE CUSTODIAN CONFIRMATION ==========
-    let removeCustodianData = null;
-    document.querySelectorAll('.btn-remove-custodian').forEach(btn => {
-      btn.addEventListener('click', function() {
-        removeCustodianData = {
-          customerId: this.dataset.customerId,
-          terminalId: this.dataset.terminalId,
-          terminalName: this.dataset.terminalName
-        };
-        document.getElementById('removeCustodianTerminal').textContent = this.dataset.terminalName;
-        $('#confirmRemoveCustodianModal').modal('show');
-      });
+  // ========== REMOVE CUSTODIAN ==========
+  let removeCustodianData = null;
+  document.querySelectorAll('.btn-remove-custodian').forEach(btn => {
+    btn.addEventListener('click', function() {
+      removeCustodianData = {
+        customerId: this.dataset.customerId,
+        terminalId: this.dataset.terminalId,
+        terminalName: this.dataset.terminalName
+      };
+      document.getElementById('removeCustodianTerminal').textContent = this.dataset.terminalName;
+      openModal('confirmRemoveCustodianModal');
     });
+  });
 
-    document.getElementById('confirmRemoveCustodianBtn').addEventListener('click', function() {
+  const confirmRemoveCustodianBtn = document.getElementById('confirmRemoveCustodianBtn');
+  if (confirmRemoveCustodianBtn) {
+    confirmRemoveCustodianBtn.addEventListener('click', function() {
+      saveScrollPosition();
+      showLoading('Removing custodian...');
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = '{% url "admin_dashboard" %}';
@@ -729,8 +1547,54 @@
       document.body.appendChild(form);
       form.submit();
     });
-  </script>
+  }
 
-  <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('active'); this.classList.remove('active');"></div> 
+  // Hide loading on page load
+  hideLoading();
+  
+  // ========== SEARCH FUNCTIONALITY ==========
+  const searchForm = document.querySelector('.navbar-search');
+  const searchInput = searchForm?.querySelector('input[name="q"]');
+  
+  if (searchInput) {
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimeout);
+      const query = this.value.toLowerCase().trim();
+      
+      if (query.length < 2) {
+        document.querySelectorAll('.data-table tbody tr').forEach(row => {
+          row.style.display = '';
+        });
+        document.querySelectorAll('.customer-card').forEach(card => {
+          card.style.display = '';
+        });
+        return;
+      }
+      
+      searchTimeout = setTimeout(() => {
+        let foundResults = false;
+        
+        document.querySelectorAll('.data-table tbody tr').forEach(row => {
+          const text = row.textContent.toLowerCase();
+          if (text.includes(query)) {
+            row.style.display = '';
+            foundResults = true;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+        
+        document.querySelectorAll('.customer-card').forEach(card => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(query) ? '' : 'none';
+        });
+      }, 300);
+    });
+  }
+});
+</script>
+
+<div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('active'); this.classList.remove('active');"></div>
 </body>
 </html>

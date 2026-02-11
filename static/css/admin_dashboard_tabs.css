@@ -1,4 +1,4 @@
-/* ==================== CUSTOMER TABS SYSTEM ==================== */
+/* ==================== CUSTOMER TABS SYSTEM - ENHANCED MOBILE ==================== */
 
 .customer-tabs-wrapper {
   background: #fff;
@@ -20,6 +20,7 @@
   overflow-y: hidden;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .customer-tabs-nav::-webkit-scrollbar {
@@ -59,6 +60,8 @@
   font-family: 'Sora', sans-serif;
   position: relative;
   overflow: hidden;
+  min-height: 44px;
+  line-height: 1.2;
 }
 
 .customer-tab-btn::before {
@@ -79,6 +82,13 @@
 .customer-tab-btn i {
   font-size: 1.05rem;
   transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.customer-tab-btn span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .customer-tab-btn:hover {
@@ -109,7 +119,7 @@
 .customer-tabs-content {
   padding: 0;
   position: relative;
-  min-height: 400px;
+  min-height: 300px;
 }
 
 .customer-tab-panel {
@@ -156,10 +166,27 @@
   min-width: 160px;
 }
 
-/* ==================== MOBILE RESPONSIVENESS ==================== */
+/* ==================== TABLET RESPONSIVENESS ==================== */
 
-/* Tablet */
+/* Large Tablet (1024px - 1280px) */
+@media (max-width: 1280px) and (min-width: 1025px) {
+  .customer-tabs-nav {
+    padding: 0.9rem;
+    gap: 0.45rem;
+  }
+
+  .customer-tab-btn {
+    padding: 0.8rem 1.3rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Standard Tablet (768px - 1024px) */
 @media (max-width: 1024px) {
+  .customer-tabs-wrapper {
+    border-radius: 12px;
+  }
+
   .customer-tabs-nav {
     padding: 0.85rem;
     gap: 0.4rem;
@@ -168,14 +195,21 @@
   .customer-tab-btn {
     padding: 0.75rem 1.2rem;
     font-size: 0.88rem;
+    min-height: 42px;
   }
 
   .customer-tab-btn i {
     font-size: 1rem;
   }
+
+  .customer-tabs-content {
+    min-height: 250px;
+  }
 }
 
-/* Mobile */
+/* ==================== MOBILE RESPONSIVENESS ==================== */
+
+/* Mobile (max-width: 768px) */
 @media (max-width: 768px) {
   .customer-tabs-wrapper {
     border-radius: 12px;
@@ -183,14 +217,29 @@
   }
 
   .customer-tabs-nav {
-    padding: 0.75rem;
+    padding: 0.75rem 0.75rem;
     gap: 0.4rem;
+    /* Add scroll indicator */
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    position: relative;
+  }
+
+  .customer-tabs-nav::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(to left, #e5e7eb, transparent);
+    pointer-events: none;
   }
 
   .customer-tab-btn {
     padding: 0.7rem 1rem;
     font-size: 0.84rem;
     border-radius: 8px;
+    min-height: 40px;
   }
 
   .customer-tab-btn i {
@@ -203,16 +252,20 @@
     text-overflow: ellipsis;
   }
 
+  .customer-tabs-content {
+    min-height: 200px;
+  }
+
   /* Terminal table → card layout on mobile */
-  .data-table.compact {
+  .customer-tab-panel .data-table.compact {
     min-width: auto;
   }
 
-  .data-table.compact thead {
+  .customer-tab-panel .data-table.compact thead {
     display: none;
   }
 
-  .data-table.compact tbody tr {
+  .customer-tab-panel .data-table.compact tbody tr {
     display: block;
     margin-bottom: 1rem;
     border: 1px solid #e5e7eb;
@@ -222,26 +275,27 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
 
-  .data-table.compact tbody tr:hover {
+  .customer-tab-panel .data-table.compact tbody tr:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
-  .data-table.compact td {
+  .customer-tab-panel .data-table.compact td {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     padding: 0.65rem 0;
     border-bottom: 1px solid #f0f0f0;
+    min-height: auto;
   }
 
-  .data-table.compact td:last-child {
+  .customer-tab-panel .data-table.compact td:last-child {
     border-bottom: none;
     flex-direction: column;
     align-items: stretch;
     padding-top: 0.85rem;
   }
 
-  .data-table.compact td::before {
+  .customer-tab-panel .data-table.compact td::before {
     content: attr(data-label);
     font-weight: 700;
     color: #6b7280;
@@ -250,6 +304,7 @@
     letter-spacing: 0.4px;
     flex-shrink: 0;
     margin-bottom: 0.25rem;
+    min-width: 100px;
   }
 
   .terminal-action-group {
@@ -265,19 +320,37 @@
   .terminal-action-group select,
   .terminal-action-group .btn {
     width: 100%;
+    min-height: 42px;
+  }
+
+  .customer-tab-panel .action-buttons {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .customer-tab-panel .action-buttons .btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
-/* Small Mobile */
+/* Small Mobile (max-width: 576px) */
 @media (max-width: 576px) {
+  .customer-tabs-wrapper {
+    border-radius: 10px;
+    margin-bottom: 1rem;
+  }
+
   .customer-tabs-nav {
-    padding: 0.65rem;
+    padding: 0.65rem 0.65rem;
     gap: 0.35rem;
   }
 
   .customer-tab-btn {
     padding: 0.65rem 0.9rem;
     font-size: 0.8rem;
+    min-height: 38px;
   }
 
   .customer-tab-btn i {
@@ -292,13 +365,19 @@
     padding: 1rem;
   }
 
-  .data-table.compact td {
+  .customer-tab-panel .data-table.compact tbody tr {
+    padding: 0.85rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .customer-tab-panel .data-table.compact td {
     padding: 0.55rem 0;
     font-size: 0.84rem;
   }
 
-  .data-table.compact td::before {
+  .customer-tab-panel .data-table.compact td::before {
     font-size: 0.72rem;
+    min-width: 90px;
   }
 
   .terminal-action-group {
@@ -312,24 +391,36 @@
   .terminal-action-group select {
     font-size: 0.84rem;
     padding: 0.6rem 0.75rem;
+    min-height: 40px;
   }
 
   .terminal-action-group .btn {
     font-size: 0.8rem;
-    padding: 0.5rem 0.8rem;
+    padding: 0.55rem 0.8rem;
+    min-height: 40px;
+  }
+
+  .customer-tabs-content {
+    min-height: 150px;
   }
 }
 
-/* Very Small Mobile */
+/* Very Small Mobile (max-width: 400px) */
 @media (max-width: 400px) {
   .customer-tabs-nav {
-    padding: 0.6rem;
+    padding: 0.6rem 0.6rem;
+    gap: 0.3rem;
+  }
+
+  .customer-tabs-nav::after {
+    width: 30px;
   }
 
   .customer-tab-btn {
     padding: 0.6rem 0.8rem;
     font-size: 0.76rem;
     gap: 0.5rem;
+    min-height: 36px;
   }
 
   .customer-tab-btn i {
@@ -340,16 +431,38 @@
     max-width: 90px;
   }
 
-  .data-table.compact td {
-    font-size: 0.8rem;
+  .customer-tab-panel .customer-card {
+    padding: 0.85rem;
   }
 
-  .data-table.compact td::before {
+  .customer-tab-panel .data-table.compact tbody tr {
+    padding: 0.75rem;
+  }
+
+  .customer-tab-panel .data-table.compact td {
+    font-size: 0.8rem;
+    padding: 0.5rem 0;
+  }
+
+  .customer-tab-panel .data-table.compact td::before {
     font-size: 0.7rem;
+    min-width: 80px;
+  }
+
+  .terminal-action-group select {
+    font-size: 0.8rem;
+    padding: 0.55rem 0.7rem;
+    min-height: 38px;
+  }
+
+  .terminal-action-group .btn {
+    font-size: 0.76rem;
+    padding: 0.5rem 0.7rem;
+    min-height: 38px;
   }
 }
 
-/* Landscape Mode on Mobile */
+/* ==================== LANDSCAPE MODE ON MOBILE ==================== */
 @media (max-width: 768px) and (orientation: landscape) {
   .customer-tabs-nav {
     padding: 0.65rem 0.85rem;
@@ -358,31 +471,36 @@
   .customer-tab-btn {
     padding: 0.6rem 1rem;
     font-size: 0.82rem;
+    min-height: 38px;
   }
 
   .customer-tab-btn span {
     max-width: 160px;
   }
 
+  .customer-tabs-content {
+    min-height: 180px;
+  }
+
   /* Keep table layout in landscape for better space usage */
-  .data-table.compact thead {
+  .customer-tab-panel .data-table.compact thead {
     display: table-header-group;
   }
 
-  .data-table.compact tbody tr {
+  .customer-tab-panel .data-table.compact tbody tr {
     display: table-row;
     border: none;
     padding: 0;
     margin-bottom: 0;
   }
 
-  .data-table.compact td {
+  .customer-tab-panel .data-table.compact td {
     display: table-cell;
     padding: 0.65rem 0.85rem;
     border-bottom: 1px solid #eee;
   }
 
-  .data-table.compact td::before {
+  .customer-tab-panel .data-table.compact td::before {
     content: none;
   }
 
@@ -404,21 +522,54 @@
   .terminal-action-group .btn {
     width: auto;
   }
+
+  .customer-tab-panel .action-buttons {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: auto;
+  }
+
+  .customer-tab-panel .action-buttons .btn {
+    width: auto;
+  }
 }
+
+/* ==================== TOUCH DEVICE OPTIMIZATIONS ==================== */
 
 /* Disable hover effects on touch devices */
 @media (hover: none) {
   .customer-tab-btn:hover {
     transform: none;
     box-shadow: none;
+    background: #fff;
+    color: #6b7280;
+    border-color: #e5e7eb;
+  }
+
+  .customer-tab-btn.active:hover {
+    background: linear-gradient(135deg, #667eea 0%, #004080 100%);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
   }
 
   .customer-tab-btn:active {
     transform: scale(0.97);
   }
+
+  .customer-tab-btn::before {
+    display: none;
+  }
 }
 
-/* Print Styles */
+/* Larger touch targets for better accessibility */
+@media (max-width: 768px) {
+  .customer-tab-btn {
+    -webkit-tap-highlight-color: rgba(102, 126, 234, 0.2);
+    tap-highlight-color: rgba(102, 126, 234, 0.2);
+  }
+}
+
+/* ==================== PRINT STYLES ==================== */
 @media print {
   .customer-tabs-nav {
     display: none;
@@ -432,5 +583,66 @@
   .customer-tab-panel .customer-card {
     border: 1px solid #ddd;
     margin-bottom: 1rem;
+    border-radius: 8px;
+  }
+
+  .customer-tab-panel .data-table.compact tbody tr {
+    page-break-inside: avoid;
+  }
+}
+
+/* ==================== REDUCED MOTION ==================== */
+@media (prefers-reduced-motion: reduce) {
+  .customer-tab-btn,
+  .customer-tab-btn::before,
+  .customer-tab-panel {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ==================== HIGH CONTRAST MODE ==================== */
+@media (prefers-contrast: high) {
+  .customer-tab-btn {
+    border-width: 3px;
+  }
+
+  .customer-tab-btn.active {
+    border-width: 3px;
+    font-weight: 700;
+  }
+}
+
+/* ==================== DARK MODE SUPPORT (Optional) ==================== */
+@media (prefers-color-scheme: dark) {
+  /* Add dark mode styles if needed in the future */
+}
+
+/* ==================== SCROLL SNAP FOR SMOOTH SCROLLING ==================== */
+@supports (scroll-snap-type: x mandatory) {
+  .customer-tabs-nav {
+    scroll-snap-type: x proximity;
+    scroll-padding: 0 1rem;
+  }
+
+  .customer-tab-btn {
+    scroll-snap-align: start;
+  }
+}
+
+/* ==================== SAFE AREA INSETS FOR NOTCHED DEVICES ==================== */
+@supports (padding: max(0px)) {
+  @media (max-width: 768px) {
+    .customer-tabs-nav {
+      padding-left: max(0.75rem, env(safe-area-inset-left));
+      padding-right: max(0.75rem, env(safe-area-inset-right));
+    }
+  }
+
+  @media (max-width: 576px) {
+    .customer-tabs-nav {
+      padding-left: max(0.65rem, env(safe-area-inset-left));
+      padding-right: max(0.65rem, env(safe-area-inset-right));
+    }
   }
 }

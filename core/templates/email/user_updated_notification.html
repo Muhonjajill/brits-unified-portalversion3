@@ -1,0 +1,105 @@
+{% load static %}
+
+<head>
+    <title>Your Account Has Been Updated - BRITS</title>
+</head>
+
+<body style="font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 20px; margin: 0;">
+    <div style="background-color: #ffffff; width: 100%; max-width: 600px; margin: 0 auto; padding: 40px 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+        
+        <div style="background-color: #123692; color: white; padding: 30px; border-radius: 10px 10px 0 0; margin: -40px -30px 30px -30px; text-align: center;">
+            <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 5px 0;">Account Update Notification</h1>
+            <p style="font-size: 14px; opacity: 0.9; margin: 0; color: white;">Your account details have been updated</p>
+        </div>
+        
+        <h2 style="font-size: 22px; color: #123692; margin-bottom: 15px; font-weight: bold;">Hello {{ user.first_name }} {{ user.last_name }},</h2>
+        
+        <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">We're writing to inform you that your account has been updated by an administrator.</p>
+        
+        <!-- Updated Account Details -->
+        <div style="background-color: #f8f9fa; border-left: 4px solid #123692; padding: 20px; border-radius: 6px; margin: 25px 0;">
+            <h3 style="color: #123692; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">📋 Your Current Account Details</h3>
+            <ul style="list-style: none; padding: 0; margin: 0;">
+                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">
+                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 140px;">Name:</strong> {{ user.first_name }} {{ user.last_name }}
+                </li>
+                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">
+                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 140px;">Username:</strong> {{ user.username }}
+                </li>
+                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">
+                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 140px;">Email:</strong> {{ user.email }}
+                </li>
+                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef; {% if not customer_name and not terminal_name %}border-bottom: none; margin-bottom: 0;{% endif %}">
+                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 140px;">Role:</strong> {{ new_role }}
+                </li>
+                {% if customer_name %}
+                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef; {% if not terminal_name %}border-bottom: none; margin-bottom: 0;{% endif %}">
+                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 140px;">Customer:</strong> {{ customer_name }}
+                </li>
+                {% endif %}
+                {% if terminal_name %}
+                <li style="font-size: 16px; color: #343a40; margin-bottom: 0; padding: 8px 0; border-bottom: none;">
+                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 140px;">Terminal:</strong> {{ terminal_name }}
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+
+        {% if changes %}
+        <!-- Changes Made -->
+        <div style="background-color: #e7f3ff; border-left: 4px solid #0066cc; padding: 20px; border-radius: 6px; margin: 25px 0;">
+            <h3 style="color: #123692; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">🔄 Changes Made</h3>
+            <ul style="margin: 10px 0; padding-left: 20px; color: #343a40; font-size: 15px; line-height: 1.8;">
+                {% for change in changes %}
+                <li>{{ change }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <!-- What to Do Next -->
+        <div style="background-color: #fff9e6; border-left: 4px solid #f39c12; padding: 20px; border-radius: 6px; margin: 25px 0;">
+            <h3 style="color: #e67e22; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">📌 What to Do Next</h3>
+            <ul style="margin: 10px 0; padding-left: 20px; color: #343a40; font-size: 15px; line-height: 1.8;">
+                <li>Review your updated account details above</li>
+                <li>If your email was changed, verify your new email address</li>
+                <li>If your role was updated, familiarize yourself with your new permissions</li>
+                <li>Contact your administrator if you have any questions about these changes</li>
+            </ul>
+        </div>
+
+        <!-- Security Notice -->
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; color: #856404; padding: 20px; border-radius: 6px; margin: 25px 0;">
+            <p style="color: #856404; margin: 0; font-size: 16px; line-height: 1.6;">
+                <strong style="color: #664d03;">🔒 Security Notice:</strong> If you did not request these changes or believe they were made in error, please contact your system administrator immediately.
+            </p>
+        </div>
+
+        <!-- Platform Access Section -->
+        <div style="background-color: #e9ecef; padding: 20px; border-radius: 6px; text-align: center; margin: 25px 0;">
+            <p style="margin: 0 0 15px 0; color: #343a40; font-weight: 600; font-size: 16px;">Access the Platform:</p>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                    <td align="center">
+                        <a href="{{ site_url }}" style="display: inline-block; background-color: #123692; color: #ffffff !important; padding: 14px 35px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 16px; font-family: Arial, sans-serif;">Go to BRITS Ticketing System</a>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 15px;">If you have any questions or concerns about these changes, please don't hesitate to contact your system administrator or our support team.</p>
+        
+        <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 15px;">
+            Best regards,<br>
+            <span style="color: #123692; font-weight: 600;">The Blue River Technology Solutions Team</span>
+        </p>
+
+        <div style="text-align: center; font-size: 14px; color: #6c757d; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e9ecef;">
+            <p style="font-size: 14px; color: #6c757d; margin: 0 0 10px 0;">&copy; 2026 Blue River Technology Solutions. All rights reserved.</p>
+            <p style="font-size: 14px; color: #6c757d; margin: 5px 0 0 0;">
+                <a href="{{ site_url }}" style="color: #123692; text-decoration: none; font-weight: normal;">Visit Website</a> | 
+                <a href="mailto:support@blueriverafrica.net" style="color: #123692; text-decoration: none; font-weight: normal;">Contact Support</a>
+            </p>
+        </div>
+    </div>
+</body>
