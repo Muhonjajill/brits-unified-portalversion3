@@ -22,6 +22,7 @@ from core import views as core_views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path('', include('core.urls')),
+    path('', include('core.claims.urls')),
 ]
 
 handler403 = core_views.custom_permission_denied

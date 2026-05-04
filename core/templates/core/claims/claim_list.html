@@ -1,0 +1,122 @@
+{% extends "files_base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/claims.css' %}">
+
+<div class="claims-container">
+
+  <div class="claims-header">
+    <h2><i class="fas fa-file-invoice-dollar"></i> My Claims</h2>
+    <a href="{% url 'claim_create' %}" class="btn-new-claim">
+      <i class="fas fa-plus"></i> New Claim
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% if pending_approvals %}
+  <section class="claims-section">
+    <h3 class="claims-section-title pending-title">
+      <i class="fas fa-clock"></i> Awaiting Your Approval
+      <span class="badge-count">{{ pending_approvals.count }}</span>
+    </h3>
+    <div class="claims-table-wrap">
+      <table class="claims-table">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Month</th>
+            <th>Sub-total</th>
+            <th>Status</th>
+            <th>Submitted</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for claim in pending_approvals %}
+          <tr>
+            <td data-label="Employee">{{ claim.employee.get_full_name }}</td>
+            <td data-label="Month">{{ claim.month|date:"F Y" }}</td>
+            <td data-label="Sub-total" class="amount">KES {{ claim.subtotal|floatformat:2 }}</td>
+            <td data-label="Status">
+              <span class="status-badge status-{{ claim.status_color }}">{{ claim.get_status_display }}</span>
+            </td>
+            <td data-label="Submitted">{{ claim.submitted_at|date:"d M Y" }}</td>
+            <td data-label="Action" class="action-cell">
+              <a href="{% url 'claim_detail' claim.pk %}" class="btn-action">
+                <i class="fas fa-eye"></i> Review
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="claims-section">
+    <h3 class="claims-section-title">
+      <i class="fas fa-history"></i> My Claim History
+    </h3>
+    {% if my_claims %}
+    <div class="claims-table-wrap">
+      <table class="claims-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Month</th>
+            <th>Sub-total</th>
+            <th>Advance</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for claim in my_claims %}
+          <tr>
+            <td data-label="Title">{{ claim.title|default:"—" }}</td>
+            <td data-label="Month">{{ claim.month|date:"F Y" }}</td>
+            <td data-label="Sub-total" class="amount">KES {{ claim.subtotal|floatformat:2 }}</td>
+            <td data-label="Advance" class="amount">KES {{ claim.advance|floatformat:2 }}</td>
+            <td data-label="Status">
+              <span class="status-badge status-{{ claim.status_color }}">{{ claim.get_status_display }}</span>
+            </td>
+            <td data-label="Actions" class="action-cell">
+              <a href="{% url 'claim_detail' claim.pk %}" class="btn-action">
+                <i class="fas fa-eye"></i> View
+              </a>
+              {% if claim.status == "draft" or claim.status == "rejected" %}
+                <a href="{% url 'claim_edit' claim.pk %}" class="btn-action btn-edit">
+                  <i class="fas fa-edit"></i> Edit
+                </a>
+              {% endif %}
+              {% if claim.status == "finance_approved" %}
+                <a href="{% url 'claim_export_pdf' claim.pk %}" class="btn-action btn-pdf">
+                  <i class="fas fa-file-pdf"></i> PDF
+                </a>
+                <a href="{% url 'claim_export_excel' claim.pk %}" class="btn-action btn-excel">
+                  <i class="fas fa-file-excel"></i> Excel
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-file-invoice-dollar"></i>
+      <p>No claims yet. <a href="{% url 'claim_create' %}">Submit your first claim →</a></p>
+    </div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}

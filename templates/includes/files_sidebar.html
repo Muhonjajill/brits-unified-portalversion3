@@ -11,6 +11,7 @@
     <li><a href="{% url 'file_list' %}" class="nav-link"><i class="fas fa-folder icon"></i><span>Files</span></a></li>
     <li><a href="{% url 'file_list' %}?sort=recent" class="nav-link"><i class="fas fa-history icon"></i><span>Recent</span></a></li>
     <li><a href="{% url 'user_list' %}" class="nav-link"><i class="fas fa-users icon"></i><span>Users</span></a></li>
+    <li><a href="{% url 'claim_list' %}" class="nav-link"><i class="fas fa-file-invoice-dollar icon"></i><span>Claims</span></a></li>
 
    {% if can_view_logs %}
         <li><a href="{% url 'file_access_logs' %}" class="nav-link"><i class="fas fa-clipboard-list icon"></i><span>File Access Logs</span></a></li>

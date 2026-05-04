@@ -1,0 +1,229 @@
+{% extends "files_base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/claims.css' %}">
+
+<div class="claims-container">
+
+  <div class="claims-header">
+    <h2><i class="fas fa-file-invoice-dollar"></i> {{ page_title }}</h2>
+    <a href="{% url 'claim_list' %}" class="btn-action">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- ── Approval progress tracker ── -->
+  <div class="status-track">
+    {% with s=claim.status %}
+    <div class="track-step {% if s != 'draft' %}done{% elif s == 'draft' %}active{% endif %}">
+      <div class="step-dot"></div>
+      <span>Submitted</span>
+    </div>
+    <div class="track-line {% if s == 'manager_approved' or s == 'hr_approved' or s == 'finance_approved' %}done{% endif %}"></div>
+    <div class="track-step {% if s == 'manager_approved' %}active{% elif s == 'hr_approved' or s == 'finance_approved' %}done{% elif s == 'rejected' %}rejected{% endif %}">
+      <div class="step-dot"></div>
+      <span>Manager</span>
+    </div>
+    <div class="track-line {% if s == 'hr_approved' or s == 'finance_approved' %}done{% endif %}"></div>
+    <div class="track-step {% if s == 'hr_approved' %}active{% elif s == 'finance_approved' %}done{% elif s == 'rejected' %}rejected{% endif %}">
+      <div class="step-dot"></div>
+      <span>HR</span>
+    </div>
+    <div class="track-line {% if s == 'finance_approved' %}done{% endif %}"></div>
+    <div class="track-step {% if s == 'finance_approved' %}done{% endif %}">
+      <div class="step-dot"></div>
+      <span>Finance</span>
+    </div>
+    {% endwith %}
+    <span class="status-badge status-{{ claim.status_color }} track-badge">
+      {{ claim.get_status_display }}
+    </span>
+  </div>
+
+  <!-- ── Claim summary ── -->
+  <div class="claim-meta-card">
+    <h3 class="card-section-title">Claim Summary</h3>
+    <div class="meta-grid">
+      <div>
+        <label>Employee</label>
+        <strong>{{ claim.employee.get_full_name }}</strong>
+      </div>
+      <div>
+        <label>Month</label>
+        <strong>{{ claim.month|date:"F Y" }}</strong>
+      </div>
+      <div>
+        <label>Title</label>
+        <strong>{{ claim.title|default:"—" }}</strong>
+      </div>
+      <div>
+        <label>Submitted</label>
+        <strong>{{ claim.submitted_at|date:"d M Y H:i"|default:"Not yet submitted" }}</strong>
+      </div>
+      <div>
+        <label>Manager</label>
+        <strong>{{ claim.manager.get_full_name|default:"—" }}</strong>
+      </div>
+      <div>
+        <label>HR Reviewer</label>
+        <strong>{{ claim.hr_reviewer.get_full_name|default:"—" }}</strong>
+      </div>
+      <div>
+        <label>Finance Reviewer</label>
+        <strong>{{ claim.finance_reviewer.get_full_name|default:"—" }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Entries table ── -->
+  <div class="claim-entries-card">
+    <h3 class="card-section-title">Claim Entries</h3>
+    <div class="entries-scroll">
+      <table class="entries-table view-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Site</th>
+            <th>Job Card ID</th>
+            <th>To (KES)</th>
+            <th>From (KES)</th>
+            <th>Breakfast</th>
+            <th>Lunch</th>
+            <th>Dinner</th>
+            <th>Bed</th>
+            <th>Total (KES)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+          <tr>
+            <td>{{ entry.date|date:"d/m/Y" }}</td>
+            <td>{{ entry.site }}</td>
+            <td>{{ entry.job_card_id|default:"—" }}</td>
+            <td class="amount">{{ entry.transport_to|floatformat:2 }}</td>
+            <td class="amount">{{ entry.transport_from|floatformat:2 }}</td>
+            <td class="amount">{{ entry.breakfast|floatformat:2 }}</td>
+            <td class="amount">{{ entry.lunch|floatformat:2 }}</td>
+            <td class="amount">{{ entry.dinner|floatformat:2 }}</td>
+            <td class="amount">{{ entry.bed|floatformat:2 }}</td>
+            <td class="amount row-total">{{ entry.total|floatformat:2 }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10" class="empty-cell">No entries found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr class="totals-row">
+            <td colspan="9" class="totals-label">Sub-total</td>
+            <td class="amount grand-total">KES {{ claim.subtotal|floatformat:2 }}</td>
+          </tr>
+          <tr class="totals-row">
+            <td colspan="9" class="totals-label">Advance</td>
+            <td class="amount">KES {{ claim.advance|floatformat:2 }}</td>
+          </tr>
+          <tr class="totals-row net-row">
+            <td colspan="9" class="totals-label">Total Minus Advance</td>
+            <td class="amount grand-total">KES {{ claim.total_minus_advance|floatformat:2 }}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Approval comments ── -->
+  {% if claim.manager_comment or claim.hr_comment or claim.finance_comment %}
+  <div class="claim-meta-card">
+    <h3 class="card-section-title">Approval Comments</h3>
+    {% if claim.manager_comment %}
+    <div class="comment-block">
+      <strong><i class="fas fa-user-tie"></i> Manager — {{ claim.manager.get_full_name }}</strong>
+      <p>{{ claim.manager_comment }}</p>
+      <small><i class="fas fa-clock"></i> {{ claim.manager_actioned_at|date:"d M Y H:i" }}</small>
+    </div>
+    {% endif %}
+    {% if claim.hr_comment %}
+    <div class="comment-block">
+      <strong><i class="fas fa-users"></i> HR — {{ claim.hr_reviewer.get_full_name }}</strong>
+      <p>{{ claim.hr_comment }}</p>
+      <small><i class="fas fa-clock"></i> {{ claim.hr_actioned_at|date:"d M Y H:i" }}</small>
+    </div>
+    {% endif %}
+    {% if claim.finance_comment %}
+    <div class="comment-block">
+      <strong><i class="fas fa-coins"></i> Finance — {{ claim.finance_reviewer.get_full_name }}</strong>
+      <p>{{ claim.finance_comment }}</p>
+      <small><i class="fas fa-clock"></i> {{ claim.finance_actioned_at|date:"d M Y H:i" }}</small>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ── Approval action panel ── -->
+  {% if can_approve %}
+  <div class="claim-meta-card approval-panel">
+    <h3 class="card-section-title">Action Required</h3>
+    <p class="approver-hint">
+      <i class="fas fa-info-circle"></i>
+      You are reviewing this claim as <strong>{{ claim.next_approver_role }}</strong>.
+    </p>
+
+    <form method="post" action="{% url 'claim_approve' claim.pk %}">
+      {% csrf_token %}
+      <div class="field-group">
+        <label>Comment <span style="color:var(--claims-muted); font-weight:400;">(optional for approval)</span></label>
+        {{ approval_form.comment }}
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-submit-claim">
+          <i class="fas fa-check-circle"></i> Approve
+        </button>
+      </div>
+    </form>
+
+    <hr style="margin: 20px 0; border-color: #f0f0f0;">
+
+    <form method="post" action="{% url 'claim_reject' claim.pk %}">
+      {% csrf_token %}
+      <div class="field-group">
+        <label>Rejection reason <span class="required">*</span></label>
+        <textarea name="comment" class="form-control" rows="3"
+                  placeholder="Required — explain why you are rejecting this claim"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-reject"
+                onclick="return confirm('Reject this claim? The employee will be notified by email.')">
+          <i class="fas fa-times-circle"></i> Reject Claim
+        </button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  <!-- ── Export & edit buttons ── -->
+  <div class="form-actions" style="margin-bottom: 24px;">
+    {% if claim.employee == request.user and claim.status == "draft" or claim.status == "rejected" and claim.employee == request.user %}
+      <a href="{% url 'claim_edit' claim.pk %}" class="btn-save">
+        <i class="fas fa-edit"></i> Edit Claim
+      </a>
+    {% endif %}
+    {% if claim.status == "finance_approved" %}
+      <a href="{% url 'claim_export_pdf' claim.pk %}" class="btn-action btn-pdf">
+        <i class="fas fa-file-pdf"></i> Download PDF
+      </a>
+      <a href="{% url 'claim_export_excel' claim.pk %}" class="btn-action btn-excel">
+        <i class="fas fa-file-excel"></i> Download Excel
+      </a>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

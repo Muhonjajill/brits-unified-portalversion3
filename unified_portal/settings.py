@@ -98,7 +98,7 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'auth_db',
+        'NAME': 'helpdesk_db',
         'USER': 'postgres',
         'PASSWORD': 'goddie',
         'HOST': 'localhost',
@@ -132,7 +132,7 @@ EMAIL_USE_TLS = True
 #EMAIL_HOST_USER = 'brts.support@blueriverafrica.net'
 #EMAIL_HOST_PASSWORD = '8E@77fHhG6729tPFVzaS'
 EMAIL_HOST_USER = 'godblessodhiambo@gmail.com'
-EMAIL_HOST_PASSWORD = 'vikt ydrj drzv gemz'
+EMAIL_HOST_PASSWORD = 'zces avrq ooza nluy'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 

@@ -1,0 +1,263 @@
+{% extends "files_base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/claims.css' %}">
+
+<div class="claims-container">
+
+  <div class="claims-header">
+    <h2>
+      <i class="fas fa-file-invoice-dollar"></i>
+      {% if is_new %}New Claim{% else %}Edit Claim{% endif %}
+    </h2>
+    <a href="{% url 'claim_list' %}" class="btn-action">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" id="claim-form" novalidate>
+    {% csrf_token %}
+
+    <!-- ── Claim header details ── -->
+    <div class="claim-meta-card">
+      <h3 class="card-section-title">Claim Details</h3>
+
+      <div class="meta-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px,1fr));">
+        <div class="field-group">
+          <label for="{{ form.title.id_for_label }}">Title <span style="color:var(--claims-muted);font-weight:400;">(optional)</span></label>
+          {{ form.title }}
+          {% if form.title.errors %}<div class="field-error">{{ form.title.errors }}</div>{% endif %}
+        </div>
+        <div class="field-group">
+          <label for="{{ form.month.id_for_label }}">Month <span class="required">*</span></label>
+          {{ form.month }}
+          {% if form.month.errors %}<div class="field-error">{{ form.month.errors }}</div>{% endif %}
+        </div>
+        <div class="field-group">
+          <label for="{{ form.advance.id_for_label }}">Advance Received (KES)</label>
+          {{ form.advance }}
+          {% if form.advance.errors %}<div class="field-error">{{ form.advance.errors }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div style="margin-top: 4px;">
+        <h4 style="font-size:0.9rem; font-weight:600; color:var(--claims-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:14px;">
+          Approval Chain
+        </h4>
+        <div class="meta-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px,1fr));">
+          <div class="field-group">
+            <label for="{{ form.manager.id_for_label }}">Manager <span class="required">*</span></label>
+            {{ form.manager }}
+            {% if form.manager.errors %}<div class="field-error">{{ form.manager.errors }}</div>{% endif %}
+          </div>
+          <div class="field-group">
+            <label for="{{ form.hr_reviewer.id_for_label }}">HR Reviewer <span class="required">*</span></label>
+            {{ form.hr_reviewer }}
+            {% if form.hr_reviewer.errors %}<div class="field-error">{{ form.hr_reviewer.errors }}</div>{% endif %}
+          </div>
+          <div class="field-group">
+            <label for="{{ form.finance_reviewer.id_for_label }}">Finance Reviewer <span class="required">*</span></label>
+            {{ form.finance_reviewer }}
+            {% if form.finance_reviewer.errors %}<div class="field-error">{{ form.finance_reviewer.errors }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Entries ── -->
+    {{ formset.management_form }}
+    <div class="claim-entries-card">
+      <h3 class="card-section-title">Claim Entries</h3>
+
+      <div class="entries-scroll">
+        <table class="entries-table" id="entries-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Site</th>
+              <th>Job Card ID</th>
+              <th>To (KES)</th>
+              <th>From (KES)</th>
+              <th>Breakfast</th>
+              <th>Lunch</th>
+              <th>Dinner</th>
+              <th>Bed</th>
+              <th>Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="entries-body">
+            {% for entry_form in formset %}
+              <tr class="entry-row {% if entry_form.instance.pk %}existing{% endif %}">
+                <td>
+                  {{ entry_form.date }}
+                  {{ entry_form.id }}
+                  {% if entry_form.DELETE %}{{ entry_form.DELETE }}{% endif %}
+                </td>
+                <td>{{ entry_form.site }}</td>
+                <td>{{ entry_form.job_card_id }}</td>
+                <td>{{ entry_form.transport_to }}</td>
+                <td>{{ entry_form.transport_from }}</td>
+                <td>{{ entry_form.breakfast }}</td>
+                <td>{{ entry_form.lunch }}</td>
+                <td>{{ entry_form.dinner }}</td>
+                <td>{{ entry_form.bed }}</td>
+                <td class="row-total grand-total">0.00</td>
+                <td>
+                  <button type="button" class="btn-remove-row" onclick="removeRow(this)" title="Remove row">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr class="totals-row">
+              <td colspan="3" class="totals-label">Sub-total</td>
+              <td id="col-total-to" class="amount">0.00</td>
+              <td id="col-total-from" class="amount">0.00</td>
+              <td id="col-total-breakfast" class="amount">0.00</td>
+              <td id="col-total-lunch" class="amount">0.00</td>
+              <td id="col-total-dinner" class="amount">0.00</td>
+              <td id="col-total-bed" class="amount">0.00</td>
+              <td id="grand-subtotal" class="grand-total">0.00</td>
+              <td></td>
+            </tr>
+            <tr class="totals-row">
+              <td colspan="9" class="totals-label">Advance</td>
+              <td id="display-advance" class="amount">0.00</td>
+              <td></td>
+            </tr>
+            <tr class="totals-row net-row">
+              <td colspan="9" class="totals-label">Total Minus Advance</td>
+              <td id="net-total" class="grand-total">0.00</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <button type="button" id="add-row-btn" class="btn-add-row">
+        <i class="fas fa-plus"></i> Add Row
+      </button>
+    </div>
+
+    <!-- ── Actions ── -->
+    <div class="claim-meta-card" style="padding: 20px 28px;">
+      <div class="form-actions">
+        <button type="submit" name="action" value="save" class="btn-save">
+          <i class="fas fa-save"></i> Save Draft
+        </button>
+        <button type="submit" name="action" value="submit" class="btn-submit-claim"
+                onclick="return confirm('Submit this claim for manager approval? You will not be able to edit it while it is under review.')">
+          <i class="fas fa-paper-plane"></i> Submit for Approval
+        </button>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<script>
+(function () {
+  const COL_IDS = [
+    'col-total-to', 'col-total-from',
+    'col-total-breakfast', 'col-total-lunch',
+    'col-total-dinner', 'col-total-bed'
+  ];
+
+  function val(input) {
+    return parseFloat(input?.value || 0) || 0;
+  }
+
+  function recalc() {
+    const rows = document.querySelectorAll('#entries-body .entry-row:not(.deleted)');
+    let colTotals = [0, 0, 0, 0, 0, 0];
+    let grandTotal = 0;
+
+    rows.forEach(row => {
+      const inputs = row.querySelectorAll('.money-field');
+      let rowSum = 0;
+      inputs.forEach((inp, idx) => {
+        const v = val(inp);
+        colTotals[idx] = (colTotals[idx] || 0) + v;
+        rowSum += v;
+      });
+      const rt = row.querySelector('.row-total');
+      if (rt) rt.textContent = rowSum.toFixed(2);
+      grandTotal += rowSum;
+    });
+
+    COL_IDS.forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = colTotals[i].toFixed(2);
+    });
+
+    const gs = document.getElementById('grand-subtotal');
+    if (gs) gs.textContent = grandTotal.toFixed(2);
+
+    const advInput = document.querySelector('[name$="-advance"]');
+    const advance = advInput ? (parseFloat(advInput.value) || 0) : 0;
+    const da = document.getElementById('display-advance');
+    const nt = document.getElementById('net-total');
+    if (da) da.textContent = advance.toFixed(2);
+    if (nt) nt.textContent = (grandTotal - advance).toFixed(2);
+  }
+
+  document.addEventListener('input', function (e) {
+    if (e.target.matches('.money-field, [name$="-advance"]')) recalc();
+  });
+
+  let formCount = parseInt(document.querySelector('#id_entries-TOTAL_FORMS').value);
+  const prefix = 'entries';
+
+  document.getElementById('add-row-btn').addEventListener('click', function () {
+    const tbody = document.getElementById('entries-body');
+    const firstRow = tbody.querySelector('.entry-row');
+    if (!firstRow) return;
+    const newRow = firstRow.cloneNode(true);
+    newRow.classList.remove('existing', 'deleted');
+    newRow.style.display = '';
+
+    newRow.innerHTML = newRow.innerHTML.replace(
+      new RegExp(prefix + '-(\\d+)-', 'g'),
+      prefix + '-' + formCount + '-'
+    );
+    newRow.querySelectorAll('input:not([type=hidden])').forEach(i => {
+      if (i.type !== 'checkbox') i.value = '';
+    });
+    const rt = newRow.querySelector('.row-total');
+    if (rt) rt.textContent = '0.00';
+
+    tbody.appendChild(newRow);
+    formCount++;
+    document.querySelector('#id_entries-TOTAL_FORMS').value = formCount;
+    recalc();
+  });
+
+  window.removeRow = function (btn) {
+    const row = btn.closest('.entry-row');
+    const deleteCheck = row.querySelector('input[type=checkbox][name$="-DELETE"]');
+    if (deleteCheck) {
+      deleteCheck.checked = true;
+      row.classList.add('deleted');
+      row.style.display = 'none';
+    } else {
+      row.remove();
+      formCount--;
+      document.querySelector('#id_entries-TOTAL_FORMS').value = formCount;
+    }
+    recalc();
+  };
+
+  recalc();
+})();
+</script>
+{% endblock %}

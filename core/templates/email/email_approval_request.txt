@@ -1,0 +1,13 @@
+Hi {{ claim.next_approver_role }},
+
+A claim has been submitted and is awaiting your approval.
+
+Employee:   {{ claim.employee.get_full_name }}
+Month:      {{ claim.month|date:"F Y" }}
+Sub-total:  KES {{ claim.subtotal }}
+Status:     {{ claim.get_status_display }}
+
+Please log in to BRITS to review and action this claim.
+
+Thank you,
+BRITS Automated System
