@@ -23,62 +23,35 @@
   <div class="status-track">
     {% with s=claim.status %}
     <div class="track-step {% if s != 'draft' %}done{% elif s == 'draft' %}active{% endif %}">
-      <div class="step-dot"></div>
-      <span>Submitted</span>
+      <div class="step-dot"></div><span>Submitted</span>
     </div>
     <div class="track-line {% if s == 'manager_approved' or s == 'hr_approved' or s == 'finance_approved' %}done{% endif %}"></div>
     <div class="track-step {% if s == 'manager_approved' %}active{% elif s == 'hr_approved' or s == 'finance_approved' %}done{% elif s == 'rejected' %}rejected{% endif %}">
-      <div class="step-dot"></div>
-      <span>Manager</span>
+      <div class="step-dot"></div><span>Manager</span>
     </div>
     <div class="track-line {% if s == 'hr_approved' or s == 'finance_approved' %}done{% endif %}"></div>
     <div class="track-step {% if s == 'hr_approved' %}active{% elif s == 'finance_approved' %}done{% elif s == 'rejected' %}rejected{% endif %}">
-      <div class="step-dot"></div>
-      <span>HR</span>
+      <div class="step-dot"></div><span>HR</span>
     </div>
     <div class="track-line {% if s == 'finance_approved' %}done{% endif %}"></div>
     <div class="track-step {% if s == 'finance_approved' %}done{% endif %}">
-      <div class="step-dot"></div>
-      <span>Finance</span>
+      <div class="step-dot"></div><span>Finance</span>
     </div>
     {% endwith %}
-    <span class="status-badge status-{{ claim.status_color }} track-badge">
-      {{ claim.get_status_display }}
-    </span>
+    <span class="status-badge status-{{ claim.status_color }} track-badge">{{ claim.get_status_display }}</span>
   </div>
 
   <!-- ── Claim summary ── -->
   <div class="claim-meta-card">
     <h3 class="card-section-title">Claim Summary</h3>
     <div class="meta-grid">
-      <div>
-        <label>Employee</label>
-        <strong>{{ claim.employee.get_full_name }}</strong>
-      </div>
-      <div>
-        <label>Month</label>
-        <strong>{{ claim.month|date:"F Y" }}</strong>
-      </div>
-      <div>
-        <label>Title</label>
-        <strong>{{ claim.title|default:"—" }}</strong>
-      </div>
-      <div>
-        <label>Submitted</label>
-        <strong>{{ claim.submitted_at|date:"d M Y H:i"|default:"Not yet submitted" }}</strong>
-      </div>
-      <div>
-        <label>Manager</label>
-        <strong>{{ claim.manager.get_full_name|default:"—" }}</strong>
-      </div>
-      <div>
-        <label>HR Reviewer</label>
-        <strong>{{ claim.hr_reviewer.get_full_name|default:"—" }}</strong>
-      </div>
-      <div>
-        <label>Finance Reviewer</label>
-        <strong>{{ claim.finance_reviewer.get_full_name|default:"—" }}</strong>
-      </div>
+      <div><label>Employee</label><strong>{{ claim.employee.get_full_name }}</strong></div>
+      <div><label>Month</label><strong>{{ claim.month|date:"F Y" }}</strong></div>
+      <div><label>Title</label><strong>{{ claim.title|default:"—" }}</strong></div>
+      <div><label>Submitted</label><strong>{{ claim.submitted_at|date:"d M Y H:i"|default:"Not yet submitted" }}</strong></div>
+      <div><label>Manager</label><strong>{{ claim.manager.get_full_name|default:"—" }}</strong></div>
+      <div><label>HR Reviewer</label><strong>{{ claim.hr_reviewer.get_full_name|default:"—" }}</strong></div>
+      <div><label>Finance Reviewer</label><strong>{{ claim.finance_reviewer.get_full_name|default:"—" }}</strong></div>
     </div>
   </div>
 
@@ -89,16 +62,9 @@
       <table class="entries-table view-table">
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Site</th>
-            <th>Job Card ID</th>
-            <th>To (KES)</th>
-            <th>From (KES)</th>
-            <th>Breakfast</th>
-            <th>Lunch</th>
-            <th>Dinner</th>
-            <th>Bed</th>
-            <th>Total (KES)</th>
+            <th>Date</th><th>Site</th><th>Job Card ID</th>
+            <th>To (KES)</th><th>From (KES)</th>
+            <th>Breakfast</th><th>Lunch</th><th>Dinner</th><th>Bed</th><th>Total (KES)</th>
           </tr>
         </thead>
         <tbody>
@@ -116,9 +82,7 @@
             <td class="amount row-total">{{ entry.total|floatformat:2 }}</td>
           </tr>
           {% empty %}
-          <tr>
-            <td colspan="10" class="empty-cell">No entries found.</td>
-          </tr>
+          <tr><td colspan="10" class="empty-cell">No entries found.</td></tr>
           {% endfor %}
         </tbody>
         <tfoot>
@@ -176,40 +140,29 @@
       You are reviewing this claim as <strong>{{ claim.next_approver_role }}</strong>.
     </p>
 
-    <form method="post" action="{% url 'claim_approve' claim.pk %}">
+    <!-- hidden forms — submitted by modals -->
+    <form method="post" action="{% url 'claim_approve' claim.pk %}" id="approveForm">
       {% csrf_token %}
-      <div class="field-group">
-        <label>Comment <span style="color:var(--claims-muted); font-weight:400;">(optional for approval)</span></label>
-        {{ approval_form.comment }}
-      </div>
-      <div class="form-actions">
-        <button type="submit" class="btn-submit-claim">
-          <i class="fas fa-check-circle"></i> Approve
-        </button>
-      </div>
+      <input type="hidden" name="comment" id="approveCommentInput">
+    </form>
+    <form method="post" action="{% url 'claim_reject' claim.pk %}" id="rejectForm">
+      {% csrf_token %}
+      <input type="hidden" name="comment" id="rejectCommentInput">
     </form>
 
-    <hr style="margin: 20px 0; border-color: #f0f0f0;">
-
-    <form method="post" action="{% url 'claim_reject' claim.pk %}">
-      {% csrf_token %}
-      <div class="field-group">
-        <label>Rejection reason <span class="required">*</span></label>
-        <textarea name="comment" class="form-control" rows="3"
-                  placeholder="Required — explain why you are rejecting this claim"></textarea>
-      </div>
-      <div class="form-actions">
-        <button type="submit" class="btn-reject"
-                onclick="return confirm('Reject this claim? The employee will be notified by email.')">
-          <i class="fas fa-times-circle"></i> Reject Claim
-        </button>
-      </div>
-    </form>
+    <div class="form-actions">
+      <button type="button" class="btn-submit-claim" onclick="openClaimModal('approveModal')">
+        <i class="fas fa-check-circle"></i> Approve Claim
+      </button>
+      <button type="button" class="btn-reject" onclick="openClaimModal('rejectModal')">
+        <i class="fas fa-times-circle"></i> Reject Claim
+      </button>
+    </div>
   </div>
   {% endif %}
 
   <!-- ── Export & edit buttons ── -->
-  <div class="form-actions" style="margin-bottom: 24px;">
+  <div class="form-actions" style="margin-bottom:24px;">
     {% if claim.employee == request.user and claim.status == "draft" or claim.status == "rejected" and claim.employee == request.user %}
       <a href="{% url 'claim_edit' claim.pk %}" class="btn-save">
         <i class="fas fa-edit"></i> Edit Claim
@@ -226,4 +179,101 @@
   </div>
 
 </div>
+
+<!-- ══ Approve Modal ══ -->
+<div class="claim-modal-overlay" id="approveModal">
+  <div class="claim-modal">
+    <button class="claim-modal-close" onclick="closeClaimModal('approveModal')">&times;</button>
+    <div class="claim-modal-icon claim-modal-icon--success">
+      <i class="fas fa-check-circle"></i>
+    </div>
+    <h3 class="claim-modal-title">Approve This Claim?</h3>
+    <div class="claim-modal-divider"></div>
+    <p class="claim-modal-body">
+      You are approving the claim for <strong>{{ claim.employee.get_full_name }}</strong>
+      — <strong>{{ claim.month|date:"F Y" }}</strong>
+      (KES {{ claim.subtotal|floatformat:2 }}).
+    </p>
+    <div class="field-group" style="text-align:left; margin-bottom:0;">
+      <label style="font-size:0.82rem; font-weight:600; color:#6c757d; text-transform:uppercase;">
+        Comment <span style="font-weight:400; text-transform:none;">(optional)</span>
+      </label>
+      <textarea id="approveCommentBox" class="form-control" rows="3"
+                placeholder="Add a comment for the employee (optional)"></textarea>
+    </div>
+    <div class="claim-modal-actions">
+      <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('approveModal')">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+      <button class="claim-modal-btn claim-modal-btn--success" onclick="submitApprove()">
+        <i class="fas fa-check"></i> Approve
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ Reject Modal ══ -->
+<div class="claim-modal-overlay" id="rejectModal">
+  <div class="claim-modal">
+    <button class="claim-modal-close" onclick="closeClaimModal('rejectModal')">&times;</button>
+    <div class="claim-modal-icon claim-modal-icon--danger">
+      <i class="fas fa-times-circle"></i>
+    </div>
+    <h3 class="claim-modal-title" style="color:var(--claims-danger);">Reject This Claim?</h3>
+    <div class="claim-modal-divider" style="border-color:var(--claims-danger);"></div>
+    <p class="claim-modal-body">
+      You are rejecting the claim for <strong>{{ claim.employee.get_full_name }}</strong>.
+      The employee will be notified by email.
+    </p>
+    <div class="field-group" style="text-align:left; margin-bottom:0;">
+      <label style="font-size:0.82rem; font-weight:600; color:#6c757d; text-transform:uppercase;">
+        Reason <span style="color:var(--claims-danger);">*</span>
+      </label>
+      <textarea id="rejectCommentBox" class="form-control" rows="3"
+                placeholder="Required — explain why you are rejecting this claim"></textarea>
+      <div class="field-error" id="rejectCommentError" style="display:none;">
+        A reason is required when rejecting a claim.
+      </div>
+    </div>
+    <div class="claim-modal-actions">
+      <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('rejectModal')">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+      <button class="claim-modal-btn claim-modal-btn--danger" onclick="submitReject()">
+        <i class="fas fa-times-circle"></i> Reject Claim
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openClaimModal(id) {
+  document.getElementById(id).classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeClaimModal(id) {
+  document.getElementById(id).classList.remove('show');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.claim-modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) { if (e.target === this) closeClaimModal(this.id); });
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') document.querySelectorAll('.claim-modal-overlay.show').forEach(m => closeClaimModal(m.id));
+});
+
+function submitApprove() {
+  document.getElementById('approveCommentInput').value = document.getElementById('approveCommentBox').value;
+  document.getElementById('approveForm').submit();
+}
+
+function submitReject() {
+  const comment = document.getElementById('rejectCommentBox').value.trim();
+  const err = document.getElementById('rejectCommentError');
+  if (!comment) { err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  document.getElementById('rejectCommentInput').value = comment;
+  document.getElementById('rejectForm').submit();
+}
+</script>
 {% endblock %}
