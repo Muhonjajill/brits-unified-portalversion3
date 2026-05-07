@@ -69,6 +69,8 @@ def parts_list(request):
         elif stock_status == 'ok':
             parts = parts.filter(quantity_in_stock__gt=F('minimum_stock_level'))
 
+    print(parts.query)
+
     return render(request, 'core/inventory/parts_list.html', {'parts': parts, 'form': form})
 
 

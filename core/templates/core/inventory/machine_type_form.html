@@ -12,12 +12,44 @@
     </div>
     {% endfor %}
     <div class="d-flex gap-3 mt-4">
-        <button type="button" class="btn btn-primary px-4"
-            onclick="confirmAction('Save Machine Type','Add this machine type?','Save','btn-primary',()=>document.getElementById(\'mtForm\').submit(),'fa-floppy-disk','confirm-info')">
+        <button type="button" class="btn btn-primary px-4" id="saveMtBtn">
             <i class="fa-solid fa-floppy-disk me-1"></i> Save
         </button>
         <a href="{% url 'inventory:machine_types' %}" class="btn btn-outline-secondary px-4">Cancel</a>
     </div>
 </div></form>
 </div></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const btn = document.getElementById("saveMtBtn");
+    const form = document.getElementById("mtForm");
+
+    if (!btn || !form) {
+        console.error("Button or form not found");
+        return;
+    }
+
+    if (typeof confirmAction !== "function") {
+        console.error("confirmAction is not defined");
+        return;
+    }
+
+    btn.addEventListener("click", function () {
+
+        confirmAction(
+            "Save Machine Type",
+            "Add this machine type?",
+            "Save",
+            "btn-primary",
+            () => form.submit(),
+            "fa-floppy-disk",
+            "confirm-info"
+        );
+
+    });
+
+});
+</script>
 {% endblock %}

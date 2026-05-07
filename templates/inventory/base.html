@@ -454,16 +454,31 @@ function showToast(message, type = 'success') {
 }
 
 function confirmAction(title, message, btnText, btnClass, onConfirm, iconClass = 'fa-trash', iconBg = 'confirm-danger') {
+
+    const modalEl = document.getElementById('confirmModal');
+
     document.getElementById('confirmTitle').textContent = title;
     document.getElementById('confirmMessage').textContent = message;
+
     const iconEl = document.getElementById('confirmIcon');
     iconEl.className = 'confirm-modal-icon ' + iconBg;
+
     document.getElementById('confirmIconInner').className = 'fa-solid ' + iconClass;
+
     const btn = document.getElementById('confirmBtn');
     btn.className = 'btn px-4 ' + btnClass;
     btn.textContent = btnText;
-    btn.onclick = () => { bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide(); onConfirm(); };
-    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+
+    // SAFE handler (NO getInstance issues)
+    btn.onclick = function () {
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.hide();
+        onConfirm();
+    };
+
+    // ALWAYS show modal safely
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
 }
 </script>
 {% block extra_js %}{% endblock %}

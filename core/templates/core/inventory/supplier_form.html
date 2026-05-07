@@ -1,23 +1,84 @@
 {% extends 'inventory/base.html' %}
 {% block title %}{{ title }}{% endblock %}
 {% block page_title %}{{ title }}{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center"><div class="col-lg-7">
-    <form method="post" id="suppForm">{% csrf_token %}
-    <div class="form-card">
-        <h5 class="fw-700 mb-4" style="color:var(--primary);"><i class="fa-solid fa-truck me-2"></i>{{ title }}</h5>
-        {% for field in form %}
-        <div class="mb-3"><label class="form-label">{{ field.label }}</label>{{ field }}
-            {% if field.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ field.errors }}</div>{% endif %}
-        </div>
-        {% endfor %}
-        <div class="d-flex gap-3 mt-4">
-            <button type="button" class="btn btn-primary px-4"
-                onclick="confirmAction('{{ title }}','Save supplier details?','Save','btn-primary',()=>document.getElementById(\'suppForm\').submit(),'fa-floppy-disk','confirm-info')">
-                <i class="fa-solid fa-floppy-disk me-1"></i> Save
-            </button>
-            <a href="{% url 'inventory:suppliers' %}" class="btn btn-outline-secondary px-4">Cancel</a>
-        </div>
-    </div></form>
-</div></div>
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <form method="post" id="suppForm">
+            {% csrf_token %}
+
+            <div class="form-card">
+                <h5 class="fw-700 mb-4" style="color:var(--primary);">
+                    <i class="fa-solid fa-truck me-2"></i>{{ title }}
+                </h5>
+
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="text-danger mt-1" style="font-size:0.8rem;">
+                            {{ field.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <div class="d-flex gap-3 mt-4">
+                    <button type="button" class="btn btn-primary px-4" id="saveSuppBtn">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Save
+                    </button>
+
+                    <a href="{% url 'inventory:suppliers' %}" class="btn btn-outline-secondary px-4">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const btn = document.getElementById("saveSuppBtn");
+    const form = document.getElementById("suppForm");
+
+    if (!btn || !form) {
+        console.error("Missing button or form");
+        return;
+    }
+
+    btn.addEventListener("click", function () {
+
+        // fallback so NOTHING breaks
+        if (typeof confirmAction !== "function") {
+            console.warn("confirmAction missing → using native confirm");
+
+            if (confirm("Save supplier details?")) {
+                form.submit();
+            }
+
+            return;
+        }
+
+        // your modal system
+        confirmAction(
+            "{{ title }}",
+            "Save supplier details?",
+            "Save",
+            "btn-primary",
+            () => form.submit(),
+            "fa-floppy-disk",
+            "confirm-info"
+        );
+
+    });
+
+});
+</script>
 {% endblock %}
