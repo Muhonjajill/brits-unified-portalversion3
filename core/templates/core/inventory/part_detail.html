@@ -1,0 +1,221 @@
+{% extends 'inventory/base.html' %}
+{% load humanize %}
+{% block title %}{{ part.name }}{% endblock %}
+{% block page_title %}{{ part.name }}{% endblock %}
+{% block page_subtitle %}{{ part.part_number }} — Part Detail{% endblock %}
+
+{% block topbar_btn %}
+<a href="{% url 'inventory:part_edit' part.pk %}" class="btn btn-outline-primary me-2">
+    <i class="fa-solid fa-pen me-1"></i> Edit
+</a>
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#transactionModal">
+    <i class="fa-solid fa-right-left me-1"></i> Record Transaction
+</button>
+{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'inventory:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'inventory:parts_list' %}">Parts</a></li>
+    <li class="breadcrumb-item active">{{ part.name }}</li>
+</ol></nav>
+
+<div class="row g-4">
+    <!-- Part Info -->
+    <div class="col-lg-4">
+        <div class="form-card h-100">
+            <div class="text-center mb-3">
+                <div style="width:80px;height:80px;background:var(--primary);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:2rem;color:white;">
+                    <i class="fa-solid fa-gear"></i>
+                </div>
+                <h4 class="fw-700 mb-1">{{ part.name }}</h4>
+                <code class="text-muted">{{ part.part_number }}</code>
+            </div>
+
+            {% if part.is_out_of_stock %}
+                <div class="alert alert-danger text-center py-2"><i class="fa-solid fa-circle-xmark me-1"></i> Out of Stock</div>
+            {% elif part.is_low_stock %}
+                <div class="alert alert-warning text-center py-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> Low Stock</div>
+            {% else %}
+                <div class="alert alert-success text-center py-2"><i class="fa-solid fa-circle-check me-1"></i> In Stock</div>
+            {% endif %}
+
+            <table class="table table-sm mt-3">
+                <tr><td class="text-muted fw-500">Category</td>
+                    <td><span class="badge" style="background:{{ part.category.color }}20;color:{{ part.category.color }}">{{ part.category.name }}</span></td></tr>
+                <tr><td class="text-muted fw-500">Condition</td><td>{{ part.get_condition_display }}</td></tr>
+                <tr><td class="text-muted fw-500">Unit</td><td>{{ part.get_unit_display }}</td></tr>
+                <tr><td class="text-muted fw-500">Unit Cost</td><td class="fw-700">KES {{ part.unit_cost|intcomma }}</td></tr>
+                <tr><td class="text-muted fw-500">Stock Value</td><td class="fw-700 text-success">KES {{ part.total_value|intcomma }}</td></tr>
+                <tr><td class="text-muted fw-500">Min. Level</td><td>{{ part.minimum_stock_level }} {{ part.unit }}(s)</td></tr>
+                <tr><td class="text-muted fw-500">Location</td><td>{{ part.storage_location|default:"—" }}</td></tr>
+                <tr><td class="text-muted fw-500">Supplier</td><td>{{ part.supplier.name|default:"—" }}</td></tr>
+                <tr><td class="text-muted fw-500">Added</td><td><small>{{ part.created_at|date:"d M Y" }}</small></td></tr>
+            </table>
+
+            {% if part.compatible_machines.all %}
+            <div class="mt-2">
+                <div class="form-section-title">Compatible Machines</div>
+                {% for m in part.compatible_machines.all %}
+                    <span class="badge bg-light text-dark me-1 mb-1"><i class="fa-solid fa-server me-1"></i>{{ m.name }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if part.description %}
+            <div class="mt-3">
+                <div class="form-section-title">Description</div>
+                <p class="text-muted" style="font-size:0.875rem;">{{ part.description }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stock Level + History -->
+    <div class="col-lg-8">
+        <!-- Big Stock Number -->
+        <div class="stat-card mb-4">
+            <div class="row align-items-center">
+                <div class="col">
+                    <div class="stat-label">Current Stock Level</div>
+                    <div class="display-3 fw-700 {% if part.is_out_of_stock %}text-danger{% elif part.is_low_stock %}text-warning{% else %}text-success{% endif %}" id="stockQty">
+                        {{ part.quantity_in_stock }}
+                    </div>
+                    <div class="text-muted">{{ part.get_unit_display }}(s) in stock</div>
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#transactionModal">
+                        <i class="fa-solid fa-right-left me-2"></i>Record Transaction
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="data-table">
+            <div class="table-header">
+                <h5><i class="fa-solid fa-clock-rotate-left me-2"></i>Transaction History</h5>
+            </div>
+            {% if transactions %}
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr><th>Type</th><th>Qty</th><th>Before</th><th>After</th><th>Machine</th><th>Reference</th><th>By</th><th>Date</th></tr>
+                </thead>
+                <tbody>
+                    {% for txn in transactions %}
+                    <tr>
+                        <td>
+                            {% if txn.transaction_type in 'receipt,return' %}
+                                <span class="badge bg-success">{{ txn.get_transaction_type_display }}</span>
+                            {% elif txn.transaction_type in 'issue,damaged' %}
+                                <span class="badge bg-danger">{{ txn.get_transaction_type_display }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ txn.get_transaction_type_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold {% if txn.quantity < 0 %}text-danger{% else %}text-success{% endif %}">
+                            {% if txn.quantity > 0 %}+{% endif %}{{ txn.quantity }}
+                        </td>
+                        <td class="text-muted">{{ txn.quantity_before }}</td>
+                        <td class="fw-500">{{ txn.quantity_after }}</td>
+                        <td><small>{{ txn.machine_serial|default:"—" }}</small></td>
+                        <td><small class="text-muted">{{ txn.reference_number|default:"—" }}</small></td>
+                        <td><small>{{ txn.performed_by.get_full_name|default:txn.performed_by.username|default:"—" }}</small></td>
+                        <td><small class="text-muted">{{ txn.performed_at|date:"d M Y H:i" }}</small></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="fa-solid fa-receipt fa-2x mb-2"></i>
+                <p class="mb-0">No transactions recorded yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Modal -->
+<div class="modal fade" id="transactionModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-solid fa-right-left me-2"></i>Record Stock Transaction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info py-2 mb-3" style="font-size:0.875rem;">
+                    <strong>{{ part.name }}</strong> — Current: <strong id="currentStock">{{ part.quantity_in_stock }}</strong> {{ part.unit }}(s)
+                </div>
+                <div id="txnForm">
+                    <div class="mb-3">
+                        <label class="form-label">Transaction Type *</label>
+                        {{ transaction_form.transaction_type }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Quantity *</label>
+                        {{ transaction_form.quantity }}
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Machine Serial No.</label>
+                            {{ transaction_form.machine_serial }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Machine Type</label>
+                            {{ transaction_form.machine_type }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reference Number</label>
+                        {{ transaction_form.reference_number }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        {{ transaction_form.notes }}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="submitTxn">
+                    <i class="fa-solid fa-check me-1"></i> Record Transaction
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('submitTxn').addEventListener('click', function() {
+    const form = document.getElementById('txnForm');
+    const data = new FormData();
+    data.append('transaction_type', form.querySelector('[name=transaction_type]').value);
+    data.append('quantity', form.querySelector('[name=quantity]').value);
+    data.append('machine_serial', form.querySelector('[name=machine_serial]').value);
+    data.append('machine_type', form.querySelector('[name=machine_type]').value);
+    data.append('reference_number', form.querySelector('[name=reference_number]').value);
+    data.append('notes', form.querySelector('[name=notes]').value);
+    data.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+    this.disabled = true; this.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Saving...';
+
+    fetch('{% url "inventory:stock_transaction" part.pk %}', { method: 'POST', body: data })
+    .then(r => r.json()).then(d => {
+        if (d.success) {
+            bootstrap.Modal.getInstance(document.getElementById('transactionModal')).hide();
+            showToast(d.message, 'success');
+            document.getElementById('stockQty').textContent = d.new_quantity;
+            document.getElementById('currentStock').textContent = d.new_quantity;
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(d.error || 'Transaction failed', 'danger');
+        }
+        this.disabled = false; this.innerHTML = '<i class="fa-solid fa-check me-1"></i> Record Transaction';
+    });
+});
+</script>
+{% endblock %}

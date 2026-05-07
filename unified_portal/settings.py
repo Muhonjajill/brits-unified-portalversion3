@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'widget_tweaks',
     'channels',
+    'core.inventory',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [

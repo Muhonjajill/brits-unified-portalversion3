@@ -1,0 +1,74 @@
+{% extends 'inventory/base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <form method="post" id="catForm">
+            {% csrf_token %}
+            <div class="form-card">
+                <h5 class="fw-700 mb-4" style="color:var(--primary);">
+                    <i class="fa-solid fa-tag me-2"></i>{{ title }}
+                </h5>
+
+                {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="text-danger mt-1" style="font-size:0.8rem;">
+                            {{ field.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <div class="d-flex gap-3 mt-4">
+                    <button type="submit" class="btn btn-primary px-4"
+                        onclick="return confirm('Add this part category?')">
+                        Save
+                    </button>
+
+                    <a href="{% url 'inventory:categories' %}" class="btn btn-outline-secondary px-4">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const btn = document.getElementById("saveBtn");
+    const form = document.getElementById("catForm");
+
+    if (!btn || !form) {
+        console.error("Button or form not found");
+        return;
+    }
+
+    btn.addEventListener("click", function () {
+
+        if (typeof confirmAction !== "function") {
+            console.error("confirmAction() is not defined");
+            return;
+        }
+
+        confirmAction(
+            "Save Category",
+            "Add this part category?",
+            "Save",
+            "btn-primary",
+            () => form.submit(),
+            "fa-floppy-disk",
+            "confirm-info"
+        );
+    });
+});
+</script>
+{% endblock %}

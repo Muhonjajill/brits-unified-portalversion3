@@ -1,0 +1,103 @@
+{% extends 'inventory/base.html' %}
+{% load humanize %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Inventory Reports{% endblock %}
+{% block page_subtitle %}Analytics & insights{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Most Issued Parts -->
+    <div class="col-lg-6">
+        <div class="data-table">
+            <div class="table-header">
+                <h5><i class="fa-solid fa-arrow-trend-up me-2 text-danger"></i>Most Issued Parts</h5>
+            </div>
+            <table class="table table-hover mb-0">
+                <thead><tr><th>#</th><th>Part</th><th>Issues</th><th>Stock Left</th></tr></thead>
+                <tbody>
+                    {% for part in most_issued %}
+                    <tr>
+                        <td class="text-muted fw-700">{{ forloop.counter }}</td>
+                        <td>
+                            <a href="{% url 'inventory:part_detail' part.pk %}" class="text-decoration-none text-dark fw-600">{{ part.name }}</a><br>
+                            <small class="text-muted">{{ part.part_number }}</small>
+                        </td>
+                        <td><span class="badge bg-danger">{{ part.issues }}</span></td>
+                        <td class="{% if part.is_out_of_stock %}text-danger{% elif part.is_low_stock %}text-warning{% else %}text-success{% endif %} fw-600">{{ part.quantity_in_stock }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center text-muted py-4">No issue transactions yet</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Stock Value by Category -->
+    <div class="col-lg-6">
+        <div class="data-table">
+            <div class="table-header">
+                <h5><i class="fa-solid fa-coins me-2 text-success"></i>Stock Value by Category</h5>
+            </div>
+            <table class="table table-hover mb-0">
+                <thead><tr><th>Category</th><th>Total Value (KES)</th></tr></thead>
+                <tbody>
+                    {% for cat in category_values %}
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:0.5rem;">
+                                <div style="width:10px;height:10px;border-radius:50%;background:{{ cat.color }};flex-shrink:0;"></div>
+                                {{ cat.name }}
+                            </div>
+                        </td>
+                        <td class="fw-700">{{ cat.total_val|default:0|floatformat:0|intcomma }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2" class="text-center text-muted py-4">No data</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Transactions (30 days) -->
+    <div class="col-12">
+        <div class="data-table">
+            <div class="table-header">
+                <h5><i class="fa-solid fa-calendar-days me-2" style="color:var(--primary)"></i>Last 30 Days — Transactions</h5>
+            </div>
+            <table class="table table-hover mb-0">
+                <thead><tr><th>Part</th><th>Type</th><th>Qty</th><th>Machine</th><th>Reference</th><th>By</th><th>Date</th></tr></thead>
+                <tbody>
+                    {% for txn in recent_txns %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'inventory:part_detail' txn.part.pk %}" class="text-decoration-none text-dark fw-600">{{ txn.part.name }}</a><br>
+                            <small class="text-muted">{{ txn.part.part_number }}</small>
+                        </td>
+                        <td>
+                            {% if txn.transaction_type == 'receipt' or txn.transaction_type == 'return' %}
+                                <span class="badge bg-success">{{ txn.get_transaction_type_display }}</span>
+                            {% elif txn.transaction_type == 'issue' or txn.transaction_type == 'damaged' %}
+                                <span class="badge bg-danger">{{ txn.get_transaction_type_display }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ txn.get_transaction_type_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold {% if txn.quantity < 0 %}text-danger{% else %}text-success{% endif %}">
+                            {% if txn.quantity > 0 %}+{% endif %}{{ txn.quantity }}
+                        </td>
+                        <td><small>{{ txn.machine_serial|default:"—" }}</small></td>
+                        <td><small class="text-muted">{{ txn.reference_number|default:"—" }}</small></td>
+                        <td><small>{{ txn.performed_by.get_full_name|default:txn.performed_by.username|default:"—" }}</small></td>
+                        <td><small class="text-muted">{{ txn.performed_at|date:"d M Y H:i" }}</small></td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">No transactions in the last 30 days</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,471 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Inventory{% endblock %} | Blue River</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'icons/favicon.ico' %}">
+    <link href="https://fonts.googleapis.com/css?family=Rubik:400,500,600,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+:root {
+    --primary: #123692;
+    --primary-dark: #0d2870;
+    --primary-light: #1e4db7;
+
+    --accent: #e63946;
+    --success: #2ecc71;
+    --warning: #f39c12;
+    --danger: #e74c3c;
+
+    --sidebar-width: 260px;
+
+    --bg: #f3f4f6;
+    --card-bg: #ffffff;
+    --text: #1f2937;
+    --muted: #9ca3af;
+    --border: #e5e7eb;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+/* =========================
+   SIDEBAR (LIGHT THEME)
+========================= */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: var(--sidebar-width);
+    background: #ffffff;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.sidebar-brand {
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sidebar-brand img {
+    height: 38px;
+}
+
+.sidebar-brand span {
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.sidebar-section-label {
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 1rem 1.5rem 0.4rem;
+}
+
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #4b5563;
+    padding: 0.65rem 1.5rem;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    background: #f3f4f6;
+    color: var(--primary);
+}
+
+.nav-link.active {
+    background: var(--primary);
+    color: #fff;
+    border-left-color: var(--primary);
+}
+
+.nav-link i {
+    width: 18px;
+    text-align: center;
+}
+
+.nav-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 2px 7px;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.sidebar-footer a {
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.sidebar-footer a:hover {
+    color: var(--primary);
+}
+
+/* =========================
+   MAIN LAYOUT
+========================= */
+.main-content {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.topbar {
+    background: white;
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topbar-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.topbar-title small {
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: block;
+}
+
+.page-body {
+    padding: 1.5rem;
+    flex: 1;
+}
+
+/* =========================
+   STAT CARDS (HELPDESK STYLE)
+========================= */
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.2rem;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+
+.stat-card .stat-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+    background: #eef2ff;
+    color: var(--primary);
+}
+
+.stat-value {
+    font-size: 1.7rem;
+    font-weight: 700;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+}
+
+/* =========================
+   TABLES
+========================= */
+.data-table {
+    background: white;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.data-table .table-header {
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table table {
+    margin: 0;
+}
+
+.data-table thead th {
+    background: #f9fafb;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0.75rem;
+}
+
+.data-table tbody td {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+}
+
+/* =========================
+   BADGES
+========================= */
+.stock-badge {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+.stock-ok { background: #dcfce7; color: #166534; }
+.stock-low { background: #fef9c3; color: #854d0e; }
+.stock-out { background: #fee2e2; color: #991b1b; }
+
+/* =========================
+   FORMS
+========================= */
+.form-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 0.875rem;
+}
+
+/* =========================
+   MODALS
+========================= */
+.modal-content {
+    border-radius: 12px;
+    border: none;
+}
+
+/* =========================
+   TOASTS
+========================= */
+.toast-container {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+}
+
+/* =========================
+   BUTTONS
+========================= */
+.btn-primary {
+    background: var(--primary);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-100%);
+    }
+    .main-content {
+        margin-left: 0;
+    }
+}
+</style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+<!-- Sidebar -->
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <img src="{% static 'icons/logo.png' %}" alt="Blue River">
+        <span>Blue River<br>Technology Solutions</span>
+    </div>
+    <div class="sidebar-nav">
+        <div class="sidebar-section-label">Overview</div>
+        <a href="{% url 'inventory:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <i class="fa-solid fa-gauge-high"></i> Dashboard
+        </a>
+
+        <div class="sidebar-section-label">Inventory</div>
+        <a href="{% url 'inventory:parts_list' %}" class="nav-link {% if 'part' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fa-solid fa-boxes-stacked"></i> Spare Parts
+        </a>
+        <a href="{% url 'inventory:alerts' %}" class="nav-link {% if request.resolver_match.url_name == 'alerts' %}active{% endif %}">
+            <i class="fa-solid fa-bell"></i> Stock Alerts
+            {% if active_alert_count %}<span class="nav-badge">{{ active_alert_count }}</span>{% endif %}
+        </a>
+        <a href="{% url 'inventory:reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+            <i class="fa-solid fa-chart-bar"></i> Reports
+        </a>
+
+        <div class="sidebar-section-label">Master Data</div>
+        <a href="{% url 'inventory:categories' %}" class="nav-link {% if 'categor' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fa-solid fa-tags"></i> Categories
+        </a>
+        <a href="{% url 'inventory:machine_types' %}" class="nav-link {% if 'machine' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fa-solid fa-server"></i> Machine Types
+        </a>
+        <a href="{% url 'inventory:suppliers' %}" class="nav-link {% if 'supplier' in request.resolver_match.url_name %}active{% endif %}">
+            <i class="fa-solid fa-truck"></i> Suppliers
+        </a>
+    </div>
+    <div class="sidebar-footer">
+        <a href="{% url 'pre_dashboards' %}"><i class="fa-solid fa-arrow-left"></i> Back to Portal</a>
+    </div>
+</nav>
+
+<!-- Main -->
+<div class="main-content">
+    <div class="topbar">
+        <div>
+            <div class="topbar-title">
+                {% block page_title %}Inventory Management{% endblock %}
+                <small>{% block page_subtitle %}Blue River Technology Solutions{% endblock %}</small>
+            </div>
+        </div>
+        <div class="topbar-actions">
+            <a href="{% url 'inventory:alerts' %}" class="alert-bell">
+                <i class="fa-solid fa-bell"></i>
+                {% if active_alert_count %}<span class="badge">{{ active_alert_count }}</span>{% endif %}
+            </a>
+            {% block topbar_btn %}{% endblock %}
+        </div>
+    </div>
+    <div class="page-body">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show mb-3" role="alert" style="border-radius:10px;">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Generic Confirm Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="confirm-modal-icon confirm-danger" id="confirmIcon">
+                    <i class="fa-solid fa-trash" id="confirmIconInner"></i>
+                </div>
+                <h5 class="fw-bold mb-2" id="confirmTitle">Are you sure?</h5>
+                <p class="text-muted mb-0" id="confirmMessage">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer justify-content-center gap-2">
+                <button class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-danger px-4" id="confirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function showToast(message, type = 'success') {
+    const id = 'toast_' + Date.now();
+    const icons = { success: 'fa-circle-check', danger: 'fa-circle-xmark', warning: 'fa-triangle-exclamation', info: 'fa-circle-info' };
+    const colors = { success: '#2ecc71', danger: '#e74c3c', warning: '#f39c12', info: '#3498db' };
+    const html = `
+        <div id="${id}" class="toast align-items-center text-white border-0 mb-2" style="background:${colors[type]||colors.info}" role="alert">
+            <div class="d-flex">
+                <div class="toast-body fw-500">
+                    <i class="fa-solid ${icons[type]||icons.info} me-2"></i> ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>`;
+    document.getElementById('toastContainer').insertAdjacentHTML('beforeend', html);
+    const toastEl = document.getElementById(id);
+    new bootstrap.Toast(toastEl, { delay: 4000 }).show();
+    toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+}
+
+function confirmAction(title, message, btnText, btnClass, onConfirm, iconClass = 'fa-trash', iconBg = 'confirm-danger') {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMessage').textContent = message;
+    const iconEl = document.getElementById('confirmIcon');
+    iconEl.className = 'confirm-modal-icon ' + iconBg;
+    document.getElementById('confirmIconInner').className = 'fa-solid ' + iconClass;
+    const btn = document.getElementById('confirmBtn');
+    btn.className = 'btn px-4 ' + btnClass;
+    btn.textContent = btnText;
+    btn.onclick = () => { bootstrap.Modal.getInstance(document.getElementById('confirmModal')).hide(); onConfirm(); };
+    new bootstrap.Modal(document.getElementById('confirmModal')).show();
+}
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

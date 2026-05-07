@@ -23,6 +23,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path('', include('core.urls')),
     path('', include('core.claims.urls')),
+    path('inventory/', include('core.inventory.urls')),
 ]
 
 handler403 = core_views.custom_permission_denied

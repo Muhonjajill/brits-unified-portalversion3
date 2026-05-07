@@ -1,0 +1,223 @@
+{% extends 'inventory/base.html' %}
+{% load humanize %}
+
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Inventory Dashboard{% endblock %}
+{% block page_subtitle %}CDM & ATM Spare Parts Overview{% endblock %}
+
+{% block topbar_btn %}
+<a href="{% url 'inventory:part_create' %}" class="btn btn-primary">
+    <i class="fa-solid fa-plus me-1"></i> Add Part
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#dbeafe; color:var(--primary);">
+                <i class="fa-solid fa-boxes-stacked"></i>
+            </div>
+            <div class="stat-value text-primary">{{ total_parts }}</div>
+            <div class="stat-label">Total Parts</div>
+            <i class="fa-solid fa-boxes-stacked stat-bg"></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#d4edda; color:#155724;">
+                <i class="fa-solid fa-coins"></i>
+            </div>
+            <div class="stat-value" style="color:#155724;">KES {{ total_value|floatformat:0|intcomma }}</div>
+            <div class="stat-label">Total Stock Value</div>
+            <i class="fa-solid fa-coins stat-bg" style="color:#155724;"></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#fff3cd; color:#856404;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="stat-value" style="color:#856404;">{{ low_stock }}</div>
+            <div class="stat-label">Low Stock Items</div>
+            <i class="fa-solid fa-triangle-exclamation stat-bg" style="color:#856404;"></i>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#f8d7da; color:#721c24;">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </div>
+            <div class="stat-value" style="color:#721c24;">{{ out_of_stock }}</div>
+            <div class="stat-label">Out of Stock</div>
+            <i class="fa-solid fa-circle-xmark stat-bg" style="color:#721c24;"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Low Stock Alert Table -->
+    <div class="col-lg-8">
+        <div class="data-table">
+            <div class="table-header">
+                <h5><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i>Parts Needing Attention</h5>
+                <a href="{% url 'inventory:parts_list' %}?stock_status=low" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            {% if low_stock_parts %}
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Part</th>
+                        <th>Category</th>
+                        <th>In Stock</th>
+                        <th>Min. Level</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for part in low_stock_parts %}
+                    <tr>
+                        <td>
+                            <div class="fw-600">{{ part.name }}</div>
+                            <small class="text-muted">{{ part.part_number }}</small>
+                        </td>
+                        <td><span class="badge bg-light text-dark">{{ part.category.name }}</span></td>
+                        <td class="fw-bold {% if part.is_out_of_stock %}text-danger{% else %}text-warning{% endif %}">
+                            {{ part.quantity_in_stock }} {{ part.unit }}(s)
+                        </td>
+                        <td class="text-muted">{{ part.minimum_stock_level }}</td>
+                        <td>
+                            {% if part.is_out_of_stock %}
+                                <span class="stock-badge stock-out">Out of Stock</span>
+                            {% else %}
+                                <span class="stock-badge stock-low">Low Stock</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'inventory:part_detail' part.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="fa-solid fa-circle-check fa-3x mb-3 text-success"></i>
+                <p class="mb-0">All parts are sufficiently stocked!</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+        <!-- Category Breakdown -->
+        <div class="data-table mb-4">
+            <div class="table-header">
+                <h5><i class="fa-solid fa-tags me-2" style="color:var(--primary)"></i>By Category</h5>
+            </div>
+            <div class="p-3">
+                {% for cat in categories %}
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:10px;height:10px;border-radius:50%;background:{{ cat.color }};flex-shrink:0;"></div>
+                        <span style="font-size:0.875rem;">{{ cat.name }}</span>
+                    </div>
+                    <span class="badge" style="background:{{ cat.color }}20;color:{{ cat.color }};font-weight:600;">{{ cat.part_count }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center py-2">No categories yet</p>
+                {% endfor %}
+                <a href="{% url 'inventory:categories' %}" class="btn btn-sm btn-outline-primary w-100 mt-2">Manage Categories</a>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="data-table">
+            <div class="table-header">
+                <h5><i class="fa-solid fa-bolt me-2" style="color:var(--primary)"></i>Quick Stats</h5>
+            </div>
+            <div class="p-3">
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <span class="text-muted" style="font-size:0.875rem;">Transactions (7 days)</span>
+                    <strong>{{ week_transactions }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <span class="text-muted" style="font-size:0.875rem;">Active Alerts</span>
+                    <strong class="text-danger">{{ active_alerts }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2">
+                    <span class="text-muted" style="font-size:0.875rem;">Categories</span>
+                    <strong>{{ categories|length }}</strong>
+                </div>
+                <div class="mt-3 d-grid gap-2">
+                    <a href="{% url 'inventory:parts_list' %}" class="btn btn-primary btn-sm">
+                        <i class="fa-solid fa-boxes-stacked me-1"></i> View All Parts
+                    </a>
+                    <a href="{% url 'inventory:reports' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fa-solid fa-chart-bar me-1"></i> View Reports
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="data-table mt-4">
+    <div class="table-header">
+        <h5><i class="fa-solid fa-clock-rotate-left me-2" style="color:var(--primary)"></i>Recent Transactions</h5>
+        <a href="{% url 'inventory:reports' %}" class="btn btn-sm btn-outline-primary">Full History</a>
+    </div>
+    {% if recent_transactions %}
+    <table class="table table-hover mb-0">
+        <thead>
+            <tr>
+                <th>Part</th>
+                <th>Type</th>
+                <th>Qty</th>
+                <th>Reference</th>
+                <th>By</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for txn in recent_transactions %}
+            <tr>
+                <td>
+                    <a href="{% url 'inventory:part_detail' txn.part.pk %}" class="text-decoration-none text-dark fw-500">
+                        {{ txn.part.name }}
+                    </a><br>
+                    <small class="text-muted">{{ txn.part.part_number }}</small>
+                </td>
+                <td>
+                    {% if txn.transaction_type == 'receipt' or txn.transaction_type == 'return' %}
+                        <span class="badge bg-success">{{ txn.get_transaction_type_display }}</span>
+                    {% elif txn.transaction_type == 'issue' or txn.transaction_type == 'damaged' %}
+                        <span class="badge bg-danger">{{ txn.get_transaction_type_display }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ txn.get_transaction_type_display }}</span>
+                    {% endif %}
+                </td>
+                <td class="fw-bold {% if txn.quantity < 0 %}text-danger{% else %}text-success{% endif %}">
+                    {% if txn.quantity > 0 %}+{% endif %}{{ txn.quantity }}
+                </td>
+                <td><small class="text-muted">{{ txn.reference_number|default:"—" }}</small></td>
+                <td><small>{{ txn.performed_by.get_full_name|default:txn.performed_by.username }}</small></td>
+                <td><small class="text-muted">{{ txn.performed_at|date:"d M Y H:i" }}</small></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <i class="fa-solid fa-receipt fa-3x mb-3"></i>
+        <p class="mb-0">No transactions yet</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

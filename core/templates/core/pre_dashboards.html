@@ -42,15 +42,24 @@
                 <p class="card-description">Raise issues, track support tickets, communicate with support.</p>
                 <div class="card-footer">24/7 support & real-time tracking</div>
             </div>
+
+            <div class="card card-effect animate__animated animate__fadeInUp animate__delay-2s" id="inventorySystemCard" tabindex="0">
+                <span class="card-icon bounce"><i class="fa-solid fa-boxes-stacked"></i></span>
+                <h2 class="card-title gradient-text">Inventory System</h2>
+                <p class="card-description">Manage spare parts, stock levels, suppliers, and inventory transactions.</p>
+                <div class="card-footer">Real-time inventory monitoring</div>
+            </div>
         </main>
     <div>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const ticketingCard = document.getElementById('ticketingSystemCard');
             const fileManagementCard = document.getElementById('fileManagementCard');
+            const inventoryCard = document.getElementById('inventorySystemCard');
 
             const ticketingURL = "{% url 'ticketing_dashboard' %}";
             const filemanagementURL = "{% url 'file_management_dashboard' %}";
+            const inventoryURL = "{% url 'inventory:dashboard' %}";
 
             if (ticketingCard) {
                 ticketingCard.addEventListener('click', function () {
@@ -61,6 +70,12 @@
             if (fileManagementCard) {
                 fileManagementCard.addEventListener('click', function () {
                     window.location.href = filemanagementURL;
+                });
+            }
+
+            if (inventoryCard) {
+                inventoryCard.addEventListener('click', function () {
+                    window.location.href = inventoryURL;
                 });
             }
         });

@@ -909,6 +909,18 @@ window.addEventListener('DOMContentLoaded', () => {
       },
       options: {
         ...animationOptions,
+        scales: {
+          ...animationOptions.scales,
+          y: {
+            ...animationOptions.scales.y,
+            beginAtZero: true
+          },
+          x: {
+            ...animationOptions.scales.x,
+            offset: true,
+            grid: { display: false }
+          }
+        },
         onClick: (event, elements) => {
           if (elements.length > 0) {
             const index = elements[0].index;
@@ -1009,6 +1021,18 @@ window.addEventListener('DOMContentLoaded', () => {
       },
       options: {
         ...animationOptions,
+        scales: {
+          ...animationOptions.scales,
+          y: {
+            ...animationOptions.scales.y,
+            beginAtZero: true
+          },
+          x: {
+            ...animationOptions.scales.x,
+            offset: true,
+            grid: { display: false }
+          }
+        },
         onClick: (event, elements) => {
           if (elements.length > 0) {
             const index = elements[0].index;

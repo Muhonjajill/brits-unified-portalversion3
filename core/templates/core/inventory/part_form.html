@@ -1,0 +1,114 @@
+{% extends 'inventory/base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block page_subtitle %}Spare Parts Inventory{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb"><ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'inventory:dashboard' %}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'inventory:parts_list' %}">Parts</a></li>
+    <li class="breadcrumb-item active">{{ title }}</li>
+</ol></nav>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <form method="post" id="partForm">
+            {% csrf_token %}
+            <div class="form-card">
+                <h5 class="fw-700 mb-4" style="color:var(--primary);">
+                    <i class="fa-solid fa-gear me-2"></i>{{ title }}
+                </h5>
+
+                <div class="form-section-title">Identification</div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Part Number *</label>
+                        {{ form.part_number }}
+                        {% if form.part_number.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ form.part_number.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Part Name *</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ form.name.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Description</label>
+                        {{ form.description }}
+                    </div>
+                </div>
+
+                <div class="form-section-title">Classification</div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Category *</label>
+                        {{ form.category }}
+                        {% if form.category.errors %}<div class="text-danger mt-1" style="font-size:0.8rem;">{{ form.category.errors }}</div>{% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Supplier</label>
+                        {{ form.supplier }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Condition</label>
+                        {{ form.condition }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Compatible Machines</label>
+                        <div class="d-flex flex-wrap gap-3 mt-1">
+                            {% for cb in form.compatible_machines %}
+                            <div class="form-check">
+                                {{ cb.tag }}
+                                <label class="form-check-label" for="{{ cb.id_for_label }}">{{ cb.choice_label }}</label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section-title">Stock & Pricing</div>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Quantity in Stock</label>
+                        {{ form.quantity_in_stock }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Minimum Stock Level</label>
+                        {{ form.minimum_stock_level }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Unit</label>
+                        {{ form.unit }}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Unit Cost (KES)</label>
+                        {{ form.unit_cost }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Storage Location</label>
+                        {{ form.storage_location }}
+                    </div>
+                </div>
+
+                <div class="mt-4 d-flex gap-3">
+                    <button type="button" class="btn btn-primary px-4" id="saveBtn"
+                        onclick="confirmAction('{% if part %}Update Part{% else %}Save New Part{% endif %}',
+                            '{% if part %}Update &quot;{{ part.name }}&quot;?{% else %}Add this new spare part to inventory?{% endif %}',
+                            '{% if part %}Update{% else %}Save{% endif %}',
+                            'btn-primary', submitForm, 'fa-floppy-disk', 'confirm-info')">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> {% if part %}Update Part{% else %}Save Part{% endif %}
+                    </button>
+                    <a href="{% if part %}{% url 'inventory:part_detail' part.pk %}{% else %}{% url 'inventory:parts_list' %}{% endif %}" class="btn btn-outline-secondary px-4">
+                        Cancel
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function submitForm() { document.getElementById('partForm').submit(); }
+</script>
+{% endblock %}
