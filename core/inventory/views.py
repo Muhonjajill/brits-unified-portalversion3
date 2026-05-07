@@ -11,17 +11,22 @@ import json
 
 @login_required
 def inventory_dashboard(request):
-    total_parts = SparePart.objects.filter(is_active=True).count()
-    total_value = SparePart.objects.filter(is_active=True).aggregate(
+    #total_parts = SparePart.objects.filter(is_active=True).count()
+    total_parts = SparePart.objects.count()
+    #total_value = SparePart.objects.filter(is_active=True).aggregate(
+    total_value = SparePart.objects.aggregate(
         val=Sum(F('quantity_in_stock') * F('unit_cost'))
     )['val'] or 0
-    low_stock = SparePart.objects.filter(is_active=True, quantity_in_stock__gt=0).filter(
+    #low_stock = SparePart.objects.filter(is_active=True, quantity_in_stock__gt=0).filter(
+    low_stock = SparePart.objects.filter(is_active=False, quantity_in_stock__gt=0).filter(
         quantity_in_stock__lte=F('minimum_stock_level')
     ).count()
-    out_of_stock = SparePart.objects.filter(is_active=True, quantity_in_stock=0).count()
+    #out_of_stock = SparePart.objects.filter(is_active=True, quantity_in_stock=0).count()
+    out_of_stock = SparePart.objects.filter(is_active=False, quantity_in_stock=0).count()
     active_alerts = StockAlert.objects.filter(status='active').count()
     recent_transactions = StockTransaction.objects.select_related('part', 'performed_by').order_by('-performed_at')[:10]
-    low_stock_parts = SparePart.objects.filter(is_active=True).filter(
+    #low_stock_parts = SparePart.objects.filter(is_active=True).filter(
+    low_stock_parts = SparePart.objects.filter(
         quantity_in_stock__lte=F('minimum_stock_level')
     ).order_by('quantity_in_stock')[:8]
     # Category breakdown
@@ -48,7 +53,8 @@ def inventory_dashboard(request):
 @login_required
 def parts_list(request):
     form = StockFilterForm(request.GET)
-    parts = SparePart.objects.filter(is_active=True).select_related('category', 'supplier').prefetch_related('compatible_machines')
+    #parts = SparePart.objects.filter(is_active=True).select_related('category', 'supplier').prefetch_related('compatible_machines')
+    parts = SparePart.objects.select_related('category', 'supplier').prefetch_related('compatible_machines')
 
     if form.is_valid():
         search = form.cleaned_data.get('search')
@@ -276,7 +282,8 @@ def machine_type_create(request):
 @login_required
 def reports(request):
     # Top 10 most issued
-    most_issued = SparePart.objects.filter(is_active=True).annotate(
+    #most_issued = SparePart.objects.filter(is_active=True).annotate(
+    most_issued = SparePart.objects.annotate(
         issues=Count('transactions', filter=Q(transactions__transaction_type='issue'))
     ).order_by('-issues')[:10]
 
