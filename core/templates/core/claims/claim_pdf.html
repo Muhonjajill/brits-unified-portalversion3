@@ -15,12 +15,14 @@
   td.center { text-align: center; }
   .totals-row td { font-weight: bold; background: #f0f0f0; }
   .net-row td { background: #dce6f1; }
+  .paid-row td { background: #d4edda; }
   .signatures { margin-top: 24px; }
   .sig-row { display: flex; gap: 40px; margin-bottom: 32px; }
   .sig-block { flex: 1; border-top: 1px solid #555; padding-top: 4px; font-size: 9pt; }
   .meta-table td { border: none; padding: 2px 8px 2px 0; }
   .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px;
                   font-size: 8pt; font-weight: bold; background: #198754; color: #fff; }
+  a { color: #1F3864; }
 </style>
 </head>
 <body>
@@ -34,19 +36,22 @@
     <td style="padding-left:24px"><strong>Manager:</strong></td><td>{{ claim.manager.get_full_name|default:"—" }}</td>
   </tr>
   <tr>
-    <td><strong>HR:</strong></td><td>{{ claim.hr_reviewer.get_full_name|default:"—" }}</td>
-    <td style="padding-left:24px"><strong>Finance:</strong></td><td>{{ claim.finance_reviewer.get_full_name|default:"—" }}</td>
+    <td><strong>Finance:</strong></td><td>{{ claim.finance_reviewer.get_full_name|default:"—" }}</td>
+    <td style="padding-left:24px"><strong>Submitted:</strong></td><td>{{ claim.submitted_at|date:"d M Y"|default:"—" }}</td>
   </tr>
   <tr>
-    <td><strong>Submitted:</strong></td><td>{{ claim.submitted_at|date:"d M Y"|default:"—" }}</td>
-    <td style="padding-left:24px"><strong>Advance:</strong></td><td>KES {{ claim.advance|floatformat:2 }}</td>
+    <td><strong>Advance:</strong></td><td>KES {{ claim.advance|floatformat:2 }}</td>
+    {% if claim.amount_paid %}
+    <td style="padding-left:24px"><strong>Amount Paid:</strong></td>
+    <td style="color:#198754; font-weight:bold;">KES {{ claim.amount_paid|floatformat:2 }}</td>
+    {% endif %}
   </tr>
 </table>
 
 <table>
   <thead>
     <tr>
-      <th>Date</th><th>Site</th><th>Job Card ID</th>
+      <th>Date</th><th>Site</th><th>Ticket No.</th>
       <th>To (KES)</th><th>From (KES)</th>
       <th>Breakfast</th><th>Lunch</th><th>Dinner</th><th>Bed</th>
       <th>Total (KES)</th>
@@ -57,7 +62,17 @@
     <tr>
       <td class="center">{{ entry.date|date:"d/m/Y" }}</td>
       <td>{{ entry.site }}</td>
-      <td class="center">{{ entry.job_card_id|default:"—" }}</td>
+      <td class="center">
+        {% if entry.ticket_number %}
+          {% if entry.ticket_url %}
+            <a href="{{ entry.ticket_url }}">{{ entry.ticket_number }}</a>
+          {% else %}
+            {{ entry.ticket_number }}
+          {% endif %}
+        {% else %}
+          —
+        {% endif %}
+      </td>
       <td class="amount">{{ entry.transport_to|floatformat:2 }}</td>
       <td class="amount">{{ entry.transport_from|floatformat:2 }}</td>
       <td class="amount">{{ entry.breakfast|floatformat:2 }}</td>
@@ -81,20 +96,37 @@
       <td colspan="9" style="text-align:right">Total Minus Advance</td>
       <td class="amount">KES {{ claim.total_minus_advance|floatformat:2 }}</td>
     </tr>
+    {% if claim.amount_paid %}
+    <tr class="totals-row paid-row">
+      <td colspan="9" style="text-align:right">Amount Paid</td>
+      <td class="amount">KES {{ claim.amount_paid|floatformat:2 }}</td>
+    </tr>
+    {% if claim.balance_due > 0 %}
+    <tr class="totals-row" style="background:#f8d7da;">
+      <td colspan="9" style="text-align:right; color:#721c24;">Outstanding Balance</td>
+      <td class="amount" style="color:#721c24;">KES {{ claim.balance_due|floatformat:2 }}</td>
+    </tr>
+    {% endif %}
+    {% endif %}
   </tfoot>
 </table>
 
-{% if claim.manager_comment or claim.hr_comment or claim.finance_comment %}
+{% if claim.manager_comment or claim.finance_comment %}
 <h3 style="font-size:10pt; margin-bottom:6px;">Approval Comments</h3>
 <table style="font-size:9pt;">
   {% if claim.manager_comment %}
-  <tr><td><strong>Manager:</strong></td><td>{{ claim.manager_comment }}</td><td>{{ claim.manager_actioned_at|date:"d M Y" }}</td></tr>
-  {% endif %}
-  {% if claim.hr_comment %}
-  <tr><td><strong>HR:</strong></td><td>{{ claim.hr_comment }}</td><td>{{ claim.hr_actioned_at|date:"d M Y" }}</td></tr>
+  <tr>
+    <td><strong>Manager:</strong></td>
+    <td>{{ claim.manager_comment }}</td>
+    <td>{{ claim.manager_actioned_at|date:"d M Y" }}</td>
+  </tr>
   {% endif %}
   {% if claim.finance_comment %}
-  <tr><td><strong>Finance:</strong></td><td>{{ claim.finance_comment }}</td><td>{{ claim.finance_actioned_at|date:"d M Y" }}</td></tr>
+  <tr>
+    <td><strong>Finance:</strong></td>
+    <td>{{ claim.finance_comment }}</td>
+    <td>{{ claim.finance_actioned_at|date:"d M Y" }}</td>
+  </tr>
   {% endif %}
 </table>
 {% endif %}
@@ -105,8 +137,8 @@
     <div class="sig-block">Manager signature &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date: ___________</div>
   </div>
   <div class="sig-row">
-    <div class="sig-block">HR signature &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date: ___________</div>
     <div class="sig-block">Finance signature &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date: ___________</div>
+    <div class="sig-block">&nbsp;</div>
   </div>
 </div>
 

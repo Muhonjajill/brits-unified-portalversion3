@@ -7,7 +7,7 @@
 <div class="claims-container">
 
   <div class="claims-header">
-    <h2><i class="fas fa-file-invoice-dollar"></i> My Claims</h2>
+    <h2><i class="fas fa-file-invoice-dollar"></i> {{ page_title }}</h2>
     <a href="{% url 'claim_create' %}" class="btn-new-claim">
       <i class="fas fa-plus"></i> New Claim
     </a>
@@ -19,6 +19,33 @@
     {% endfor %}
   {% endif %}
 
+  {# ── Summary stats bar (elevated users only) ── #}
+  {% if summary %}
+  <div class="claims-summary-bar">
+    <div class="summary-card">
+      <span class="summary-num">{{ summary.total }}</span>
+      <span class="summary-label">Total Claims</span>
+    </div>
+    <div class="summary-card summary-pending">
+      <span class="summary-num">{{ summary.pending }}</span>
+      <span class="summary-label">Pending</span>
+    </div>
+    <div class="summary-card summary-approved">
+      <span class="summary-num">{{ summary.approved }}</span>
+      <span class="summary-label">Finance Approved</span>
+    </div>
+    <div class="summary-card summary-rejected">
+      <span class="summary-num">{{ summary.rejected }}</span>
+      <span class="summary-label">Rejected</span>
+    </div>
+    <div class="summary-card summary-paid">
+      <span class="summary-num">KES {{ summary.total_paid|floatformat:0 }}</span>
+      <span class="summary-label">Total Paid Out</span>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Pending approvals ── #}
   {% if pending_approvals %}
   <section class="claims-section">
     <h3 class="claims-section-title pending-title">
@@ -60,30 +87,73 @@
   </section>
   {% endif %}
 
+  {# ── Search & filter bar ── #}
   <section class="claims-section">
+    <div class="claims-filter-bar">
+      <form method="get" class="filter-form">
+        <div class="filter-group">
+          <input type="text" name="q" value="{{ search }}" placeholder="Search by name or title…"
+                 class="form-control filter-input">
+        </div>
+        <div class="filter-group">
+          <select name="status" class="form-select filter-select">
+            <option value="">All statuses</option>
+            {% for val, label in status_choices %}
+              <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn-action">
+          <i class="fas fa-search"></i> Filter
+        </button>
+        {% if search or status_filter %}
+          <a href="{% url 'claim_list' %}" class="btn-action btn-clear">
+            <i class="fas fa-times"></i> Clear
+          </a>
+        {% endif %}
+      </form>
+    </div>
+
     <h3 class="claims-section-title">
-      <i class="fas fa-history"></i> My Claim History
+      {% if elevated %}
+        <i class="fas fa-list"></i> All Claims
+      {% else %}
+        <i class="fas fa-history"></i> My Claim History
+      {% endif %}
     </h3>
-    {% if my_claims %}
+
+    {% if page_obj.object_list %}
     <div class="claims-table-wrap">
       <table class="claims-table">
         <thead>
           <tr>
+            {% if elevated %}<th>Employee</th>{% endif %}
             <th>Title</th>
             <th>Month</th>
             <th>Sub-total</th>
             <th>Advance</th>
+            <th>Paid</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {% for claim in my_claims %}
+          {% for claim in page_obj %}
           <tr>
+            {% if elevated %}
+            <td data-label="Employee">{{ claim.employee.get_full_name }}</td>
+            {% endif %}
             <td data-label="Title">{{ claim.title|default:"—" }}</td>
             <td data-label="Month">{{ claim.month|date:"F Y" }}</td>
             <td data-label="Sub-total" class="amount">KES {{ claim.subtotal|floatformat:2 }}</td>
             <td data-label="Advance" class="amount">KES {{ claim.advance|floatformat:2 }}</td>
+            <td data-label="Paid" class="amount">
+              {% if claim.amount_paid %}
+                <span class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ claim.amount_paid|floatformat:2 }}</span>
+              {% else %}
+                <span class="unpaid-badge">—</span>
+              {% endif %}
+            </td>
             <td data-label="Status">
               <span class="status-badge status-{{ claim.status_color }}">{{ claim.get_status_display }}</span>
             </td>
@@ -91,7 +161,7 @@
               <a href="{% url 'claim_detail' claim.pk %}" class="btn-action">
                 <i class="fas fa-eye"></i> View
               </a>
-              {% if claim.status == "draft" or claim.status == "rejected" %}
+              {% if claim.employee == request.user and claim.status == "draft" or claim.status == "rejected" and claim.employee == request.user %}
                 <a href="{% url 'claim_edit' claim.pk %}" class="btn-action btn-edit">
                   <i class="fas fa-edit"></i> Edit
                 </a>
@@ -104,19 +174,129 @@
                   <i class="fas fa-file-excel"></i> Excel
                 </a>
               {% endif %}
+              {% if can_delete %}
+                <button type="button" class="btn-action btn-danger-sm"
+                        onclick="openDeleteModal({{ claim.pk }}, '{{ claim.employee.get_full_name }}', '{{ claim.month|date:"F Y" }}')">
+                  <i class="fas fa-trash"></i> Delete
+                </button>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
+    {# ── Pagination ── #}
+    {% if page_obj.has_other_pages %}
+    <nav class="claims-pagination">
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search }}&status={{ status_filter }}">
+              <i class="fas fa-chevron-left"></i>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link"><i class="fas fa-chevron-left"></i></span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ num }}&q={{ search }}&status={{ status_filter }}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search }}&status={{ status_filter }}">
+              <i class="fas fa-chevron-right"></i>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link"><i class="fas fa-chevron-right"></i></span></li>
+        {% endif %}
+      </ul>
+      <p class="pagination-info">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        &nbsp;&mdash;&nbsp; {{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }}
+      </p>
+    </nav>
+    {% endif %}
+
     {% else %}
     <div class="empty-state">
       <i class="fas fa-file-invoice-dollar"></i>
-      <p>No claims yet. <a href="{% url 'claim_create' %}">Submit your first claim →</a></p>
+      {% if search or status_filter %}
+        <p>No claims match your filters. <a href="{% url 'claim_list' %}">Clear filters →</a></p>
+      {% else %}
+        <p>No claims yet. <a href="{% url 'claim_create' %}">Submit your first claim →</a></p>
+      {% endif %}
     </div>
     {% endif %}
   </section>
 
 </div>
+
+{# ── Delete Confirmation Modal ── #}
+{% if can_delete %}
+<div class="claim-modal-overlay" id="deleteModal">
+  <div class="claim-modal">
+    <button class="claim-modal-close" onclick="closeClaimModal('deleteModal')">&times;</button>
+    <div class="claim-modal-icon claim-modal-icon--danger">
+      <i class="fas fa-trash-alt"></i>
+    </div>
+    <h3 class="claim-modal-title" style="color:var(--claims-danger);">Delete This Claim?</h3>
+    <div class="claim-modal-divider" style="border-color:var(--claims-danger);"></div>
+    <p class="claim-modal-body" id="deleteModalBody">
+      You are about to permanently delete this claim. This action <strong>cannot be undone</strong>.
+    </p>
+    <p class="claim-modal-warning">
+      <i class="fas fa-exclamation-triangle"></i>
+      All entries associated with this claim will also be deleted.
+    </p>
+    <form method="post" id="deleteForm">
+      {% csrf_token %}
+      <div class="claim-modal-actions">
+        <button type="button" class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('deleteModal')">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="submit" class="claim-modal-btn claim-modal-btn--danger">
+          <i class="fas fa-trash-alt"></i> Yes, Delete Permanently
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openDeleteModal(pk, employee, month) {
+  document.getElementById('deleteModalBody').innerHTML =
+    'You are about to permanently delete the claim for <strong>' + employee +
+    '</strong> &mdash; <strong>' + month + '</strong>. This action <strong>cannot be undone</strong>.';
+  document.getElementById('deleteForm').action = '/claims/' + pk + '/delete/';
+  document.getElementById('deleteModal').classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function openClaimModal(id) {
+  document.getElementById(id).classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+function closeClaimModal(id) {
+  document.getElementById(id).classList.remove('show');
+  document.body.style.overflow = '';
+}
+document.querySelectorAll('.claim-modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) { if (e.target === this) closeClaimModal(this.id); });
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') document.querySelectorAll('.claim-modal-overlay.show').forEach(m => closeClaimModal(m.id));
+});
+</script>
+{% endif %}
+
 {% endblock %}

@@ -8,9 +8,17 @@
 
   <div class="claims-header">
     <h2><i class="fas fa-file-invoice-dollar"></i> {{ page_title }}</h2>
-    <a href="{% url 'claim_list' %}" class="btn-action">
-      <i class="fas fa-arrow-left"></i> Back
-    </a>
+    <div class="header-actions">
+      <a href="{% url 'claim_list' %}" class="btn-action">
+        <i class="fas fa-arrow-left"></i> Back
+      </a>
+      {% if can_delete %}
+        <button type="button" class="btn-action btn-danger-sm"
+                onclick="openClaimModal('deleteModal')">
+          <i class="fas fa-trash"></i> Delete Claim
+        </button>
+      {% endif %}
+    </div>
   </div>
 
   {% if messages %}
@@ -19,19 +27,15 @@
     {% endfor %}
   {% endif %}
 
-  <!-- ── Approval progress tracker ── -->
+  {# ── Approval progress tracker (Manager → Finance only) ── #}
   <div class="status-track">
     {% with s=claim.status %}
     <div class="track-step {% if s != 'draft' %}done{% elif s == 'draft' %}active{% endif %}">
       <div class="step-dot"></div><span>Submitted</span>
     </div>
-    <div class="track-line {% if s == 'manager_approved' or s == 'hr_approved' or s == 'finance_approved' %}done{% endif %}"></div>
-    <div class="track-step {% if s == 'manager_approved' %}active{% elif s == 'hr_approved' or s == 'finance_approved' %}done{% elif s == 'rejected' %}rejected{% endif %}">
+    <div class="track-line {% if s == 'manager_approved' or s == 'finance_approved' %}done{% endif %}"></div>
+    <div class="track-step {% if s == 'manager_approved' %}active{% elif s == 'finance_approved' %}done{% elif s == 'rejected' %}rejected{% endif %}">
       <div class="step-dot"></div><span>Manager</span>
-    </div>
-    <div class="track-line {% if s == 'hr_approved' or s == 'finance_approved' %}done{% endif %}"></div>
-    <div class="track-step {% if s == 'hr_approved' %}active{% elif s == 'finance_approved' %}done{% elif s == 'rejected' %}rejected{% endif %}">
-      <div class="step-dot"></div><span>HR</span>
     </div>
     <div class="track-line {% if s == 'finance_approved' %}done{% endif %}"></div>
     <div class="track-step {% if s == 'finance_approved' %}done{% endif %}">
@@ -41,7 +45,7 @@
     <span class="status-badge status-{{ claim.status_color }} track-badge">{{ claim.get_status_display }}</span>
   </div>
 
-  <!-- ── Claim summary ── -->
+  {# ── Claim summary ── #}
   <div class="claim-meta-card">
     <h3 class="card-section-title">Claim Summary</h3>
     <div class="meta-grid">
@@ -50,21 +54,109 @@
       <div><label>Title</label><strong>{{ claim.title|default:"—" }}</strong></div>
       <div><label>Submitted</label><strong>{{ claim.submitted_at|date:"d M Y H:i"|default:"Not yet submitted" }}</strong></div>
       <div><label>Manager</label><strong>{{ claim.manager.get_full_name|default:"—" }}</strong></div>
-      <div><label>HR Reviewer</label><strong>{{ claim.hr_reviewer.get_full_name|default:"—" }}</strong></div>
       <div><label>Finance Reviewer</label><strong>{{ claim.finance_reviewer.get_full_name|default:"—" }}</strong></div>
+      <div><label>Advance</label><strong>KES {{ claim.advance|floatformat:2 }}</strong></div>
+      {% if claim.amount_paid %}
+      <div>
+        <label>Amount Paid</label>
+        <strong class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ claim.amount_paid|floatformat:2 }}</strong>
+      </div>
+      {% if claim.finance_paid_at %}
+      <div><label>Paid On</label><strong>{{ claim.finance_paid_at|date:"d M Y H:i" }}</strong></div>
+      {% endif %}
+      {% endif %}
     </div>
   </div>
 
-  <!-- ── Entries table ── -->
+  {# ── Previous claim history panel ── #}
+  {% if claim_history %}
+  <div class="claim-meta-card claim-history-card">
+    <h3 class="card-section-title">
+      <i class="fas fa-history"></i> Previous Claims — {{ claim.employee.get_full_name }}
+    </h3>
+    <div class="history-table-wrap">
+      <table class="claims-table history-table">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Sub-total</th>
+            <th>Advance</th>
+            <th>Net Due</th>
+            <th>Paid</th>
+            <th>Balance</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for prev in claim_history %}
+          <tr>
+            <td>
+              <a href="{% url 'claim_detail' prev.pk %}" class="ticket-link">
+                {{ prev.month|date:"M Y" }}
+              </a>
+            </td>
+            <td class="amount">KES {{ prev.subtotal|floatformat:2 }}</td>
+            <td class="amount">KES {{ prev.advance|floatformat:2 }}</td>
+            <td class="amount">KES {{ prev.total_minus_advance|floatformat:2 }}</td>
+            <td class="amount">
+              {% if prev.amount_paid %}
+                <span class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ prev.amount_paid|floatformat:2 }}</span>
+              {% else %}
+                <span class="unpaid-badge">Unpaid</span>
+              {% endif %}
+            </td>
+            <td class="amount">
+              {% if prev.amount_paid %}
+                {% with bal=prev.balance_due %}
+                  {% if bal > 0 %}
+                    <span style="color:var(--claims-danger);">KES {{ bal|floatformat:2 }}</span>
+                  {% else %}
+                    <span style="color:var(--claims-success);">Settled</span>
+                  {% endif %}
+                {% endwith %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td><span class="status-badge status-{{ prev.status_color }}">{{ prev.get_status_display }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if prev_claim %}
+    <div class="prev-claim-alert">
+      <i class="fas fa-info-circle"></i>
+      Last approved claim was <strong>{{ prev_claim.month|date:"F Y" }}</strong>
+      — KES {{ prev_claim.subtotal|floatformat:2 }} claimed,
+      KES {{ prev_claim.advance|floatformat:2 }} advance,
+      {% if prev_claim.amount_paid %}
+        <span class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ prev_claim.amount_paid|floatformat:2 }} paid</span>.
+      {% else %}
+        <span class="unpaid-badge">payment not yet recorded</span>.
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# ── Entries table ── #}
   <div class="claim-entries-card">
     <h3 class="card-section-title">Claim Entries</h3>
     <div class="entries-scroll">
       <table class="entries-table view-table">
         <thead>
           <tr>
-            <th>Date</th><th>Site</th><th>Job Card ID</th>
-            <th>To (KES)</th><th>From (KES)</th>
-            <th>Breakfast</th><th>Lunch</th><th>Dinner</th><th>Bed</th><th>Total (KES)</th>
+            <th>Date</th>
+            <th>Site</th>
+            <th>Ticket No.</th>
+            <th>To (KES)</th>
+            <th>From (KES)</th>
+            <th>Breakfast</th>
+            <th>Lunch</th>
+            <th>Dinner</th>
+            <th>Bed</th>
+            <th>Total (KES)</th>
           </tr>
         </thead>
         <tbody>
@@ -72,7 +164,19 @@
           <tr>
             <td>{{ entry.date|date:"d/m/Y" }}</td>
             <td>{{ entry.site }}</td>
-            <td>{{ entry.job_card_id|default:"—" }}</td>
+            <td>
+              {% if entry.ticket_number %}
+                {% if entry.ticket_url %}
+                  <a href="{{ entry.ticket_url }}" target="_blank" rel="noopener noreferrer" class="ticket-link">
+                    <i class="fas fa-external-link-alt"></i> {{ entry.ticket_number }}
+                  </a>
+                {% else %}
+                  <span class="ticket-ref">{{ entry.ticket_number }}</span>
+                {% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
             <td class="amount">{{ entry.transport_to|floatformat:2 }}</td>
             <td class="amount">{{ entry.transport_from|floatformat:2 }}</td>
             <td class="amount">{{ entry.breakfast|floatformat:2 }}</td>
@@ -98,13 +202,27 @@
             <td colspan="9" class="totals-label">Total Minus Advance</td>
             <td class="amount grand-total">KES {{ claim.total_minus_advance|floatformat:2 }}</td>
           </tr>
+          {% if claim.amount_paid %}
+          <tr class="totals-row">
+            <td colspan="9" class="totals-label">
+              <span class="paid-badge"><i class="fas fa-check-circle"></i> Amount Paid</span>
+            </td>
+            <td class="amount grand-total" style="color:var(--claims-success);">KES {{ claim.amount_paid|floatformat:2 }}</td>
+          </tr>
+          {% if claim.balance_due > 0 %}
+          <tr class="totals-row">
+            <td colspan="9" class="totals-label" style="color:var(--claims-danger);">Outstanding Balance</td>
+            <td class="amount grand-total" style="color:var(--claims-danger);">KES {{ claim.balance_due|floatformat:2 }}</td>
+          </tr>
+          {% endif %}
+          {% endif %}
         </tfoot>
       </table>
     </div>
   </div>
 
-  <!-- ── Approval comments ── -->
-  {% if claim.manager_comment or claim.hr_comment or claim.finance_comment %}
+  {# ── Approval comments ── #}
+  {% if claim.manager_comment or claim.finance_comment %}
   <div class="claim-meta-card">
     <h3 class="card-section-title">Approval Comments</h3>
     {% if claim.manager_comment %}
@@ -112,13 +230,6 @@
       <strong><i class="fas fa-user-tie"></i> Manager — {{ claim.manager.get_full_name }}</strong>
       <p>{{ claim.manager_comment }}</p>
       <small><i class="fas fa-clock"></i> {{ claim.manager_actioned_at|date:"d M Y H:i" }}</small>
-    </div>
-    {% endif %}
-    {% if claim.hr_comment %}
-    <div class="comment-block">
-      <strong><i class="fas fa-users"></i> HR — {{ claim.hr_reviewer.get_full_name }}</strong>
-      <p>{{ claim.hr_comment }}</p>
-      <small><i class="fas fa-clock"></i> {{ claim.hr_actioned_at|date:"d M Y H:i" }}</small>
     </div>
     {% endif %}
     {% if claim.finance_comment %}
@@ -131,7 +242,58 @@
   </div>
   {% endif %}
 
-  <!-- ── Approval action panel ── -->
+  {# ── Finance payment recording panel ── #}
+  {% if payment_form %}
+  <div class="claim-meta-card finance-payment-card">
+    <h3 class="card-section-title">
+      <i class="fas fa-money-bill-wave"></i> Record Disbursement
+    </h3>
+    <p class="approver-hint">
+      <i class="fas fa-info-circle"></i>
+      Record the actual amount disbursed to <strong>{{ claim.employee.get_full_name }}</strong>.
+      This is tracked for integrity purposes and shown in the employee's claim history.
+    </p>
+    <div class="finance-integrity-grid">
+      <div class="integrity-item">
+        <label>Claimed Sub-total</label>
+        <strong>KES {{ claim.subtotal|floatformat:2 }}</strong>
+      </div>
+      <div class="integrity-item">
+        <label>Advance Deducted</label>
+        <strong>KES {{ claim.advance|floatformat:2 }}</strong>
+      </div>
+      <div class="integrity-item">
+        <label>Net Payable</label>
+        <strong class="grand-total">KES {{ claim.total_minus_advance|floatformat:2 }}</strong>
+      </div>
+      {% if claim.amount_paid %}
+      <div class="integrity-item">
+        <label>Already Paid</label>
+        <strong class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ claim.amount_paid|floatformat:2 }}</strong>
+      </div>
+      {% endif %}
+    </div>
+    <form method="post" id="paymentForm">
+      {% csrf_token %}
+      <div class="meta-grid" style="grid-template-columns:280px auto; align-items:flex-end; gap:12px; margin-top:16px;">
+        <div class="field-group" style="margin:0;">
+          <label>{{ payment_form.amount_paid.label }}</label>
+          {{ payment_form.amount_paid }}
+          {% if payment_form.amount_paid.errors %}
+            <div class="field-error">{{ payment_form.amount_paid.errors }}</div>
+          {% endif %}
+        </div>
+        <button type="button" class="btn-submit-claim" style="height:40px;"
+                onclick="openClaimModal('paymentModal')">
+          <i class="fas fa-money-bill-wave"></i> Record Payment
+        </button>
+      </div>
+      <input type="hidden" name="record_payment" value="1">
+    </form>
+  </div>
+  {% endif %}
+
+  {# ── Approval action panel ── #}
   {% if can_approve %}
   <div class="claim-meta-card approval-panel">
     <h3 class="card-section-title">Action Required</h3>
@@ -140,7 +302,6 @@
       You are reviewing this claim as <strong>{{ claim.next_approver_role }}</strong>.
     </p>
 
-    <!-- hidden forms — submitted by modals -->
     <form method="post" action="{% url 'claim_approve' claim.pk %}" id="approveForm">
       {% csrf_token %}
       <input type="hidden" name="comment" id="approveCommentInput">
@@ -161,7 +322,7 @@
   </div>
   {% endif %}
 
-  <!-- ── Export & edit buttons ── -->
+  {# ── Export & edit buttons ── #}
   <div class="form-actions" style="margin-bottom:24px;">
     {% if claim.employee == request.user and claim.status == "draft" or claim.status == "rejected" and claim.employee == request.user %}
       <a href="{% url 'claim_edit' claim.pk %}" class="btn-save">
@@ -180,7 +341,7 @@
 
 </div>
 
-<!-- ══ Approve Modal ══ -->
+{# ══ Approve Modal ══ #}
 <div class="claim-modal-overlay" id="approveModal">
   <div class="claim-modal">
     <button class="claim-modal-close" onclick="closeClaimModal('approveModal')">&times;</button>
@@ -212,7 +373,7 @@
   </div>
 </div>
 
-<!-- ══ Reject Modal ══ -->
+{# ══ Reject Modal ══ #}
 <div class="claim-modal-overlay" id="rejectModal">
   <div class="claim-modal">
     <button class="claim-modal-close" onclick="closeClaimModal('rejectModal')">&times;</button>
@@ -245,6 +406,71 @@
     </div>
   </div>
 </div>
+
+{# ══ Payment Confirmation Modal ══ #}
+{% if payment_form %}
+<div class="claim-modal-overlay" id="paymentModal">
+  <div class="claim-modal">
+    <button class="claim-modal-close" onclick="closeClaimModal('paymentModal')">&times;</button>
+    <div class="claim-modal-icon claim-modal-icon--success">
+      <i class="fas fa-money-bill-wave"></i>
+    </div>
+    <h3 class="claim-modal-title">Confirm Payment Recording</h3>
+    <div class="claim-modal-divider"></div>
+    <p class="claim-modal-body">
+      You are recording a payment for <strong>{{ claim.employee.get_full_name }}</strong>.
+      Net payable is <strong>KES {{ claim.total_minus_advance|floatformat:2 }}</strong>.
+    </p>
+    <p class="claim-modal-warning">
+      <i class="fas fa-exclamation-triangle"></i>
+      Ensure the amount matches what was actually disbursed. This record is permanent.
+    </p>
+    <div class="claim-modal-actions">
+      <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('paymentModal')">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+      <button class="claim-modal-btn claim-modal-btn--success" onclick="document.getElementById('paymentForm').submit()">
+        <i class="fas fa-check"></i> Confirm Payment
+      </button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ══ Delete Confirmation Modal ══ #}
+{% if can_delete %}
+<div class="claim-modal-overlay" id="deleteModal">
+  <div class="claim-modal">
+    <button class="claim-modal-close" onclick="closeClaimModal('deleteModal')">&times;</button>
+    <div class="claim-modal-icon claim-modal-icon--danger">
+      <i class="fas fa-trash-alt"></i>
+    </div>
+    <h3 class="claim-modal-title" style="color:var(--claims-danger);">Delete This Claim?</h3>
+    <div class="claim-modal-divider" style="border-color:var(--claims-danger);"></div>
+    <p class="claim-modal-body">
+      You are about to permanently delete the claim for
+      <strong>{{ claim.employee.get_full_name }}</strong>
+      — <strong>{{ claim.month|date:"F Y" }}</strong>.
+      This action <strong>cannot be undone</strong>.
+    </p>
+    <p class="claim-modal-warning">
+      <i class="fas fa-exclamation-triangle"></i>
+      All entries associated with this claim will also be deleted.
+    </p>
+    <form method="post" action="{% url 'claim_delete' claim.pk %}">
+      {% csrf_token %}
+      <div class="claim-modal-actions">
+        <button type="button" class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('deleteModal')">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button type="submit" class="claim-modal-btn claim-modal-btn--danger">
+          <i class="fas fa-trash-alt"></i> Yes, Delete Permanently
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
 
 <script>
 function openClaimModal(id) {

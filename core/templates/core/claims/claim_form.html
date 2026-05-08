@@ -25,6 +25,7 @@
   <form method="post" id="claim-form" novalidate>
     {% csrf_token %}
 
+    {# ── Claim meta ── #}
     <div class="claim-meta-card">
       <h3 class="card-section-title">Claim Details</h3>
       <div class="meta-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px,1fr));">
@@ -45,17 +46,12 @@
         </div>
       </div>
       <div style="margin-top:16px;">
-        <h4 style="font-size:0.9rem;font-weight:600;color:var(--claims-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;">Approval Chain</h4>
+        <h4 class="sub-section-label">Approval Chain</h4>
         <div class="meta-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px,1fr));">
           <div class="field-group">
             <label for="{{ form.manager.id_for_label }}">Manager <span class="required">*</span></label>
             {{ form.manager }}
             {% if form.manager.errors %}<div class="field-error">{{ form.manager.errors }}</div>{% endif %}
-          </div>
-          <div class="field-group">
-            <label for="{{ form.hr_reviewer.id_for_label }}">HR Reviewer <span class="required">*</span></label>
-            {{ form.hr_reviewer }}
-            {% if form.hr_reviewer.errors %}<div class="field-error">{{ form.hr_reviewer.errors }}</div>{% endif %}
           </div>
           <div class="field-group">
             <label for="{{ form.finance_reviewer.id_for_label }}">Finance Reviewer <span class="required">*</span></label>
@@ -66,17 +62,30 @@
       </div>
     </div>
 
+    {# ── Entries table ── #}
     {{ formset.management_form }}
     <div class="claim-entries-card">
       <h3 class="card-section-title">Claim Entries</h3>
+      <p class="entries-hint">
+        <i class="fas fa-info-circle"></i>
+        Enter a <strong>Ticket No.</strong> for each day. Paste the direct ticket URL in the link column so approvers can verify each job.
+      </p>
       <div class="entries-scroll">
         <table class="entries-table" id="entries-table">
           <thead>
             <tr>
-              <th>Date</th><th>Site</th><th>Job Card ID</th>
-              <th>To (KES)</th><th>From (KES)</th>
-              <th>Breakfast</th><th>Lunch</th><th>Dinner</th><th>Bed</th>
-              <th>Total</th><th></th>
+              <th>Date</th>
+              <th>Site</th>
+              <th>Ticket No.</th>
+              <th>Ticket URL</th>
+              <th>To (KES)</th>
+              <th>From (KES)</th>
+              <th>Breakfast</th>
+              <th>Lunch</th>
+              <th>Dinner</th>
+              <th>Bed</th>
+              <th>Total</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="entries-body">
@@ -84,7 +93,8 @@
               <tr class="entry-row {% if entry_form.instance.pk %}existing{% endif %}">
                 <td>{{ entry_form.date }}{{ entry_form.id }}{% if entry_form.DELETE %}{{ entry_form.DELETE }}{% endif %}</td>
                 <td>{{ entry_form.site }}</td>
-                <td>{{ entry_form.job_card_id }}</td>
+                <td>{{ entry_form.ticket_number }}</td>
+                <td>{{ entry_form.ticket_url }}</td>
                 <td>{{ entry_form.transport_to }}</td>
                 <td>{{ entry_form.transport_from }}</td>
                 <td>{{ entry_form.breakfast }}</td>
@@ -98,7 +108,7 @@
           </tbody>
           <tfoot>
             <tr class="totals-row">
-              <td colspan="3" class="totals-label">Sub-total</td>
+              <td colspan="4" class="totals-label">Sub-total</td>
               <td id="col-total-to" class="amount">0.00</td>
               <td id="col-total-from" class="amount">0.00</td>
               <td id="col-total-breakfast" class="amount">0.00</td>
@@ -109,12 +119,14 @@
               <td></td>
             </tr>
             <tr class="totals-row">
-              <td colspan="9" class="totals-label">Advance</td>
-              <td id="display-advance" class="amount">0.00</td><td></td>
+              <td colspan="10" class="totals-label">Advance</td>
+              <td id="display-advance" class="amount">0.00</td>
+              <td></td>
             </tr>
             <tr class="totals-row net-row">
-              <td colspan="9" class="totals-label">Total Minus Advance</td>
-              <td id="net-total" class="grand-total">0.00</td><td></td>
+              <td colspan="10" class="totals-label">Total Minus Advance</td>
+              <td id="net-total" class="grand-total">0.00</td>
+              <td></td>
             </tr>
           </tfoot>
         </table>
@@ -135,13 +147,12 @@
       </div>
     </div>
 
-    <!-- Hidden real submit buttons triggered by modals -->
     <button type="submit" name="action" value="save"   id="doSave"   style="display:none"></button>
     <button type="submit" name="action" value="submit" id="doSubmit" style="display:none"></button>
   </form>
 </div>
 
-<!-- ══ Save Draft Modal ══ -->
+{# ══ Save Draft Modal ══ #}
 <div class="claim-modal-overlay" id="saveDraftModal">
   <div class="claim-modal">
     <button class="claim-modal-close" onclick="closeClaimModal('saveDraftModal')">&times;</button>
@@ -163,7 +174,7 @@
   </div>
 </div>
 
-<!-- ══ Submit for Approval Modal ══ -->
+{# ══ Submit for Approval Modal ══ #}
 <div class="claim-modal-overlay" id="submitClaimModal">
   <div class="claim-modal">
     <button class="claim-modal-close" onclick="closeClaimModal('submitClaimModal')">&times;</button>
@@ -172,7 +183,7 @@
     </div>
     <h3 class="claim-modal-title">Submit for Approval?</h3>
     <div class="claim-modal-divider"></div>
-    <p class="claim-modal-body">Your claim will be sent to your <strong>Manager</strong> for review and approval.</p>
+    <p class="claim-modal-body">Your claim will be sent to your <strong>Manager</strong> for review, then to <strong>Finance</strong> for final approval.</p>
     <p class="claim-modal-warning"><i class="fas fa-exclamation-triangle"></i> You will <strong>not</strong> be able to edit this claim while it is under review.</p>
     <div class="claim-modal-actions">
       <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('submitClaimModal')">
@@ -202,6 +213,7 @@ document.addEventListener('keydown', function(e) {
 });
 
 (function () {
+  // Columns: to, from, breakfast, lunch, dinner, bed (indices 0-5 of .money-field within a row)
   const COL_IDS = ['col-total-to','col-total-from','col-total-breakfast','col-total-lunch','col-total-dinner','col-total-bed'];
   function val(i) { return parseFloat(i?.value||0)||0; }
   function recalc() {
@@ -212,7 +224,7 @@ document.addEventListener('keydown', function(e) {
       inputs.forEach((inp,idx)=>{ const v=val(inp); ct[idx]=(ct[idx]||0)+v; rs+=v; });
       const rt=row.querySelector('.row-total'); if(rt) rt.textContent=rs.toFixed(2); gt+=rs;
     });
-    COL_IDS.forEach((id,i)=>{ const el=document.getElementById(id); if(el) el.textContent=ct[i].toFixed(2); });
+    COL_IDS.forEach((id,i)=>{ const el=document.getElementById(id); if(el) el.textContent=(ct[i]||0).toFixed(2); });
     const gs=document.getElementById('grand-subtotal'); if(gs) gs.textContent=gt.toFixed(2);
     const adv=document.querySelector('[name$="-advance"]'), a=adv?(parseFloat(adv.value)||0):0;
     const da=document.getElementById('display-advance'); const nt=document.getElementById('net-total');

@@ -8,7 +8,6 @@ class ClaimForm(models.Model):
     STATUS_DRAFT = 'draft'
     STATUS_SUBMITTED = 'submitted'
     STATUS_MANAGER_APPROVED = 'manager_approved'
-    STATUS_HR_APPROVED = 'hr_approved'
     STATUS_FINANCE_APPROVED = 'finance_approved'
     STATUS_REJECTED = 'rejected'
 
@@ -16,7 +15,6 @@ class ClaimForm(models.Model):
         (STATUS_DRAFT, 'Draft'),
         (STATUS_SUBMITTED, 'Submitted'),
         (STATUS_MANAGER_APPROVED, 'Manager Approved'),
-        (STATUS_HR_APPROVED, 'HR Approved'),
         (STATUS_FINANCE_APPROVED, 'Finance Approved'),
         (STATUS_REJECTED, 'Rejected'),
     ]
@@ -31,18 +29,12 @@ class ClaimForm(models.Model):
     advance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default=STATUS_DRAFT)
 
-    # Approval chain
+    # Approval chain (HR removed — Manager → Finance only)
     manager = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True, blank=True,
         related_name='claims_to_manage'
-    )
-    hr_reviewer = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True, blank=True,
-        related_name='claims_to_hr_review'
     )
     finance_reviewer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -51,12 +43,23 @@ class ClaimForm(models.Model):
         related_name='claims_to_finance_review'
     )
 
+    # Finance integrity — actual disbursement tracking
+    amount_paid = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+        help_text="Amount actually disbursed by Finance"
+    )
+    finance_paid_at = models.DateTimeField(null=True, blank=True)
+    finance_paid_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='claims_paid_out'
+    )
+
     manager_comment = models.TextField(blank=True)
-    hr_comment = models.TextField(blank=True)
     finance_comment = models.TextField(blank=True)
 
     manager_actioned_at = models.DateTimeField(null=True, blank=True)
-    hr_actioned_at = models.DateTimeField(null=True, blank=True)
     finance_actioned_at = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -79,12 +82,24 @@ class ClaimForm(models.Model):
         return self.subtotal - self.advance
 
     @property
+    def balance_due(self):
+        """Amount still owed after advance and any recorded payment."""
+        return self.subtotal - self.advance - self.amount_paid
+
+    @property
+    def is_fully_paid(self):
+        return (
+            self.status == self.STATUS_FINANCE_APPROVED
+            and self.amount_paid > Decimal('0.00')
+            and self.amount_paid >= self.total_minus_advance
+        )
+
+    @property
     def status_color(self):
         return {
             self.STATUS_DRAFT: 'secondary',
             self.STATUS_SUBMITTED: 'primary',
             self.STATUS_MANAGER_APPROVED: 'info',
-            self.STATUS_HR_APPROVED: 'warning',
             self.STATUS_FINANCE_APPROVED: 'success',
             self.STATUS_REJECTED: 'danger',
         }.get(self.status, 'secondary')
@@ -94,17 +109,13 @@ class ClaimForm(models.Model):
         if self.status == self.STATUS_SUBMITTED:
             return 'Manager'
         if self.status == self.STATUS_MANAGER_APPROVED:
-            return 'HR'
-        if self.status == self.STATUS_HR_APPROVED:
             return 'Finance'
         return None
 
     def can_approve(self, user):
         if self.status == self.STATUS_SUBMITTED and self.manager == user:
             return True
-        if self.status == self.STATUS_MANAGER_APPROVED and self.hr_reviewer == user:
-            return True
-        if self.status == self.STATUS_HR_APPROVED and self.finance_reviewer == user:
+        if self.status == self.STATUS_MANAGER_APPROVED and self.finance_reviewer == user:
             return True
         return False
 
@@ -114,11 +125,7 @@ class ClaimForm(models.Model):
             self.status = self.STATUS_MANAGER_APPROVED
             self.manager_comment = comment
             self.manager_actioned_at = now
-        elif self.status == self.STATUS_MANAGER_APPROVED and self.hr_reviewer == user:
-            self.status = self.STATUS_HR_APPROVED
-            self.hr_comment = comment
-            self.hr_actioned_at = now
-        elif self.status == self.STATUS_HR_APPROVED and self.finance_reviewer == user:
+        elif self.status == self.STATUS_MANAGER_APPROVED and self.finance_reviewer == user:
             self.status = self.STATUS_FINANCE_APPROVED
             self.finance_comment = comment
             self.finance_actioned_at = now
@@ -130,20 +137,39 @@ class ClaimForm(models.Model):
         if self.manager == user:
             self.manager_comment = comment
             self.manager_actioned_at = now
-        elif self.hr_reviewer == user:
-            self.hr_comment = comment
-            self.hr_actioned_at = now
         elif self.finance_reviewer == user:
             self.finance_comment = comment
             self.finance_actioned_at = now
         self.save()
+
+    def get_previous_claim(self):
+        """Most recent finance-approved claim for this employee before this month."""
+        return (
+            ClaimForm.objects.filter(
+                employee=self.employee,
+                month__lt=self.month,
+                status=self.STATUS_FINANCE_APPROVED,
+            )
+            .order_by('-month')
+            .first()
+        )
+
+    def get_claim_history(self):
+        """All prior claims for this employee, newest first."""
+        return (
+            ClaimForm.objects.filter(employee=self.employee)
+            .exclude(pk=self.pk)
+            .order_by('-month')
+        )
 
 
 class ClaimEntry(models.Model):
     claim = models.ForeignKey(ClaimForm, on_delete=models.CASCADE, related_name='entries')
     date = models.DateField()
     site = models.CharField(max_length=200)
-    job_card_id = models.CharField(max_length=100, blank=True)
+    # Renamed from job_card_id → ticket_number
+    ticket_number = models.CharField(max_length=100, blank=True, help_text="Ticket / job reference number")
+    ticket_url = models.URLField(max_length=500, blank=True, help_text="Direct URL to the ticket (optional)")
     transport_to = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     transport_from = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     breakfast = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))

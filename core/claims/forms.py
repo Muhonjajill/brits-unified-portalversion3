@@ -12,12 +12,17 @@ class ClaimFormForm(forms.ModelForm):
 
     class Meta:
         model = ClaimForm
-        fields = ['title', 'month', 'advance', 'manager', 'hr_reviewer', 'finance_reviewer']
+        # HR reviewer removed from approval chain
+        fields = ['title', 'month', 'advance', 'manager', 'finance_reviewer']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. April 2026 Field Claims'}),
-            'advance': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g. April 2026 Field Claims'
+            }),
+            'advance': forms.NumberInput(attrs={
+                'class': 'form-control', 'min': '0', 'step': '0.01'
+            }),
             'manager': forms.Select(attrs={'class': 'form-select'}),
-            'hr_reviewer': forms.Select(attrs={'class': 'form-select'}),
             'finance_reviewer': forms.Select(attrs={'class': 'form-select'}),
         }
 
@@ -30,18 +35,50 @@ class ClaimFormForm(forms.ModelForm):
 class ClaimEntryForm(forms.ModelForm):
     class Meta:
         model = ClaimEntry
-        fields = ['date', 'site', 'job_card_id', 'transport_to', 'transport_from',
-                  'breakfast', 'lunch', 'dinner', 'bed']
+        fields = [
+            'date', 'site', 'ticket_number', 'ticket_url',
+            'transport_to', 'transport_from',
+            'breakfast', 'lunch', 'dinner', 'bed',
+        ]
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control form-control-sm entry-date'}),
-            'site': forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Site name'}),
-            'job_card_id': forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Job ID'}),
-            'transport_to': forms.NumberInput(attrs={'class': 'form-control form-control-sm money-field', 'min': '0', 'step': '0.01', 'placeholder': '0'}),
-            'transport_from': forms.NumberInput(attrs={'class': 'form-control form-control-sm money-field', 'min': '0', 'step': '0.01', 'placeholder': '0'}),
-            'breakfast': forms.NumberInput(attrs={'class': 'form-control form-control-sm money-field', 'min': '0', 'step': '0.01', 'placeholder': '0'}),
-            'lunch': forms.NumberInput(attrs={'class': 'form-control form-control-sm money-field', 'min': '0', 'step': '0.01', 'placeholder': '0'}),
-            'dinner': forms.NumberInput(attrs={'class': 'form-control form-control-sm money-field', 'min': '0', 'step': '0.01', 'placeholder': '0'}),
-            'bed': forms.NumberInput(attrs={'class': 'form-control form-control-sm money-field', 'min': '0', 'step': '0.01', 'placeholder': '0'}),
+            'date': forms.DateInput(attrs={
+                'type': 'date', 'class': 'form-control form-control-sm entry-date'
+            }),
+            'site': forms.TextInput(attrs={
+                'class': 'form-control form-control-sm', 'placeholder': 'Site name'
+            }),
+            'ticket_number': forms.TextInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'e.g. TKT-1042'
+            }),
+            'ticket_url': forms.URLInput(attrs={
+                'class': 'form-control form-control-sm',
+                'placeholder': 'https://... (optional)'
+            }),
+            'transport_to': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm money-field',
+                'min': '0', 'step': '0.01', 'placeholder': '0'
+            }),
+            'transport_from': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm money-field',
+                'min': '0', 'step': '0.01', 'placeholder': '0'
+            }),
+            'breakfast': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm money-field',
+                'min': '0', 'step': '0.01', 'placeholder': '0'
+            }),
+            'lunch': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm money-field',
+                'min': '0', 'step': '0.01', 'placeholder': '0'
+            }),
+            'dinner': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm money-field',
+                'min': '0', 'step': '0.01', 'placeholder': '0'
+            }),
+            'bed': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm money-field',
+                'min': '0', 'step': '0.01', 'placeholder': '0'
+            }),
         }
 
 
@@ -65,3 +102,19 @@ class ApprovalActionForm(forms.Form):
             'placeholder': 'Optional comment (required for rejection)'
         })
     )
+
+
+class FinancePaymentForm(forms.ModelForm):
+    """Finance records the actual disbursement against a finance-approved claim."""
+    class Meta:
+        model = ClaimForm
+        fields = ['amount_paid']
+        widgets = {
+            'amount_paid': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0',
+                'step': '0.01',
+                'placeholder': '0.00',
+            })
+        }
+        labels = {'amount_paid': 'Amount Disbursed (KES)'}
