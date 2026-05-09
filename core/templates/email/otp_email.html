@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        /* ------------------ GLOBAL STYLES ------------------ */
+        @import url('https://fonts.googleapis.com/css?family=Rubik:400,700&display=swap');
+
+        body {
+            font-family: 'Rubik', 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(120deg, #073692 0%, #e74c3c 100%);
+            min-height: 100vh;
+        }
+
+        .email-container {
+            max-width: 600px;
+            margin: 60px auto;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(44,62,80,0.12);
+            overflow: hidden;
+            padding-bottom: 40px;
+            animation: fadeIn 1s ease;
+        }
+
+        /* ------------------ HEADER ------------------ */
+        .header-bar {
+            height: 52px;
+            background: linear-gradient(90deg, #073692 30%, #e74c3c 80%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo {
+            display: block;
+            height: 100%;
+            margin: 16px auto 8px;
+            filter: drop-shadow(0 2px 8px rgba(52,152,219,0.12));
+        }
+
+        /* ------------------ TYPOGRAPHY ------------------ */
+        h2 {
+            text-align: center;
+            color: #073692;
+            font-size: 30px;
+            font-weight: 700;
+            margin-top: 16px;
+            letter-spacing: 1px;
+        }
+
+        p {
+            color: #34495e;
+            font-size: 17px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .accent-divider {
+            width: 56px;
+            height: 4px;
+            background: linear-gradient(90deg, #073692, #e74c3c);
+            border-radius: 2px;
+            margin: 18px auto 24px;
+        }
+
+        /* ------------------ OTP BOX ------------------ */
+        .otp-container {
+            background: linear-gradient(96deg, #073692 60%, #e74c3c);
+            max-width: 250px;
+            margin: 35px auto 25px;
+            padding: 30px 20px;
+            border-radius: 12px;
+            border: 1px solid #f2f2f2;
+            box-shadow: 0 6px 16px rgba(231,76,60,0.08);
+            animation: fadeIn 2s ease;
+            text-align: center;
+        }
+
+        .otp-glow {
+            background: #f4f6f9;
+            color: #e74c3c;
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            padding: 14px 34px;
+            margin: 20px 0 12px;
+            border-radius: 10px;
+            box-shadow: 0 0 25px 7px rgba(231,76,60,0.09);
+            animation: shimmer 2.5s linear infinite;
+        }
+
+        .otp-expiry {
+            color: #ffffff;
+            font-size: 15px;
+            margin-top: 18px;
+            font-style: italic;
+        }
+
+        /* ------------------ FOOTER ------------------ */
+        .footer {
+            margin-top: 60px;
+            font-size: 14px;
+            color: #98a4b3;
+            text-align: center;
+            padding: 32px 14px 0;
+        }
+
+        .footer strong {
+            color: #34495e;
+        }
+
+        .footer a {
+            color: #073692;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: #e74c3c;
+        }
+
+        /* ------------------ ANIMATIONS ------------------ */
+        @keyframes shimmer {
+            0%   { box-shadow: 0 0 20px 4px #fffCC2; }
+            50%  { box-shadow: 0 0 38px 7px #ffeabf; }
+            100% { box-shadow: 0 0 20px 4px #fffCC2; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(40px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ------------------ RESPONSIVENESS ------------------ */
+        @media (max-width: 600px) {
+            .email-container {
+                margin: 0;
+                border-radius: 0;
+                padding-bottom: 20px;
+            }
+
+            .otp-glow {
+                font-size: 26px;
+                padding: 10px;
+            }
+
+            .otp-container {
+                padding: 15px 5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="email-container">
+        <div class="header-bar"></div>
+
+        <img src="cid:logo" alt="BRITS Logo" class="logo" />
+
+        <h2>Hi {{ username }},</h2>
+        <div class="accent-divider"></div>
+
+        <p>
+            We received a login request for your account.<br>
+            Please use the One-Time Password (OTP) below to complete your login.
+        </p>
+
+        <div class="otp-container">
+            <div class="otp-glow">{{ otp }}</div>
+            <div class="otp-expiry">Your code expires in <strong>5 minutes</strong>.</div>
+        </div>
+
+        <p>
+            For your security, do not share this OTP with anyone.<br>
+            If you did not make this request, you can safely ignore this email.
+        </p>
+
+        <div class="footer">
+            Best regards,<br>
+            <strong>Blue River Technology Solutions</strong><br>
+            <span style="font-size:12px;">✉️ This inbox is not monitored for replies.</span>
+        </div>
+    </div>
+</body>
+</html>
