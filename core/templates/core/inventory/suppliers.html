@@ -1,34 +1,126 @@
 {% extends 'inventory/base.html' %}
+{% load query_tags %}
 {% block title %}Suppliers{% endblock %}
 {% block page_title %}Suppliers{% endblock %}
-{% block page_subtitle %}Manage spare part suppliers{% endblock %}
+{% block page_subtitle %}Parts supplier directory{% endblock %}
+
 {% block topbar_btn %}
-<a href="{% url 'inventory:supplier_create' %}" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> Add Supplier</a>
+<a href="{% url 'inventory:supplier_create' %}" class="btn btn-primary">
+    <i class="fa-solid fa-plus me-1"></i> Add Supplier
+</a>
 {% endblock %}
+
 {% block content %}
 <div class="data-table">
-    <div class="table-header"><h5><i class="fa-solid fa-truck me-2"></i>{{ suppliers|length }} Supplier(s)</h5></div>
+    <div class="table-header d-flex align-items-center justify-content-between">
+        <h5 class="mb-0"><i class="fa-solid fa-truck me-2"></i>{{ page_obj.paginator.count }} Supplier{{ page_obj.paginator.count|pluralize }}</h5>
+        {% if page_obj.paginator.num_pages > 1 %}
+        <small class="text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</small>
+        {% endif %}
+    </div>
+
     {% if suppliers %}
-    <table class="table table-hover mb-0">
-        <thead><tr><th>Name</th><th>Contact</th><th>Email</th><th>Phone</th><th>Parts</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>
-            {% for s in suppliers %}
-            <tr>
-                <td class="fw-600">{{ s.name }}</td>
-                <td>{{ s.contact_person|default:"—" }}</td>
-                <td>{{ s.email|default:"—" }}</td>
-                <td>{{ s.phone|default:"—" }}</td>
-                <td><span class="badge bg-primary">{{ s.part_count }}</span></td>
-                <td>{% if s.is_active %}<span class="badge bg-success">Active</span>{% else %}<span class="badge bg-secondary">Inactive</span>{% endif %}</td>
-                <td><a href="{% url 'inventory:supplier_edit' s.pk %}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-pen"></i></a></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Contact Person</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Parts Supplied</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for supplier in suppliers %}
+                <tr>
+                    <td class="fw-600">{{ supplier.name }}</td>
+                    <td>{{ supplier.contact_person|default:"—" }}</td>
+                    <td>
+                        {% if supplier.email %}
+                            <a href="mailto:{{ supplier.email }}" class="text-decoration-none text-primary" style="font-size:0.85rem;">{{ supplier.email }}</a>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>{{ supplier.phone|default:"—" }}</td>
+                    <td>
+                        <span class="badge bg-light text-dark border fw-600">{{ supplier.part_count }} part{{ supplier.part_count|pluralize }}</span>
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex gap-1 justify-content-end">
+                            <a href="{% url 'inventory:supplier_edit' supplier.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                <i class="fa-solid fa-pen"></i>
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger" title="Delete"
+                                onclick="confirmAction(
+                                    'Delete Supplier',
+                                    'Delete &quot;{{ supplier.name|escapejs }}&quot;? This cannot be undone.',
+                                    'Delete',
+                                    'btn-danger',
+                                    () => deleteSupplier({{ supplier.pk }})
+                                )">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="px-3 py-2 border-top">
+        {% if page_obj.has_other_pages %}
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-2 px-1">
+            <p class="text-muted mb-0" style="font-size:0.8rem;">
+                Showing <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+                of <strong>{{ page_obj.paginator.count }}</strong> records
+            </p>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0" style="gap:3px;">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=1 %}" style="border-radius:6px;" title="First"><i class="fa-solid fa-angles-left"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.previous_page_number %}" style="border-radius:6px;"><i class="fa-solid fa-angle-left"></i></a></li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angles-left"></i></span></li>
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angle-left"></i></span></li>
+                    {% endif %}
+                    {% with page_obj.number as cur %}{% for p in page_obj.paginator.page_range %}{% if p >= cur|add:"-2" and p <= cur|add:"2" %}{% if p == cur %}<li class="page-item active"><span class="page-link fw-bold" style="border-radius:6px;background:var(--primary);border-color:var(--primary);">{{ p }}</span></li>{% else %}<li class="page-item"><a class="page-link" href="?{% query_string page=p %}" style="border-radius:6px;">{{ p }}</a></li>{% endif %}{% endif %}{% endfor %}{% endwith %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.next_page_number %}" style="border-radius:6px;"><i class="fa-solid fa-angle-right"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.paginator.num_pages %}" style="border-radius:6px;" title="Last"><i class="fa-solid fa-angles-right"></i></a></li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angle-right"></i></span></li>
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angles-right"></i></span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
     {% else %}
     <div class="text-center py-5 text-muted">
-        <i class="fa-solid fa-truck fa-3x mb-3"></i><p>No suppliers added yet.</p>
+        <i class="fa-solid fa-truck fa-3x mb-3 d-block"></i>
+        <p class="mb-1">No suppliers added yet.</p>
+        <a href="{% url 'inventory:supplier_create' %}" class="btn btn-sm btn-primary mt-2">
+            <i class="fa-solid fa-plus me-1"></i> Add Supplier
+        </a>
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function deleteSupplier(pk) {
+    fetch(`/inventory/suppliers/${pk}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' }
+    }).then(r => r.json()).then(d => {
+        if (d.success) { showToast(d.message, 'success'); setTimeout(() => location.reload(), 1200); }
+        else showToast(d.error || 'Failed to delete supplier', 'danger');
+    }).catch(() => showToast('An error occurred', 'danger'));
+}
+</script>
 {% endblock %}

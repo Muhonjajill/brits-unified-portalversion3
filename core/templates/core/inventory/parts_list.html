@@ -1,7 +1,8 @@
 {% extends 'inventory/base.html' %}
+{% load query_tags %}
 {% block title %}Spare Parts{% endblock %}
 {% block page_title %}Spare Parts{% endblock %}
-{% block page_subtitle %}Manage CDM & ATM spare parts inventory{% endblock %}
+{% block page_subtitle %}Manage CDM &amp; ATM spare parts inventory{% endblock %}
 
 {% block topbar_btn %}
 <a href="{% url 'inventory:part_create' %}" class="btn btn-primary">
@@ -10,7 +11,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- Filters -->
 <div class="data-table mb-4">
     <div class="p-3">
         <form method="get" class="row g-2 align-items-end">
@@ -27,66 +27,103 @@
 </div>
 
 <div class="data-table">
-    <div class="table-header">
-        <h5><i class="fa-solid fa-boxes-stacked me-2"></i>{{ parts|length }} Part(s)</h5>
+    <div class="table-header d-flex align-items-center justify-content-between">
+        <h5 class="mb-0"><i class="fa-solid fa-boxes-stacked me-2"></i>{{ page_obj.paginator.count }} Part(s)</h5>
+        {% if page_obj.paginator.num_pages > 1 %}
+        <small class="text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</small>
+        {% endif %}
     </div>
+
     {% if parts %}
-    <table class="table table-hover mb-0">
-        <thead>
-            <tr>
-                <th>Part Number</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Compatible With</th>
-                <th>Stock</th>
-                <th>Unit Cost</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for part in parts %}
-            <tr>
-                <td><code style="color:var(--primary);font-weight:600;">{{ part.part_number }}</code></td>
-                <td>
-                    <a href="{% url 'inventory:part_detail' part.pk %}" class="text-decoration-none fw-600 text-dark">{{ part.name }}</a>
-                    {% if part.description %}<br><small class="text-muted">{{ part.description|truncatechars:40 }}</small>{% endif %}
-                </td>
-                <td><span class="badge" style="background:{{ part.category.color }}20;color:{{ part.category.color }};font-weight:600;">{{ part.category.name }}</span></td>
-                <td>
-                    {% for m in part.compatible_machines.all %}
-                        <span class="badge bg-light text-dark me-1">{{ m.name }}</span>
-                    {% empty %}<span class="text-muted">—</span>{% endfor %}
-                </td>
-                <td class="fw-bold {% if part.is_out_of_stock %}text-danger{% elif part.is_low_stock %}text-warning{% else %}text-success{% endif %}">
-                    {{ part.quantity_in_stock }} <small class="text-muted fw-normal">{{ part.unit }}(s)</small>
-                </td>
-                <td>KES {{ part.unit_cost }}</td>
-                <td><small class="text-muted">{{ part.storage_location|default:"—" }}</small></td>
-                <td>
-                    {% if part.is_out_of_stock %}
-                        <span class="stock-badge stock-out">Out of Stock</span>
-                    {% elif part.is_low_stock %}
-                        <span class="stock-badge stock-low">Low Stock</span>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Part Number</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Compatible With</th>
+                    <th>Stock</th>
+                    <th>Unit Cost</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for part in parts %}
+                <tr>
+                    <td><code style="color:var(--primary);font-weight:600;">{{ part.part_number }}</code></td>
+                    <td>
+                        <a href="{% url 'inventory:part_detail' part.pk %}" class="text-decoration-none fw-600 text-dark">{{ part.name }}</a>
+                        {% if part.description %}<br><small class="text-muted">{{ part.description|truncatechars:40 }}</small>{% endif %}
+                    </td>
+                    <td><span class="badge" style="background:{{ part.category.color }}20;color:{{ part.category.color }};font-weight:600;">{{ part.category.name }}</span></td>
+                    <td>
+                        {% for m in part.compatible_machines.all %}
+                            <span class="badge bg-light text-dark me-1">{{ m.name }}</span>
+                        {% empty %}<span class="text-muted">—</span>{% endfor %}
+                    </td>
+                    <td class="fw-bold {% if part.is_out_of_stock %}text-danger{% elif part.is_low_stock %}text-warning{% else %}text-success{% endif %}">
+                        {{ part.quantity_in_stock }} <small class="text-muted fw-normal">{{ part.unit }}(s)</small>
+                    </td>
+                    <td>KES {{ part.unit_cost }}</td>
+                    <td><small class="text-muted">{{ part.storage_location|default:"—" }}</small></td>
+                    <td>
+                        {% if part.is_out_of_stock %}
+                            <span class="stock-badge stock-out">Out of Stock</span>
+                        {% elif part.is_low_stock %}
+                            <span class="stock-badge stock-low">Low Stock</span>
+                        {% else %}
+                            <span class="stock-badge stock-ok">In Stock</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{% url 'inventory:part_detail' part.pk %}" class="btn btn-sm btn-outline-primary" title="View"><i class="fa-solid fa-eye"></i></a>
+                            <a href="{% url 'inventory:part_edit' part.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fa-solid fa-pen"></i></a>
+                            <button class="btn btn-sm btn-outline-danger" title="Delete"
+                                onclick="confirmAction('Delete Part','Are you sure you want to delete &quot;{{ part.name }}&quot;? This cannot be undone.','Delete','btn-danger',()=>deletePart({{ part.pk }}))">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="px-3 py-2 border-top">
+        {% if page_obj.has_other_pages %}
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-2 px-1">
+            <p class="text-muted mb-0" style="font-size:0.8rem;">
+                Showing <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+                of <strong>{{ page_obj.paginator.count }}</strong> records
+            </p>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0" style="gap:3px;">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=1 %}" style="border-radius:6px;" title="First"><i class="fa-solid fa-angles-left"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.previous_page_number %}" style="border-radius:6px;"><i class="fa-solid fa-angle-left"></i></a></li>
                     {% else %}
-                        <span class="stock-badge stock-ok">In Stock</span>
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angles-left"></i></span></li>
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angle-left"></i></span></li>
                     {% endif %}
-                </td>
-                <td>
-                    <div class="d-flex gap-1">
-                        <a href="{% url 'inventory:part_detail' part.pk %}" class="btn btn-sm btn-outline-primary" title="View"><i class="fa-solid fa-eye"></i></a>
-                        <a href="{% url 'inventory:part_edit' part.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fa-solid fa-pen"></i></a>
-                        <button class="btn btn-sm btn-outline-danger" title="Delete"
-                            onclick="confirmAction('Delete Part','Are you sure you want to delete &quot;{{ part.name }}&quot;? This cannot be undone.','Delete','btn-danger',()=>deletePart({{ part.pk }}))">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    {% with page_obj.number as cur %}{% for p in page_obj.paginator.page_range %}{% if p >= cur|add:"-2" and p <= cur|add:"2" %}{% if p == cur %}<li class="page-item active"><span class="page-link fw-bold" style="border-radius:6px;background:var(--primary);border-color:var(--primary);">{{ p }}</span></li>{% else %}<li class="page-item"><a class="page-link" href="?{% query_string page=p %}" style="border-radius:6px;">{{ p }}</a></li>{% endif %}{% endif %}{% endfor %}{% endwith %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.next_page_number %}" style="border-radius:6px;"><i class="fa-solid fa-angle-right"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.paginator.num_pages %}" style="border-radius:6px;" title="Last"><i class="fa-solid fa-angles-right"></i></a></li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angle-right"></i></span></li>
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angles-right"></i></span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
     {% else %}
     <div class="text-center py-5 text-muted">
         <i class="fa-solid fa-boxes-stacked fa-3x mb-3"></i>
@@ -94,7 +131,6 @@
     </div>
     {% endif %}
 </div>
-
 {% endblock %}
 
 {% block extra_js %}

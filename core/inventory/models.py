@@ -58,7 +58,7 @@ class SparePart(models.Model):
     part_number = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    category = models.ForeignKey(PartCategory, on_delete=models.PROTECT, related_name='parts')
+    category = models.ForeignKey(PartCategory, on_delete=models.CASCADE, related_name='parts')
     compatible_machines = models.ManyToManyField(MachineType, related_name='parts', blank=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True)
     quantity_in_stock = models.PositiveIntegerField(default=0)

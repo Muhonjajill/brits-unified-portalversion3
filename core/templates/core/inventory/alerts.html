@@ -1,76 +1,123 @@
 {% extends 'inventory/base.html' %}
+{% load query_tags %}
 {% block title %}Stock Alerts{% endblock %}
 {% block page_title %}Stock Alerts{% endblock %}
-{% block page_subtitle %}Parts requiring attention{% endblock %}
+{% block page_subtitle %}Active inventory alerts requiring attention{% endblock %}
 
 {% block content %}
-{% if alerts %}
 <div class="data-table">
-    <div class="table-header">
-        <h5><i class="fa-solid fa-bell text-danger me-2"></i>{{ alerts|length }} Active Alert(s)</h5>
+    <div class="table-header d-flex align-items-center justify-content-between">
+        <h5 class="mb-0">
+            <i class="fa-solid fa-bell me-2 text-danger"></i>
+            {{ page_obj.paginator.count }} Active Alert{{ page_obj.paginator.count|pluralize }}
+        </h5>
+        {% if page_obj.paginator.num_pages > 1 %}
+        <small class="text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</small>
+        {% endif %}
     </div>
-    <table class="table table-hover mb-0">
-        <thead>
-            <tr><th>Part</th><th>Alert</th><th>Qty at Alert</th><th>Current Stock</th><th>Date</th><th>Actions</th></tr>
-        </thead>
-        <tbody>
-            {% for alert in alerts %}
-            <tr id="alert-row-{{ alert.pk }}">
-                <td>
-                    <a href="{% url 'inventory:part_detail' alert.part.pk %}" class="text-decoration-none fw-600 text-dark">
-                        {{ alert.part.name }}
-                    </a><br>
-                    <small class="text-muted">{{ alert.part.part_number }}</small>
-                </td>
-                <td>
-                    {% if alert.alert_type == 'out_of_stock' %}
-                        <span class="stock-badge stock-out"><i class="fa-solid fa-circle-xmark me-1"></i>Out of Stock</span>
-                    {% else %}
-                        <span class="stock-badge stock-low"><i class="fa-solid fa-triangle-exclamation me-1"></i>Low Stock</span>
-                    {% endif %}
-                </td>
-                <td>{{ alert.quantity_at_alert }}</td>
-                <td class="fw-bold {% if alert.part.is_out_of_stock %}text-danger{% elif alert.part.is_low_stock %}text-warning{% else %}text-success{% endif %}">
-                    {{ alert.part.quantity_in_stock }}
-                </td>
-                <td><small class="text-muted">{{ alert.created_at|date:"d M Y H:i" }}</small></td>
-                <td>
-                    <div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-outline-warning" title="Acknowledge"
-                            onclick="confirmAction('Acknowledge Alert', 'Mark this alert as acknowledged?', 'Acknowledge', 'btn-warning', ()=>acknowledgeAlert({{ alert.pk }}), 'fa-check', 'confirm-warning')">
-                            <i class="fa-solid fa-check"></i> Acknowledge
+
+    {% if alerts %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Part</th>
+                    <th>Part Number</th>
+                    <th>Qty at Alert</th>
+                    <th>Raised</th>
+                    <th>Acknowledged By</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in alerts %}
+                <tr>
+                    <td>
+                        {% if alert.alert_type == 'out_of_stock' %}
+                            <span class="stock-badge stock-out"><i class="fa-solid fa-circle-xmark me-1"></i>Out of Stock</span>
+                        {% else %}
+                            <span class="stock-badge stock-low"><i class="fa-solid fa-triangle-exclamation me-1"></i>Low Stock</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-600">{{ alert.part.name }}</td>
+                    <td><code style="color:var(--primary);font-weight:600;">{{ alert.part.part_number }}</code></td>
+                    <td>
+                        <span class="{% if alert.alert_type == 'out_of_stock' %}text-danger{% else %}text-warning{% endif %} fw-bold">
+                            {{ alert.quantity_at_alert }}
+                        </span>
+                    </td>
+                    <td><small class="text-muted">{{ alert.created_at|date:"d M Y, H:i" }}</small></td>
+                    <td>
+                        {% if alert.acknowledged_by %}
+                            <small class="text-muted">{{ alert.acknowledged_by.get_full_name|default:alert.acknowledged_by.username }}</small>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-success" onclick="acknowledgeAlert({{ alert.pk }}, this)">
+                            <i class="fa-solid fa-check me-1"></i> Acknowledge
                         </button>
-                        <a href="{% url 'inventory:part_detail' alert.part.pk %}" class="btn btn-sm btn-primary">
-                            <i class="fa-solid fa-right-left me-1"></i> Restock
-                        </a>
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="px-3 py-2 border-top">
+        {% if page_obj.has_other_pages %}
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-2 px-1">
+            <p class="text-muted mb-0" style="font-size:0.8rem;">
+                Showing <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+                of <strong>{{ page_obj.paginator.count }}</strong> records
+            </p>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0" style="gap:3px;">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=1 %}" style="border-radius:6px;" title="First"><i class="fa-solid fa-angles-left"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.previous_page_number %}" style="border-radius:6px;"><i class="fa-solid fa-angle-left"></i></a></li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angles-left"></i></span></li>
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angle-left"></i></span></li>
+                    {% endif %}
+                    {% with page_obj.number as cur %}{% for p in page_obj.paginator.page_range %}{% if p >= cur|add:"-2" and p <= cur|add:"2" %}{% if p == cur %}<li class="page-item active"><span class="page-link fw-bold" style="border-radius:6px;background:var(--primary);border-color:var(--primary);">{{ p }}</span></li>{% else %}<li class="page-item"><a class="page-link" href="?{% query_string page=p %}" style="border-radius:6px;">{{ p }}</a></li>{% endif %}{% endif %}{% endfor %}{% endwith %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.next_page_number %}" style="border-radius:6px;"><i class="fa-solid fa-angle-right"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.paginator.num_pages %}" style="border-radius:6px;" title="Last"><i class="fa-solid fa-angles-right"></i></a></li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angle-right"></i></span></li>
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angles-right"></i></span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <i class="fa-solid fa-bell-slash fa-3x mb-3 d-block"></i>
+        <p class="mb-0">No active alerts. Everything looks good!</p>
+    </div>
+    {% endif %}
 </div>
-{% else %}
-<div class="text-center py-5">
-    <i class="fa-solid fa-circle-check fa-4x mb-3 text-success"></i>
-    <h4 class="text-success">All Clear!</h4>
-    <p class="text-muted">No active stock alerts at this time.</p>
-    <a href="{% url 'inventory:parts_list' %}" class="btn btn-primary mt-2">View All Parts</a>
-</div>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function acknowledgeAlert(pk) {
+function acknowledgeAlert(pk, btn) {
     fetch(`/inventory/alerts/${pk}/acknowledge/`, {
         method: 'POST',
         headers: { 'X-CSRFToken': '{{ csrf_token }}' }
     }).then(r => r.json()).then(d => {
         if (d.success) {
-            const row = document.getElementById(`alert-row-${pk}`);
-            row.style.opacity = '0'; row.style.transition = '0.4s';
-            setTimeout(() => { row.remove(); showToast('Alert acknowledged', 'success'); }, 400);
+            showToast('Alert acknowledged.', 'success');
+            btn.closest('tr').style.opacity = '0.4';
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            showToast('Failed to acknowledge alert.', 'danger');
         }
     });
 }

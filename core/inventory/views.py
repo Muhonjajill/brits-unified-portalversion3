@@ -4,34 +4,40 @@ from django.contrib import messages
 from django.db.models import Q, Sum, Count, F
 from django.http import JsonResponse
 from django.utils import timezone
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .models import SparePart, StockTransaction, StockAlert, PartCategory, MachineType, Supplier
 from .forms import SparePartForm, StockTransactionForm, SupplierForm, PartCategoryForm, MachineTypeForm, StockFilterForm
 import json
 
 
+def paginate_queryset(request, queryset, per_page=10):
+    """Helper: paginate any queryset. Returns a Page object."""
+    paginator = Paginator(queryset, per_page)
+    page = request.GET.get('page', 1)
+    try:
+        return paginator.page(page)
+    except PageNotAnInteger:
+        return paginator.page(1)
+    except EmptyPage:
+        return paginator.page(paginator.num_pages)
+
+
 @login_required
 def inventory_dashboard(request):
-    #total_parts = SparePart.objects.filter(is_active=True).count()
     total_parts = SparePart.objects.count()
-    #total_value = SparePart.objects.filter(is_active=True).aggregate(
     total_value = SparePart.objects.aggregate(
         val=Sum(F('quantity_in_stock') * F('unit_cost'))
     )['val'] or 0
-    #low_stock = SparePart.objects.filter(is_active=True, quantity_in_stock__gt=0).filter(
     low_stock = SparePart.objects.filter(is_active=False, quantity_in_stock__gt=0).filter(
         quantity_in_stock__lte=F('minimum_stock_level')
     ).count()
-    #out_of_stock = SparePart.objects.filter(is_active=True, quantity_in_stock=0).count()
     out_of_stock = SparePart.objects.filter(is_active=False, quantity_in_stock=0).count()
     active_alerts = StockAlert.objects.filter(status='active').count()
     recent_transactions = StockTransaction.objects.select_related('part', 'performed_by').order_by('-performed_at')[:10]
-    #low_stock_parts = SparePart.objects.filter(is_active=True).filter(
     low_stock_parts = SparePart.objects.filter(
         quantity_in_stock__lte=F('minimum_stock_level')
     ).order_by('quantity_in_stock')[:8]
-    # Category breakdown
     categories = PartCategory.objects.annotate(part_count=Count('parts')).order_by('-part_count')[:6]
-    # Recent 7 days transactions
     from datetime import timedelta
     week_ago = timezone.now() - timedelta(days=7)
     week_transactions = StockTransaction.objects.filter(performed_at__gte=week_ago).count()
@@ -53,7 +59,6 @@ def inventory_dashboard(request):
 @login_required
 def parts_list(request):
     form = StockFilterForm(request.GET)
-    #parts = SparePart.objects.filter(is_active=True).select_related('category', 'supplier').prefetch_related('compatible_machines')
     parts = SparePart.objects.select_related('category', 'supplier').prefetch_related('compatible_machines')
 
     if form.is_valid():
@@ -75,18 +80,26 @@ def parts_list(request):
         elif stock_status == 'ok':
             parts = parts.filter(quantity_in_stock__gt=F('minimum_stock_level'))
 
-    print(parts.query)
+    page_obj = paginate_queryset(request, parts, per_page=10)
 
-    return render(request, 'core/inventory/parts_list.html', {'parts': parts, 'form': form})
+    return render(request, 'core/inventory/parts_list.html', {
+        'parts': page_obj,
+        'page_obj': page_obj,
+        'form': form,
+    })
 
 
 @login_required
 def part_detail(request, pk):
     part = get_object_or_404(SparePart, pk=pk)
-    transactions = part.transactions.select_related('performed_by', 'machine_type').order_by('-performed_at')[:20]
+    transactions_qs = part.transactions.select_related('performed_by', 'machine_type').order_by('-performed_at')
+    page_obj = paginate_queryset(request, transactions_qs, per_page=5)
     transaction_form = StockTransactionForm()
     return render(request, 'core/inventory/part_detail.html', {
-        'part': part, 'transactions': transactions, 'transaction_form': transaction_form
+        'part': part,
+        'transactions': page_obj,
+        'page_obj': page_obj,
+        'transaction_form': transaction_form,
     })
 
 
@@ -141,7 +154,6 @@ def stock_transaction(request, pk):
             txn.performed_by = request.user
             txn.quantity_before = part.quantity_in_stock
 
-            # Determine sign
             t_type = txn.transaction_type
             qty = abs(txn.quantity)
             if t_type in ('receipt', 'return', 'adjustment'):
@@ -157,8 +169,6 @@ def stock_transaction(request, pk):
             txn.quantity_after = part.quantity_in_stock
             part.save()
             txn.save()
-
-            # Check alerts
             _check_stock_alerts(part)
 
             return JsonResponse({
@@ -192,8 +202,12 @@ def _check_stock_alerts(part):
 
 @login_required
 def alerts_list(request):
-    alerts = StockAlert.objects.filter(status='active').select_related('part', 'acknowledged_by').order_by('-created_at')
-    return render(request, 'core/inventory/alerts.html', {'alerts': alerts})
+    alerts_qs = StockAlert.objects.filter(status='active').select_related('part', 'acknowledged_by').order_by('-created_at')
+    page_obj = paginate_queryset(request, alerts_qs, per_page=10)
+    return render(request, 'core/inventory/alerts.html', {
+        'alerts': page_obj,
+        'page_obj': page_obj,
+    })
 
 
 @login_required
@@ -210,8 +224,12 @@ def acknowledge_alert(request, pk):
 
 @login_required
 def suppliers_list(request):
-    suppliers = Supplier.objects.annotate(part_count=Count('sparepart')).order_by('name')
-    return render(request, 'core/inventory/suppliers.html', {'suppliers': suppliers})
+    suppliers_qs = Supplier.objects.annotate(part_count=Count('sparepart')).order_by('name')
+    page_obj = paginate_queryset(request, suppliers_qs, per_page=10)
+    return render(request, 'core/inventory/suppliers.html', {
+        'suppliers': page_obj,
+        'page_obj': page_obj,
+    })
 
 
 @login_required
@@ -243,8 +261,12 @@ def supplier_edit(request, pk):
 
 @login_required
 def categories_list(request):
-    categories = PartCategory.objects.annotate(part_count=Count('parts')).order_by('name')
-    return render(request, 'core/inventory/categories.html', {'categories': categories})
+    categories_qs = PartCategory.objects.annotate(part_count=Count('parts')).order_by('name')
+    page_obj = paginate_queryset(request, categories_qs, per_page=10)
+    return render(request, 'core/inventory/categories.html', {
+        'categories': page_obj,
+        'page_obj': page_obj,
+    })
 
 
 @login_required
@@ -262,8 +284,12 @@ def category_create(request):
 
 @login_required
 def machine_types_list(request):
-    machines = MachineType.objects.annotate(part_count=Count('parts')).order_by('name')
-    return render(request, 'core/inventory/machine_types.html', {'machines': machines})
+    machines_qs = MachineType.objects.annotate(part_count=Count('parts')).order_by('name')
+    page_obj = paginate_queryset(request, machines_qs, per_page=10)
+    return render(request, 'core/inventory/machine_types.html', {
+        'machines': page_obj,
+        'page_obj': page_obj,
+    })
 
 
 @login_required
@@ -281,25 +307,72 @@ def machine_type_create(request):
 
 @login_required
 def reports(request):
-    # Top 10 most issued
-    #most_issued = SparePart.objects.filter(is_active=True).annotate(
     most_issued = SparePart.objects.annotate(
         issues=Count('transactions', filter=Q(transactions__transaction_type='issue'))
     ).order_by('-issues')[:10]
 
-    # Stock value by category
     category_values = PartCategory.objects.annotate(
         total_val=Sum(F('parts__quantity_in_stock') * F('parts__unit_cost'))
     ).order_by('-total_val')
 
-    # Transaction history last 30 days
     from datetime import timedelta
     month_ago = timezone.now() - timedelta(days=30)
-    recent_txns = StockTransaction.objects.filter(performed_at__gte=month_ago).select_related('part', 'performed_by').order_by('-performed_at')[:50]
+    recent_txns_qs = StockTransaction.objects.filter(
+        performed_at__gte=month_ago
+    ).select_related('part', 'performed_by').order_by('-performed_at')
+
+    page_obj = paginate_queryset(request, recent_txns_qs, per_page=10)
 
     context = {
         'most_issued': most_issued,
         'category_values': category_values,
-        'recent_txns': recent_txns,
+        'recent_txns': page_obj,
+        'page_obj': page_obj,
     }
     return render(request, 'core/inventory/reports.html', context)
+
+# ── Delete permission helper ──────────────────────────────────────────────────
+def _user_can_delete(user):
+    """Returns True for superusers, Directors, and Managers."""
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    return user.groups.filter(name__in=['Director', 'Manager']).exists()
+
+
+# ── Delete views ──────────────────────────────────────────────────────────────
+@login_required
+def supplier_delete(request, pk):
+    if request.method != 'POST':
+        return JsonResponse({'success': False}, status=405)
+    if not _user_can_delete(request.user):
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+    supplier = get_object_or_404(Supplier, pk=pk)
+    name = supplier.name
+    supplier.delete()
+    return JsonResponse({'success': True, 'message': f'Supplier "{name}" has been deleted.'})
+
+
+@login_required
+def category_delete(request, pk):
+    if request.method != 'POST':
+        return JsonResponse({'success': False}, status=405)
+    if not _user_can_delete(request.user):
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+    category = get_object_or_404(PartCategory, pk=pk)
+    name = category.name
+    category.delete()
+    return JsonResponse({'success': True, 'message': f'Category "{name}" has been deleted.'})
+
+
+@login_required
+def machine_type_delete(request, pk):
+    if request.method != 'POST':
+        return JsonResponse({'success': False}, status=405)
+    if not _user_can_delete(request.user):
+        return JsonResponse({'success': False, 'error': 'Permission denied.'}, status=403)
+    machine = get_object_or_404(MachineType, pk=pk)
+    name = machine.name
+    machine.delete()
+    return JsonResponse({'success': True, 'message': f'Machine type "{name}" has been deleted.'})

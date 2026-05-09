@@ -21,4 +21,8 @@ urlpatterns = [
     path('machines/', views.machine_types_list, name='machine_types'),
     path('machines/add/', views.machine_type_create, name='machine_type_create'),
     path('reports/', views.reports, name='reports'),
+
+    path('suppliers/<int:pk>/delete/', views.supplier_delete,    name='supplier_delete'),
+    path('categories/<int:pk>/delete/', views.category_delete,   name='category_delete'),
+    path('machines/<int:pk>/delete/',   views.machine_type_delete, name='machine_type_delete'),
 ]

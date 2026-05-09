@@ -1,28 +1,121 @@
 {% extends 'inventory/base.html' %}
+{% load query_tags %}
 {% block title %}Categories{% endblock %}
 {% block page_title %}Part Categories{% endblock %}
-{% block topbar_btn %}<a href="{% url 'inventory:category_create' %}" class="btn btn-primary"><i class="fa-solid fa-plus me-1"></i> Add Category</a>{% endblock %}
+{% block page_subtitle %}Manage spare part categories{% endblock %}
+
+{% block topbar_btn %}
+<a href="{% url 'inventory:category_create' %}" class="btn btn-primary">
+    <i class="fa-solid fa-plus me-1"></i> Add Category
+</a>
+{% endblock %}
+
 {% block content %}
-<div class="row g-3">
-    {% for cat in categories %}
-    <div class="col-md-4 col-lg-3">
-        <div class="stat-card">
-            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;">
-                <div style="width:36px;height:36px;border-radius:8px;background:{{ cat.color }}20;color:{{ cat.color }};display:flex;align-items:center;justify-content:center;font-size:1.1rem;">
-                    <i class="fa-solid fa-tag"></i>
-                </div>
-                <strong>{{ cat.name }}</strong>
-            </div>
-            <div class="text-muted" style="font-size:0.8rem;">{{ cat.description|default:"No description"|truncatechars:60 }}</div>
-            <div class="mt-2 d-flex justify-content-between align-items-center">
-                <span class="badge" style="background:{{ cat.color }}20;color:{{ cat.color }};">{{ cat.part_count }} parts</span>
-            </div>
+<div class="data-table">
+    <div class="table-header d-flex align-items-center justify-content-between">
+        <h5 class="mb-0"><i class="fa-solid fa-tags me-2"></i>{{ page_obj.paginator.count }} Categor{{ page_obj.paginator.count|pluralize:"y,ies" }}</h5>
+        {% if page_obj.paginator.num_pages > 1 %}
+        <small class="text-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</small>
+        {% endif %}
+    </div>
+
+    {% if categories %}
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th style="width:44px;"></th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Parts</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td>
+                        <div style="width:32px;height:32px;border-radius:8px;background:{{ cat.color }}20;color:{{ cat.color }};display:flex;align-items:center;justify-content:center;font-size:0.9rem;">
+                            <i class="fa-solid fa-tag"></i>
+                        </div>
+                    </td>
+                    <td><span class="fw-600">{{ cat.name }}</span></td>
+                    <td><span class="text-muted" style="font-size:0.85rem;">{{ cat.description|default:"—"|truncatechars:70 }}</span></td>
+                    <td>
+                        <span class="badge" style="background:{{ cat.color }}20;color:{{ cat.color }};font-weight:600;">
+                            {{ cat.part_count }} part{{ cat.part_count|pluralize }}
+                        </span>
+                    </td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-danger" title="Delete"
+                            onclick="confirmAction(
+                                'Delete Category',
+                                'Delete &quot;{{ cat.name|escapejs }}&quot;? Parts in this category will be unaffected but lose their category.',
+                                'Delete',
+                                'btn-danger',
+                                () => deleteCategory({{ cat.pk }})
+                            )">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="px-3 py-2 border-top">
+        {% if page_obj.has_other_pages %}
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-2 px-1">
+            <p class="text-muted mb-0" style="font-size:0.8rem;">
+                Showing <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+                of <strong>{{ page_obj.paginator.count }}</strong> records
+            </p>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0" style="gap:3px;">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=1 %}" style="border-radius:6px;" title="First"><i class="fa-solid fa-angles-left"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.previous_page_number %}" style="border-radius:6px;"><i class="fa-solid fa-angle-left"></i></a></li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angles-left"></i></span></li>
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angle-left"></i></span></li>
+                    {% endif %}
+                    {% with page_obj.number as cur %}{% for p in page_obj.paginator.page_range %}{% if p >= cur|add:"-2" and p <= cur|add:"2" %}{% if p == cur %}<li class="page-item active"><span class="page-link fw-bold" style="border-radius:6px;background:var(--primary);border-color:var(--primary);">{{ p }}</span></li>{% else %}<li class="page-item"><a class="page-link" href="?{% query_string page=p %}" style="border-radius:6px;">{{ p }}</a></li>{% endif %}{% endif %}{% endfor %}{% endwith %}
+                    {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.next_page_number %}" style="border-radius:6px;"><i class="fa-solid fa-angle-right"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.paginator.num_pages %}" style="border-radius:6px;" title="Last"><i class="fa-solid fa-angles-right"></i></a></li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angle-right"></i></span></li>
+                    <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angles-right"></i></span></li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
+        {% endif %}
     </div>
-    {% empty %}
-    <div class="col-12 text-center py-5 text-muted">
-        <i class="fa-solid fa-tags fa-3x mb-3"></i><p>No categories yet.</p>
+
+    {% else %}
+    <div class="text-center py-5 text-muted">
+        <i class="fa-solid fa-tags fa-3x mb-3 d-block"></i>
+        <p class="mb-1">No categories yet.</p>
+        <a href="{% url 'inventory:category_create' %}" class="btn btn-sm btn-primary mt-2">
+            <i class="fa-solid fa-plus me-1"></i> Add Category
+        </a>
     </div>
-    {% endfor %}
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function deleteCategory(pk) {
+    fetch(`/inventory/categories/${pk}/delete/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' }
+    }).then(r => r.json()).then(d => {
+        if (d.success) { showToast(d.message, 'success'); setTimeout(() => location.reload(), 1200); }
+        else showToast(d.error || 'Failed to delete category', 'danger');
+    }).catch(() => showToast('An error occurred', 'danger'));
+}
+</script>
 {% endblock %}
