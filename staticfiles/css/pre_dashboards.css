@@ -189,8 +189,9 @@ h1 {
    ══════════════════════════════════════════════════════════════ */
 
 .cards-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;             
+  flex-wrap: wrap;
+  justify-content: center;   
   gap: 1.75rem;
   width: 100%;
   max-width: 1080px;
@@ -199,6 +200,7 @@ h1 {
 }
 
 .card {
+  flex: 0 1 300px;
   background: var(--card-bg);
   border: 1.5px solid var(--border);
   border-radius: var(--radius);
@@ -337,18 +339,11 @@ h1 {
   .logo-animate { max-width: 160px; }
 
   .cards-container {
-    grid-template-columns: repeat(2, 1fr);
     max-width: 680px;
     gap: 1.4rem;
   }
 
-  /* 3 cards → last one (odd) spans full width and self-centres */
-  .cards-container > .card:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-    max-width: 340px;
-    justify-self: center;
-    width: 100%;
-  }
+  .card { flex-basis: 280px; }
 
   .admin-btn { top: 18px; right: 18px; font-size: 0.84rem; padding: 9px 18px; }
 }
@@ -368,7 +363,6 @@ h1 {
   .highlight { padding: 2px 8px; }
 
   .cards-container {
-    grid-template-columns: 1fr;
     max-width: 420px;
     gap: 1.2rem;
   }
@@ -380,7 +374,7 @@ h1 {
     justify-self: auto;
   }
 
-  .card { padding: 2rem 1.5rem 1.75rem; }
+  .card { padding: 2rem 1.5rem 1.75rem; flex-basis: 100%;}
 
   /* No hover lift on touch screens */
   .card:hover {
