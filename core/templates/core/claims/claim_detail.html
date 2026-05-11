@@ -3,11 +3,218 @@
 
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/claims.css' %}">
+<style>
+/* ── Dashboard-matched claim detail styles ── */
+.claims-container { max-width: 1200px; margin: 0 auto; padding-bottom: 40px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+/* Top bar */
+.claims-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 24px; gap: 12px; flex-wrap: wrap;
+}
+.claims-header h2 {
+  font-size: 1.35rem; font-weight: 700; color: var(--claims-text, #343a40);
+  display: flex; align-items: center; gap: 10px; margin: 0;
+}
+.claims-header h2 .hdr-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg, #123692 0%, #1a4aad 100%);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 1rem; flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(31,56,100,.25);
+}
+.header-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* Status tracker */
+.status-track {
+  display: flex; align-items: center; gap: 0;
+  background: #fff; border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.04);
+  padding: 18px 24px; margin-bottom: 20px; flex-wrap: wrap; gap: 8px;
+}
+.track-step { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.step-dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #dee2e6; border: 3px solid #dee2e6; transition: all .2s;
+}
+.track-step.done .step-dot   { background: #198754; border-color: #198754; }
+.track-step.active .step-dot { background: #123692; border-color: #123692; }
+.track-step.rejected .step-dot { background: #dc3545; border-color: #dc3545; }
+.track-step span { font-size: 0.75rem; font-weight: 600; color: #6c757d; white-space: nowrap; }
+.track-step.done span   { color: #198754; }
+.track-step.active span { color: #123692; }
+.track-step.rejected span { color: #dc3545; }
+.track-line {
+  flex: 1; height: 3px; background: #dee2e6; min-width: 40px;
+  margin-bottom: 20px; border-radius: 2px;
+}
+.track-line.done { background: #198754; }
+.track-badge { margin-left: auto; }
+
+/* Cards */
+.claim-meta-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.05);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.card-section-title {
+  font-size: 0.92rem; font-weight: 700; color: var(--claims-text, #343a40); margin: 0 0 14px;
+  padding: 16px 24px 0; display: flex; align-items: center; gap: 8px;
+}
+.card-section-title i { color: #123692; }
+
+.meta-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px; padding: 4px 24px 20px;
+}
+.meta-grid > div { display: flex; flex-direction: column; gap: 3px; }
+.meta-grid label { font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing:.04em; }
+.meta-grid strong { font-size: 0.92rem; color: var(--claims-text, #343a40); }
+
+/* Entries card */
+.claim-entries-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.05);
+  margin-bottom: 20px;
+  padding: 0 0 20px;
+}
+.claim-entries-card h3.card-section-title { padding: 16px 24px 12px; border-bottom: 1px solid #f0f2f5; margin-bottom: 14px; }
+.entries-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0 12px; }
+.entries-table.view-table { width: 100%; border-collapse: collapse; min-width: 750px; font-size: 0.85rem; }
+.entries-table.view-table thead th {
+  background: #123692; color: #fff; padding: 10px 10px;
+  font-size: 0.78rem; font-weight: 600; text-align: center;
+}
+.entries-table.view-table thead th:first-child { border-radius: 8px 0 0 0; }
+.entries-table.view-table thead th:last-child  { border-radius: 0 8px 0 0; }
+.entries-table.view-table tbody td {
+  padding: 8px 10px; border-bottom: 1px solid #f0f2f5; vertical-align: middle;
+}
+.entries-table.view-table tbody tr:last-child td { border-bottom: none; }
+.entries-table.view-table tfoot td {
+  padding: 8px 10px; font-weight: 600; background: #f8f9fc;
+  border-top: 2px solid #e9ecef;
+}
+.totals-label { text-align: right; color: #495057; }
+.amount, .grand-total { text-align: right; font-weight: 600; }
+.grand-total { color: #123692; }
+.net-row td { background: #e8f0fc !important; }
+.empty-cell { text-align: center; color: #6c757d; padding: 20px; }
+
+/* Badges */
+.status-badge {
+  display: inline-block; padding: 4px 10px; border-radius: 20px;
+  font-size: 0.75rem; font-weight: 700; letter-spacing: .03em; white-space: nowrap;
+}
+.status-secondary { background: #f0f0f0;  color: #555; }
+.status-primary   { background: #e0eaff;  color: #123692; }
+.status-info      { background: #d1f0fb;  color: #0c5e6f; }
+.status-success   { background: #d4edda;  color: #155724; }
+.status-danger    { background: #f8d7da;  color: #721c24; }
+.paid-badge   { color: #198754; font-weight: 600; }
+.unpaid-badge { color: #6c757d; }
+
+/* Comments */
+.comment-block {
+  background: #f8f9fc; border-radius: 8px; border-left: 3px solid #c0d0f0;
+  padding: 12px 16px; margin: 0 24px 12px; font-size: 0.88rem;
+}
+.comment-block p { margin: 6px 0 4px; }
+.comment-block small { color: #6c757d; }
+
+/* Finance payment card */
+.finance-payment-card { border: 2px solid #198754 !important; }
+.finance-payment-card .card-section-title { color: #155724; }
+.finance-payment-card .card-section-title i { color: #198754; }
+
+.finance-integrity-grid {
+  display: flex; flex-wrap: wrap; gap: 16px;
+  padding: 8px 24px 16px;
+}
+.integrity-item {
+  background: #f8f9fc; border-radius: 8px; padding: 10px 16px;
+  min-width: 150px; flex: 1;
+}
+.integrity-item label { font-size: 0.72rem; font-weight: 600; color: #6c757d; text-transform: uppercase; display: block; margin-bottom: 4px; }
+.integrity-item strong { font-size: 0.95rem; color: var(--claims-text, #343a40); }
+
+.approver-hint {
+  font-size: 0.83rem; color: #555;
+  background: #f0f7ff; border-radius: 8px; padding: 10px 16px;
+  margin: 0 24px 16px; border-left: 3px solid #c0d0f0;
+}
+.approver-hint i { color: #123692; }
+
+/* Approval panel */
+.approval-panel { border: 2px solid #123692 !important; }
+.approval-panel .card-section-title { color: #123692; }
+
+/* Action buttons */
+.form-actions { display: flex; gap: 10px; flex-wrap: wrap; padding: 0 24px 4px; }
+.btn-action {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 8px; font-size: 0.88rem; font-weight: 600;
+  background: #f0f5ff; color: #123692; border: 1.5px solid #c0d0f0;
+  text-decoration: none; transition: background .15s; cursor: pointer;
+}
+.btn-action:hover { background: #dce8ff; }
+.btn-action.btn-danger-sm { background: #fde8ea; color: #dc3545; border-color: #f5c2c7; }
+.btn-action.btn-danger-sm:hover { background: #f8d7da; }
+.btn-action.btn-pdf   { background: #fde8ea; color: #dc3545; border-color: #f5c2c7; }
+.btn-action.btn-excel { background: #e6f4ea; color: #198754; border-color: #b7dfc4; }
+.btn-save {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+  background: #f0f5ff; color: #123692; border: 1.5px solid #c0d0f0;
+  text-decoration: none; transition: background .15s;
+}
+.btn-save:hover { background: #dce8ff; }
+.btn-submit-claim {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+  background: linear-gradient(135deg,#123692 0%,#1a4aad 100%); color: #fff;
+  border: none; cursor: pointer; box-shadow: 0 2px 8px rgba(31,56,100,.25);
+}
+.btn-submit-claim:hover { opacity: .9; }
+.btn-reject {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+  background: #fde8ea; color: #dc3545; border: 1.5px solid #f5c2c7; cursor: pointer;
+}
+.btn-reject:hover { background: #f8d7da; }
+
+/* History table */
+.claim-history-card { }
+.history-table-wrap { padding: 0 24px 16px; overflow-x: auto; }
+.history-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+.history-table th { background: #f0f2f5; color: #495057; padding: 8px 10px; font-size: 0.75rem; text-align: left; }
+.history-table td { padding: 7px 10px; border-bottom: 1px solid #f0f2f5; }
+.ticket-link { color: #123692; text-decoration: none; font-weight: 600; }
+.ticket-link:hover { text-decoration: underline; }
+
+.prev-claim-alert {
+  background: #f0f7ff; border-radius: 8px; border-left: 3px solid #123692;
+  padding: 10px 16px; font-size: 0.85rem; color: var(--claims-text, #343a40); margin: 0 24px 0;
+}
+
+/* Form controls */
+.form-control {
+  display: block; width: 100%; border: 1.5px solid #dee2e6; border-radius: 8px;
+  padding: 8px 12px; font-size: 0.9rem; transition: border-color .15s, box-shadow .15s;
+}
+.form-control:focus { border-color: #123692; box-shadow: 0 0 0 3px rgba(31,56,100,.1); outline: none; }
+.field-group label { display: block; font-size: 0.78rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing:.04em; margin-bottom: 6px; }
+.field-error { font-size: 0.8rem; color: #dc3545; margin-top: 4px; }
+</style>
+
 
 <div class="claims-container">
 
   <div class="claims-header">
-    <h2><i class="fas fa-file-invoice-dollar"></i> {{ page_title }}</h2>
+    <h2><span class="hdr-icon"><i class="fas fa-file-invoice-dollar"></i></span> {{ claim.display_title }} — {{ claim.month|date:"F Y" }}</h2>
     <div class="header-actions">
       <a href="{% url 'claim_list' %}" class="btn-action">
         <i class="fas fa-arrow-left"></i> Back
@@ -27,7 +234,7 @@
     {% endfor %}
   {% endif %}
 
-  {# ── Approval progress tracker (Manager → Finance only) ── #}
+  {# ── Approval progress tracker ── #}
   <div class="status-track">
     {% with s=claim.status %}
     <div class="track-step {% if s != 'draft' %}done{% elif s == 'draft' %}active{% endif %}">
@@ -51,11 +258,17 @@
     <div class="meta-grid">
       <div><label>Employee</label><strong>{{ claim.employee.get_full_name }}</strong></div>
       <div><label>Month</label><strong>{{ claim.month|date:"F Y" }}</strong></div>
-      <div><label>Title</label><strong>{{ claim.title|default:"—" }}</strong></div>
       <div><label>Submitted</label><strong>{{ claim.submitted_at|date:"d M Y H:i"|default:"Not yet submitted" }}</strong></div>
       <div><label>Manager</label><strong>{{ claim.manager.get_full_name|default:"—" }}</strong></div>
       <div><label>Finance Reviewer</label><strong>{{ claim.finance_reviewer.get_full_name|default:"—" }}</strong></div>
-      <div><label>Advance</label><strong>KES {{ claim.advance|floatformat:2 }}</strong></div>
+      <div><label>Advance (this claim)</label><strong>KES {{ claim.advance|floatformat:2 }}</strong></div>
+      {% if claim.carry_forward %}
+      <div>
+        <label>Carry-forward ({{ claim.previous_claim.month|date:"M Y"|default:"prev. claim" }})</label>
+        <strong style="color:var(--claims-warning, #fd7e14);">KES {{ claim.carry_forward|floatformat:2 }}</strong>
+      </div>
+      <div><label>Total Advance (incl. carry-forward)</label><strong>KES {{ claim.total_advance|floatformat:2 }}</strong></div>
+      {% endif %}
       {% if claim.amount_paid %}
       <div>
         <label>Amount Paid</label>
@@ -74,6 +287,28 @@
     <h3 class="card-section-title">
       <i class="fas fa-history"></i> Previous Claims — {{ claim.employee.get_full_name }}
     </h3>
+
+    {# carry-forward alert banner #}
+    {% if prev_claim %}
+    <div class="prev-claim-alert" style="margin-bottom:16px;">
+      <i class="fas fa-info-circle"></i>
+      Last approved claim: <strong>{{ prev_claim.month|date:"F Y" }}</strong>
+      &mdash; KES {{ prev_claim.subtotal|floatformat:2 }} claimed,
+      KES {{ prev_claim.advance|floatformat:2 }} advance issued.
+      {% if prev_claim.amount_paid %}
+        <span class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ prev_claim.amount_paid|floatformat:2 }} paid</span>
+        {% if prev_claim.balance_due > 0 %}
+          &mdash; <span style="color:var(--claims-danger); font-weight:600;">KES {{ prev_claim.balance_due|floatformat:2 }} outstanding</span>
+          (carried into this claim's advance).
+        {% else %}
+          &mdash; <span style="color:var(--claims-success);">Fully settled.</span>
+        {% endif %}
+      {% else %}
+        <span class="unpaid-badge">payment not yet recorded</span>.
+      {% endif %}
+    </div>
+    {% endif %}
+
     <div class="history-table-wrap">
       <table class="claims-table history-table">
         <thead>
@@ -124,19 +359,6 @@
         </tbody>
       </table>
     </div>
-    {% if prev_claim %}
-    <div class="prev-claim-alert">
-      <i class="fas fa-info-circle"></i>
-      Last approved claim was <strong>{{ prev_claim.month|date:"F Y" }}</strong>
-      — KES {{ prev_claim.subtotal|floatformat:2 }} claimed,
-      KES {{ prev_claim.advance|floatformat:2 }} advance,
-      {% if prev_claim.amount_paid %}
-        <span class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ prev_claim.amount_paid|floatformat:2 }} paid</span>.
-      {% else %}
-        <span class="unpaid-badge">payment not yet recorded</span>.
-      {% endif %}
-    </div>
-    {% endif %}
   </div>
   {% endif %}
 
@@ -194,8 +416,16 @@
             <td colspan="9" class="totals-label">Sub-total</td>
             <td class="amount grand-total">KES {{ claim.subtotal|floatformat:2 }}</td>
           </tr>
+          {% if claim.carry_forward %}
+          <tr class="totals-row" style="background:#fff8ec;">
+            <td colspan="9" class="totals-label" style="color:var(--claims-warning,#fd7e14);">
+              <i class="fas fa-history"></i> Carry-forward ({{ claim.previous_claim.month|date:"M Y"|default:"prev." }})
+            </td>
+            <td class="amount" style="color:var(--claims-warning,#fd7e14);">KES {{ claim.carry_forward|floatformat:2 }}</td>
+          </tr>
+          {% endif %}
           <tr class="totals-row">
-            <td colspan="9" class="totals-label">Advance</td>
+            <td colspan="9" class="totals-label">Advance (this claim)</td>
             <td class="amount">KES {{ claim.advance|floatformat:2 }}</td>
           </tr>
           <tr class="totals-row net-row">
@@ -242,22 +472,29 @@
   </div>
   {% endif %}
 
-  {# ── Finance payment recording panel ── #}
-  {% if payment_form %}
+  {# ── Finance payment recording panel — VISIBLE ONLY TO FINANCE / ELEVATED ── #}
+  {% if payment_form and is_finance_user %}
   <div class="claim-meta-card finance-payment-card">
     <h3 class="card-section-title">
       <i class="fas fa-money-bill-wave"></i> Record Disbursement
+      <span style="font-size:0.75em; font-weight:400; color:var(--claims-muted); margin-left:8px;">(Finance only)</span>
     </h3>
     <p class="approver-hint">
       <i class="fas fa-info-circle"></i>
       Record the actual amount disbursed to <strong>{{ claim.employee.get_full_name }}</strong>.
-      This is tracked for integrity purposes and shown in the employee's claim history.
+      This is tracked for integrity purposes and feeds into the next claim's carry-forward.
     </p>
     <div class="finance-integrity-grid">
       <div class="integrity-item">
         <label>Claimed Sub-total</label>
         <strong>KES {{ claim.subtotal|floatformat:2 }}</strong>
       </div>
+      {% if claim.carry_forward %}
+      <div class="integrity-item">
+        <label>Carry-forward</label>
+        <strong style="color:var(--claims-warning,#fd7e14);">KES {{ claim.carry_forward|floatformat:2 }}</strong>
+      </div>
+      {% endif %}
       <div class="integrity-item">
         <label>Advance Deducted</label>
         <strong>KES {{ claim.advance|floatformat:2 }}</strong>
@@ -362,6 +599,7 @@
       <textarea id="approveCommentBox" class="form-control" rows="3"
                 placeholder="Add a comment for the employee (optional)"></textarea>
     </div>
+    <br>
     <div class="claim-modal-actions">
       <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('approveModal')">
         <i class="fas fa-times"></i> Cancel
@@ -423,7 +661,7 @@
     </p>
     <p class="claim-modal-warning">
       <i class="fas fa-exclamation-triangle"></i>
-      Ensure the amount matches what was actually disbursed. This record is permanent.
+      Ensure the amount matches what was actually disbursed. This feeds into the next claim's carry-forward automatically.
     </p>
     <div class="claim-modal-actions">
       <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('paymentModal')">
@@ -487,12 +725,10 @@ document.querySelectorAll('.claim-modal-overlay').forEach(overlay => {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') document.querySelectorAll('.claim-modal-overlay.show').forEach(m => closeClaimModal(m.id));
 });
-
 function submitApprove() {
   document.getElementById('approveCommentInput').value = document.getElementById('approveCommentBox').value;
   document.getElementById('approveForm').submit();
 }
-
 function submitReject() {
   const comment = document.getElementById('rejectCommentBox').value.trim();
   const err = document.getElementById('rejectCommentError');

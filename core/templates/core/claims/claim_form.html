@@ -4,13 +4,201 @@
 {% block content %}
 <link rel="stylesheet" href="{% static 'css/claims.css' %}">
 
-<div class="claims-container">
+<style>
+/* ── Dashboard-matched claim form styles ── */
+.cf-page { max-width: 1200px; margin: 0 auto; padding: 0 4px 40px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 
-  <div class="claims-header">
-    <h2>
-      <i class="fas fa-file-invoice-dollar"></i>
-      {% if is_new %}New Claim{% else %}Edit Claim{% endif %}
-    </h2>
+.cf-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px; gap: 12px; flex-wrap: wrap;
+}
+.cf-topbar h2 {
+  font-size: 1.35rem; font-weight: 700; color: var(--claims-primary, #123692);
+  display: flex; align-items: center; gap: 10px; margin: 0;
+}
+.cf-topbar h2 .page-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg, #123692 0%, #1a4aad 100%);
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 1rem; flex-shrink: 0; box-shadow: 0 2px 8px rgba(31,56,100,.25);
+}
+.cf-subtitle { font-size: 0.82rem; color: #6c757d; font-weight: 400; margin-top: 2px; }
+
+/* Cards */
+.cf-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.05);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.cf-card-header {
+  padding: 16px 24px 12px;
+  border-bottom: 1px solid #f0f2f5;
+  display: flex; align-items: center; gap: 10px;
+}
+.cf-card-header .card-icon {
+  width: 32px; height: 32px; border-radius: 8px; display: flex;
+  align-items: center; justify-content: center; font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.card-icon-blue  { background: #e8f0fc; color: #123692; }
+.card-icon-green { background: #e6f4ea; color: #198754; }
+.card-icon-amber { background: #fff3cd; color: #856404; }
+
+.cf-card-header h3 {
+  margin: 0; font-size: 1rem; font-weight: 700; color: var(--claims-text, #343a40);
+}
+.cf-card-body { padding: 20px 24px; }
+
+/* Carry-forward banner */
+.carry-banner {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 14px 20px; border-radius: 10px; margin-bottom: 20px;
+  font-size: 0.88rem; border-left: 4px solid;
+}
+.carry-banner.carry-credit { background:#e0f7fa; border-color:#0dcaf0; color:#055160; }
+.carry-banner.carry-debit  { background:#fff3cd; border-color:#fd7e14; color:#664d03; }
+.carry-banner i { margin-top: 2px; font-size: 1.1em; }
+
+/* Approval chain grid */
+.approval-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+@media(max-width:640px){ .approval-grid { grid-template-columns:1fr; } }
+
+.field-group label {
+  display: block; font-size: 0.78rem; font-weight: 600;
+  color: #6c757d; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px;
+}
+.field-group .field-error { font-size: 0.8rem; color: #dc3545; margin-top: 4px; }
+
+/* Entries table */
+.entries-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
+.entries-table {
+  width: 100%; border-collapse: collapse; min-width: 900px; font-size: 0.85rem;
+}
+.entries-table thead th {
+  background: #123692; color: #fff; padding: 10px 8px;
+  font-size: 0.78rem; font-weight: 600; white-space: nowrap;
+  text-align: center; border: none;
+}
+.entries-table thead th:first-child { border-radius: 8px 0 0 0; }
+.entries-table thead th:last-child  { border-radius: 0 8px 0 0; }
+.entries-table tbody td {
+  padding: 6px 4px; border-bottom: 1px solid #f0f2f5; vertical-align: middle;
+}
+.entries-table tbody tr:last-child td { border-bottom: none; }
+.entries-table tfoot td {
+  padding: 8px 6px; font-weight: 600; background: #f8f9fc; border-top: 2px solid #e9ecef;
+}
+.totals-label { text-align: right; color: #495057; }
+.amount, .grand-total { text-align: right; font-weight: 600; }
+.grand-total { color: #123692; }
+.net-row td { background: #e8f0fc !important; color: #123692; }
+.carry-row td { background: #fff8ec !important; font-style: italic; color: #856404; }
+
+/* Advance row */
+.advance-row td { background: #f0f5ff !important; }
+.advance-input-wrap {
+  display: flex; align-items: center; gap: 6px; justify-content: flex-end;
+}
+.advance-input-wrap input {
+  width: 130px !important; text-align: right;
+  border: 1.5px solid #c0d0f0; border-radius: 6px;
+  padding: 5px 8px; font-size: 0.88rem; font-weight: 600;
+}
+.advance-input-wrap input:focus { outline: none; border-color: #123692; box-shadow: 0 0 0 3px rgba(31,56,100,.12); }
+
+/* Row remove button */
+.btn-remove-row {
+  background: none; border: none; color: #dc3545; cursor: pointer;
+  padding: 4px 6px; border-radius: 4px; font-size: 0.85rem;
+  transition: background .15s;
+}
+.btn-remove-row:hover { background: #fde8ea; }
+
+/* Add row button */
+.btn-add-row {
+  margin-top: 12px; background: #e8f0fc; color: #123692; border: 1.5px dashed #b0c4e8;
+  border-radius: 8px; padding: 8px 20px; font-size: 0.88rem; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; gap: 6px; transition: background .15s;
+}
+.btn-add-row:hover { background: #d0e0f8; }
+
+/* Action buttons */
+.form-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn-save, .btn-submit-claim {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 24px; border-radius: 8px; font-size: 0.92rem;
+  font-weight: 600; border: none; cursor: pointer; transition: all .15s;
+}
+.btn-save {
+  background: #f0f5ff; color: #123692; border: 1.5px solid #c0d0f0;
+}
+.btn-save:hover { background: #dce8ff; }
+.btn-submit-claim {
+  background: linear-gradient(135deg, #123692 0%, #1a4aad 100%);
+  color: #fff; box-shadow: 0 2px 8px rgba(31,56,100,.25);
+}
+.btn-submit-claim:hover { opacity: .9; }
+.btn-action {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: 8px; font-size: 0.88rem;
+  font-weight: 600; background: #f0f5ff; color: #123692;
+  border: 1.5px solid #c0d0f0; text-decoration: none; transition: background .15s;
+}
+.btn-action:hover { background: #dce8ff; }
+
+/* Entries hint */
+.entries-hint {
+  font-size: 0.83rem; color: #6c757d; margin-bottom: 14px;
+  background: #f8f9fc; border-radius: 8px; padding: 10px 14px;
+  border-left: 3px solid #c0d0f0;
+}
+.entries-hint i { color: #123692; }
+
+/* Required asterisk */
+.required { color: #dc3545; }
+
+/* form-select / form-control */
+.form-select, .form-control {
+  display: block; width: 100%; border: 1.5px solid #dee2e6;
+  border-radius: 8px; padding: 8px 12px; font-size: 0.9rem;
+  transition: border-color .15s, box-shadow .15s;
+  background: #fff;
+}
+.form-select:focus, .form-control:focus {
+  border-color: #123692; box-shadow: 0 0 0 3px rgba(31,56,100,.1); outline: none;
+}
+
+/* Month badge displayed in header */
+.month-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #e8f0fc; color: #123692; border-radius: 20px;
+  padding: 4px 14px; font-size: 0.85rem; font-weight: 600;
+}
+</style>
+
+<div class="cf-page">
+
+  {# ── Top bar ── #}
+  <div class="cf-topbar">
+    <div>
+      <h2>
+        <span class="page-icon"><i class="fas fa-file-invoice-dollar"></i></span>
+        {% if is_new %}New Claim{% else %}Edit Claim{% endif %}
+      </h2>
+      <div class="cf-subtitle">
+        {% if is_new %}
+          Creating claim for <strong>{{ request.user.get_full_name }}</strong>
+          &mdash; <span class="month-chip"><i class="fas fa-calendar-alt"></i> current month</span>
+        {% else %}
+          Editing claim for <strong>{{ claim.employee.get_full_name }}</strong>
+          &mdash; <span class="month-chip"><i class="fas fa-calendar-alt"></i> {{ claim.month|date:"F Y" }}</span>
+        {% endif %}
+      </div>
+    </div>
     <a href="{% url 'claim_list' %}" class="btn-action">
       <i class="fas fa-arrow-left"></i> Back
     </a>
@@ -18,36 +206,166 @@
 
   {% if messages %}
     {% for msg in messages %}
-      <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
+      <div class="alert alert-{{ msg.tags }}" style="border-radius:10px; margin-bottom:16px;">{{ msg }}</div>
     {% endfor %}
+  {% endif %}
+
+  {# ── Carry-forward notice ── #}
+  {% if prev_claim_ref and carry_amount and carry_amount != 0 %}
+  <div class="carry-banner {% if carry_amount < 0 %}carry-debit{% else %}carry-credit{% endif %}">
+    <i class="fas {% if carry_amount < 0 %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} fa-lg"></i>
+    <div>
+      <strong>Carry-forward from {{ prev_claim_ref.month|date:"F Y" }}:</strong>
+      {% if carry_amount < 0 %}
+        The previous advance of <strong>KES {{ prev_claim_ref.advance|floatformat:2 }}</strong>
+        exceeded what was claimed (<strong>KES {{ prev_claim_ref.subtotal|floatformat:2 }}</strong>).
+        A debit of <strong>KES {{ carry_amount|floatformat:2 }}</strong> has been applied to this claim's advance.
+      {% else %}
+        An outstanding balance of <strong>KES {{ carry_amount|floatformat:2 }}</strong>
+        from {{ prev_claim_ref.month|date:"F Y" }} has been automatically included in the advance section below.
+      {% endif %}
+    </div>
+  </div>
   {% endif %}
 
   <form method="post" id="claim-form" novalidate>
     {% csrf_token %}
 
-    {# ── Claim meta ── #}
-    <div class="claim-meta-card">
-      <h3 class="card-section-title">Claim Details</h3>
-      <div class="meta-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px,1fr));">
-        <div class="field-group">
-          <label for="{{ form.title.id_for_label }}">Title <span style="color:var(--claims-muted);font-weight:400;">(optional)</span></label>
-          {{ form.title }}
-          {% if form.title.errors %}<div class="field-error">{{ form.title.errors }}</div>{% endif %}
-        </div>
-        <div class="field-group">
-          <label for="{{ form.month.id_for_label }}">Month <span class="required">*</span></label>
-          {{ form.month }}
-          {% if form.month.errors %}<div class="field-error">{{ form.month.errors }}</div>{% endif %}
-        </div>
-        <div class="field-group">
-          <label for="{{ form.advance.id_for_label }}">Advance Received (KES)</label>
-          {{ form.advance }}
-          {% if form.advance.errors %}<div class="field-error">{{ form.advance.errors }}</div>{% endif %}
+    {# Month is hidden — auto-set by the view/form to the current month #}
+    {{ form.month }}
+
+    {# ── Entries card ── #}
+    {{ formset.management_form }}
+    <div class="cf-card">
+      <div class="cf-card-header">
+        <span class="card-icon card-icon-blue"><i class="fas fa-list-alt"></i></span>
+        <div>
+          <h3>Claim Entries</h3>
         </div>
       </div>
-      <div style="margin-top:16px;">
-        <h4 class="sub-section-label">Approval Chain</h4>
-        <div class="meta-grid" style="grid-template-columns: repeat(auto-fill, minmax(220px,1fr));">
+      <div class="cf-card-body">
+        <p class="entries-hint">
+          <i class="fas fa-info-circle"></i>
+          Enter each day's expenses. Add a <strong>Ticket No.</strong> and URL so approvers can verify the job.
+          The <strong>Advance</strong> row is deducted automatically from the total.
+        </p>
+        <div class="entries-scroll">
+          <table class="entries-table" id="entries-table">
+            <thead>
+              <tr>
+                <th style="min-width:110px;">Date</th>
+                <th style="min-width:130px;">Site</th>
+                <th style="min-width:100px;">Ticket No.</th>
+                <th style="min-width:150px;">Ticket URL</th>
+                <th style="min-width:80px;">To (KES)</th>
+                <th style="min-width:80px;">From (KES)</th>
+                <th style="min-width:80px;">Breakfast</th>
+                <th style="min-width:70px;">Lunch</th>
+                <th style="min-width:70px;">Dinner</th>
+                <th style="min-width:70px;">Bed</th>
+                <th style="min-width:80px;">Total</th>
+                <th style="width:36px;"></th>
+              </tr>
+            </thead>
+            <tbody id="entries-body">
+              {% for entry_form in formset %}
+                <tr class="entry-row {% if entry_form.instance.pk %}existing{% endif %}">
+                  <td>{{ entry_form.date }}{{ entry_form.id }}{% if entry_form.DELETE %}{{ entry_form.DELETE }}{% endif %}</td>
+                  <td>{{ entry_form.site }}</td>
+                  <td>{{ entry_form.ticket_number }}</td>
+                  <td>{{ entry_form.ticket_url }}</td>
+                  <td>{{ entry_form.transport_to }}</td>
+                  <td>{{ entry_form.transport_from }}</td>
+                  <td>{{ entry_form.breakfast }}</td>
+                  <td>{{ entry_form.lunch }}</td>
+                  <td>{{ entry_form.dinner }}</td>
+                  <td>{{ entry_form.bed }}</td>
+                  <td class="row-total grand-total" style="text-align:right;">0.00</td>
+                  <td>
+                    <button type="button" class="btn-remove-row" onclick="removeRow(this)" title="Remove">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr class="totals-row">
+                <td colspan="4" class="totals-label">Sub-total</td>
+                <td id="col-total-to"        class="amount">0.00</td>
+                <td id="col-total-from"      class="amount">0.00</td>
+                <td id="col-total-breakfast" class="amount">0.00</td>
+                <td id="col-total-lunch"     class="amount">0.00</td>
+                <td id="col-total-dinner"    class="amount">0.00</td>
+                <td id="col-total-bed"       class="amount">0.00</td>
+                <td id="grand-subtotal"      class="grand-total">0.00</td>
+                <td></td>
+              </tr>
+
+              {# ── Carry-forward row (read-only) ── #}
+              {% if carry_amount and carry_amount != 0 %}
+              <tr class="totals-row carry-row">
+                <td colspan="10" class="totals-label">
+                  <i class="fas fa-history"></i>
+                  Carry-forward ({{ prev_claim_ref.month|date:"M Y" }})
+                </td>
+                <td class="amount">{{ carry_amount|floatformat:2 }}</td>
+                <td></td>
+              </tr>
+              {% endif %}
+
+              {# ── Advance row — full-width input ── #}
+              <tr class="totals-row advance-row">
+                <td colspan="9" class="totals-label">
+                  <label for="id_advance_field" style="margin:0; cursor:pointer; font-weight:600;">
+                    <i class="fas fa-hand-holding-usd" style="color:#123692;"></i>
+                    Advance Received (KES)
+                  </label>
+                  {% if prev_claim_ref and carry_amount and carry_amount != 0 %}
+                    <span style="font-size:0.78rem; color:#856404; margin-left:8px;">
+                      (includes KES {{ carry_amount|floatformat:2 }} carry-forward)
+                    </span>
+                  {% endif %}
+                </td>
+                <td colspan="1">
+                  <div class="advance-input-wrap">
+                    {{ form.advance }}
+                  </div>
+                  {% if form.advance.errors %}<div class="field-error" style="font-size:.78rem;color:#dc3545;">{{ form.advance.errors }}</div>{% endif %}
+                </td>
+                <td id="display-advance" class="grand-total">0.00</td>
+                <td></td>
+              </tr>
+
+              <tr class="totals-row net-row">
+                <td colspan="10" class="totals-label">Total Minus Advance</td>
+                <td id="net-total" class="grand-total">0.00</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <button type="button" id="add-row-btn" class="btn-add-row">
+          <i class="fas fa-plus"></i> Add Row
+        </button>
+      </div>
+    </div>
+
+    {# ── Approval chain ── #}
+    <div class="cf-card">
+      <div class="cf-card-header">
+        <span class="card-icon card-icon-green"><i class="fas fa-user-check"></i></span>
+        <div>
+          <h3>Approval Chain</h3>
+        </div>
+      </div>
+      <div class="cf-card-body">
+        <p class="entries-hint" style="margin-bottom:16px;">
+          <i class="fas fa-info-circle"></i>
+          Select your <strong>Manager</strong> and <strong>Finance Reviewer</strong> before submitting.
+          Only Managers and Directors are listed.
+        </p>
+        <div class="approval-grid">
           <div class="field-group">
             <label for="{{ form.manager.id_for_label }}">Manager <span class="required">*</span></label>
             {{ form.manager }}
@@ -62,88 +380,17 @@
       </div>
     </div>
 
-    {# ── Entries table ── #}
-    {{ formset.management_form }}
-    <div class="claim-entries-card">
-      <h3 class="card-section-title">Claim Entries</h3>
-      <p class="entries-hint">
-        <i class="fas fa-info-circle"></i>
-        Enter a <strong>Ticket No.</strong> for each day. Paste the direct ticket URL in the link column so approvers can verify each job.
-      </p>
-      <div class="entries-scroll">
-        <table class="entries-table" id="entries-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Site</th>
-              <th>Ticket No.</th>
-              <th>Ticket URL</th>
-              <th>To (KES)</th>
-              <th>From (KES)</th>
-              <th>Breakfast</th>
-              <th>Lunch</th>
-              <th>Dinner</th>
-              <th>Bed</th>
-              <th>Total</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="entries-body">
-            {% for entry_form in formset %}
-              <tr class="entry-row {% if entry_form.instance.pk %}existing{% endif %}">
-                <td>{{ entry_form.date }}{{ entry_form.id }}{% if entry_form.DELETE %}{{ entry_form.DELETE }}{% endif %}</td>
-                <td>{{ entry_form.site }}</td>
-                <td>{{ entry_form.ticket_number }}</td>
-                <td>{{ entry_form.ticket_url }}</td>
-                <td>{{ entry_form.transport_to }}</td>
-                <td>{{ entry_form.transport_from }}</td>
-                <td>{{ entry_form.breakfast }}</td>
-                <td>{{ entry_form.lunch }}</td>
-                <td>{{ entry_form.dinner }}</td>
-                <td>{{ entry_form.bed }}</td>
-                <td class="row-total grand-total">0.00</td>
-                <td><button type="button" class="btn-remove-row" onclick="removeRow(this)" title="Remove row"><i class="fas fa-times"></i></button></td>
-              </tr>
-            {% endfor %}
-          </tbody>
-          <tfoot>
-            <tr class="totals-row">
-              <td colspan="4" class="totals-label">Sub-total</td>
-              <td id="col-total-to" class="amount">0.00</td>
-              <td id="col-total-from" class="amount">0.00</td>
-              <td id="col-total-breakfast" class="amount">0.00</td>
-              <td id="col-total-lunch" class="amount">0.00</td>
-              <td id="col-total-dinner" class="amount">0.00</td>
-              <td id="col-total-bed" class="amount">0.00</td>
-              <td id="grand-subtotal" class="grand-total">0.00</td>
-              <td></td>
-            </tr>
-            <tr class="totals-row">
-              <td colspan="10" class="totals-label">Advance</td>
-              <td id="display-advance" class="amount">0.00</td>
-              <td></td>
-            </tr>
-            <tr class="totals-row net-row">
-              <td colspan="10" class="totals-label">Total Minus Advance</td>
-              <td id="net-total" class="grand-total">0.00</td>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-      <button type="button" id="add-row-btn" class="btn-add-row">
-        <i class="fas fa-plus"></i> Add Row
-      </button>
-    </div>
-
-    <div class="claim-meta-card" style="padding:20px 28px;">
-      <div class="form-actions">
-        <button type="button" class="btn-save" onclick="openClaimModal('saveDraftModal')">
-          <i class="fas fa-save"></i> Save Draft
-        </button>
-        <button type="button" class="btn-submit-claim" onclick="openClaimModal('submitClaimModal')">
-          <i class="fas fa-paper-plane"></i> Submit for Approval
-        </button>
+    {# ── Action buttons ── #}
+    <div class="cf-card">
+      <div class="cf-card-body" style="padding:16px 24px;">
+        <div class="form-actions">
+          <button type="button" class="btn-save" onclick="openClaimModal('saveDraftModal')">
+            <i class="fas fa-save"></i> Save Draft
+          </button>
+          <button type="button" class="btn-submit-claim" onclick="openClaimModal('submitClaimModal')">
+            <i class="fas fa-paper-plane"></i> Submit for Approval
+          </button>
+        </div>
       </div>
     </div>
 
@@ -156,12 +403,10 @@
 <div class="claim-modal-overlay" id="saveDraftModal">
   <div class="claim-modal">
     <button class="claim-modal-close" onclick="closeClaimModal('saveDraftModal')">&times;</button>
-    <div class="claim-modal-icon claim-modal-icon--info">
-      <i class="fas fa-save"></i>
-    </div>
+    <div class="claim-modal-icon claim-modal-icon--info"><i class="fas fa-save"></i></div>
     <h3 class="claim-modal-title">Save as Draft?</h3>
     <div class="claim-modal-divider"></div>
-    <p class="claim-modal-body">Your claim will be saved as a <strong>draft</strong>. You can return to edit it at any time before submitting.</p>
+    <p class="claim-modal-body">Your claim will be saved as a <strong>draft</strong>. You can edit it at any time before submitting.</p>
     <p class="claim-modal-warning"><i class="fas fa-info-circle"></i> This claim will <strong>not</strong> be sent for approval yet.</p>
     <div class="claim-modal-actions">
       <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('saveDraftModal')">
@@ -178,9 +423,7 @@
 <div class="claim-modal-overlay" id="submitClaimModal">
   <div class="claim-modal">
     <button class="claim-modal-close" onclick="closeClaimModal('submitClaimModal')">&times;</button>
-    <div class="claim-modal-icon claim-modal-icon--success">
-      <i class="fas fa-paper-plane"></i>
-    </div>
+    <div class="claim-modal-icon claim-modal-icon--success"><i class="fas fa-paper-plane"></i></div>
     <h3 class="claim-modal-title">Submit for Approval?</h3>
     <div class="claim-modal-divider"></div>
     <p class="claim-modal-body">Your claim will be sent to your <strong>Manager</strong> for review, then to <strong>Finance</strong> for final approval.</p>
@@ -213,40 +456,59 @@ document.addEventListener('keydown', function(e) {
 });
 
 (function () {
-  // Columns: to, from, breakfast, lunch, dinner, bed (indices 0-5 of .money-field within a row)
   const COL_IDS = ['col-total-to','col-total-from','col-total-breakfast','col-total-lunch','col-total-dinner','col-total-bed'];
-  function val(i) { return parseFloat(i?.value||0)||0; }
+  function val(i) { return parseFloat(i?.value || 0) || 0; }
+
   function recalc() {
     const rows = document.querySelectorAll('#entries-body .entry-row:not(.deleted)');
-    let ct=[0,0,0,0,0,0], gt=0;
+    let ct = [0,0,0,0,0,0], gt = 0;
     rows.forEach(row => {
-      const inputs=row.querySelectorAll('.money-field'); let rs=0;
-      inputs.forEach((inp,idx)=>{ const v=val(inp); ct[idx]=(ct[idx]||0)+v; rs+=v; });
-      const rt=row.querySelector('.row-total'); if(rt) rt.textContent=rs.toFixed(2); gt+=rs;
+      const inputs = row.querySelectorAll('.money-field');
+      let rs = 0;
+      inputs.forEach((inp, idx) => { const v = val(inp); ct[idx] = (ct[idx]||0) + v; rs += v; });
+      const rt = row.querySelector('.row-total'); if (rt) rt.textContent = rs.toFixed(2); gt += rs;
     });
-    COL_IDS.forEach((id,i)=>{ const el=document.getElementById(id); if(el) el.textContent=(ct[i]||0).toFixed(2); });
-    const gs=document.getElementById('grand-subtotal'); if(gs) gs.textContent=gt.toFixed(2);
-    const adv=document.querySelector('[name$="-advance"]'), a=adv?(parseFloat(adv.value)||0):0;
-    const da=document.getElementById('display-advance'); const nt=document.getElementById('net-total');
-    if(da) da.textContent=a.toFixed(2); if(nt) nt.textContent=(gt-a).toFixed(2);
+    COL_IDS.forEach((id, i) => { const el = document.getElementById(id); if (el) el.textContent = (ct[i]||0).toFixed(2); });
+    const gs = document.getElementById('grand-subtotal'); if (gs) gs.textContent = gt.toFixed(2);
+
+    const advInput = document.getElementById('id_advance_field');
+    const a = advInput ? (parseFloat(advInput.value) || 0) : 0;
+    const da = document.getElementById('display-advance');
+    const nt = document.getElementById('net-total');
+    const cf = parseFloat(document.body.dataset.carryForward || '0') || 0;
+
+    if (da) da.textContent = a.toFixed(2);
+    if (nt) nt.textContent = (gt - a - cf).toFixed(2);
   }
-  document.addEventListener('input', e=>{ if(e.target.matches('.money-field,[name$="-advance"]')) recalc(); });
-  let fc=parseInt(document.querySelector('#id_entries-TOTAL_FORMS').value), pfx='entries';
-  document.getElementById('add-row-btn').addEventListener('click', function(){
-    const tb=document.getElementById('entries-body'), fr=tb.querySelector('.entry-row');
-    if(!fr) return;
-    const nr=fr.cloneNode(true); nr.classList.remove('existing','deleted'); nr.style.display='';
-    nr.innerHTML=nr.innerHTML.replace(new RegExp(pfx+'-(\\d+)-','g'),pfx+'-'+fc+'-');
-    nr.querySelectorAll('input:not([type=hidden])').forEach(i=>{ if(i.type!=='checkbox') i.value=''; });
-    const rt=nr.querySelector('.row-total'); if(rt) rt.textContent='0.00';
-    tb.appendChild(nr); fc++; document.querySelector('#id_entries-TOTAL_FORMS').value=fc; recalc();
+
+  document.body.dataset.carryForward = '{{ carry_amount|default:"0"|floatformat:2 }}'.replace(/,/g,'');
+
+  document.addEventListener('input', e => {
+    if (e.target.matches('.money-field') || e.target.id === 'id_advance_field') recalc();
   });
-  window.removeRow=function(btn){
-    const row=btn.closest('.entry-row'), dc=row.querySelector('input[type=checkbox][name$="-DELETE"]');
-    if(dc){ dc.checked=true; row.classList.add('deleted'); row.style.display='none'; }
-    else{ row.remove(); fc--; document.querySelector('#id_entries-TOTAL_FORMS').value=fc; }
+
+  let fc = parseInt(document.querySelector('#id_entries-TOTAL_FORMS').value), pfx = 'entries';
+
+  document.getElementById('add-row-btn').addEventListener('click', function () {
+    const tb = document.getElementById('entries-body'), fr = tb.querySelector('.entry-row');
+    if (!fr) return;
+    const nr = fr.cloneNode(true);
+    nr.classList.remove('existing', 'deleted'); nr.style.display = '';
+    nr.innerHTML = nr.innerHTML.replace(new RegExp(pfx + '-(\\d+)-', 'g'), pfx + '-' + fc + '-');
+    nr.querySelectorAll('input:not([type=hidden])').forEach(i => { if (i.type !== 'checkbox') i.value = ''; });
+    const rt = nr.querySelector('.row-total'); if (rt) rt.textContent = '0.00';
+    tb.appendChild(nr); fc++;
+    document.querySelector('#id_entries-TOTAL_FORMS').value = fc;
+    recalc();
+  });
+
+  window.removeRow = function (btn) {
+    const row = btn.closest('.entry-row'), dc = row.querySelector('input[type=checkbox][name$="-DELETE"]');
+    if (dc) { dc.checked = true; row.classList.add('deleted'); row.style.display = 'none'; }
+    else { row.remove(); fc--; document.querySelector('#id_entries-TOTAL_FORMS').value = fc; }
     recalc();
   };
+
   recalc();
 })();
 </script>

@@ -17,11 +17,13 @@
   --claims-border:       #dee2e6;
   --claims-text:         #343a40;
   --claims-muted:        #6c757d;
+  --claims-font:         'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* ── Page wrapper ── */
 .claims-container {
   animation: claimsFadeIn 0.8s ease-in-out;
+  font-family: var(--claims-font);
 }
 @keyframes claimsFadeIn {
   from { opacity: 0; transform: translateY(10px); }
@@ -288,13 +290,13 @@ textarea.form-control { resize: vertical; }
 .btn-excel:hover { background: #146c43; }
 
 .btn-save {
-  background: #0d6efd; color: #fff;
+  background: var(--claims-primary); color: #fff;
   padding: 11px 26px; border-radius: 8px; border: none;
   font-weight: 600; font-size: 0.95rem; cursor: pointer;
   display: inline-flex; align-items: center; gap: 8px;
   transition: background 0.3s, transform 0.2s;
 }
-.btn-save:hover { background: #0b5ed7; transform: translateY(-1px); }
+.btn-save:hover { background: var(--claims-primary-dark); transform: translateY(-1px); }
 
 .btn-submit-claim {
   background: var(--claims-success); color: #fff;

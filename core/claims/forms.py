@@ -1,35 +1,70 @@
 from django import forms
 from django.forms import inlineformset_factory
+from django.contrib.auth import get_user_model
 from .models import ClaimForm, ClaimEntry
+from datetime import date
+
+User = get_user_model()
 
 
 class ClaimFormForm(forms.ModelForm):
-    month = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'month', 'class': 'form-control'}),
-        input_formats=['%Y-%m'],
-        help_text="Select the month for this claim"
-    )
+    """
+    Claim header form.
+    - month is now HIDDEN — auto-set to the current month in the view.
+    - advance is shown inside the entries formset area.
+    - manager / finance_reviewer dropdowns show only Managers & Directors.
+    """
 
     class Meta:
         model = ClaimForm
-        # HR reviewer removed from approval chain
-        fields = ['title', 'month', 'advance', 'manager', 'finance_reviewer']
+        fields = ['month', 'advance', 'manager', 'finance_reviewer']
         widgets = {
-            'title': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'e.g. April 2026 Field Claims'
-            }),
+            # month rendered as hidden; view auto-sets it to today's month
+            'month': forms.HiddenInput(),
             'advance': forms.NumberInput(attrs={
-                'class': 'form-control', 'min': '0', 'step': '0.01'
+                'class': 'form-control form-control-sm money-field',
+                'min': '0', 'step': '0.01', 'placeholder': '0.00',
+                'id': 'id_advance_field',
+                'style': 'width:140px; text-align:right;',
             }),
             'manager': forms.Select(attrs={'class': 'form-select'}),
             'finance_reviewer': forms.Select(attrs={'class': 'form-select'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Auto-default month to the 1st of the current month (new claims only)
+        if not self.instance.pk and 'month' not in self.initial:
+            today = date.today()
+            self.initial['month'] = date(today.year, today.month, 1)
+
+        # Restrict approval chain dropdowns to Managers / Directors / Superadmins
+        try:
+            from django.db.models import Q
+            elevated_qs = User.objects.filter(is_active=True).filter(
+                Q(role__iexact='manager') |
+                Q(role__iexact='director') |
+                Q(is_superuser=True)
+            ).order_by('first_name', 'last_name')
+        except Exception:
+            from django.db.models import Q
+            elevated_qs = User.objects.filter(is_active=True).filter(
+                Q(groups__name__in=['Manager', 'Director', 'Superadmin']) |
+                Q(is_superuser=True)
+            ).distinct().order_by('first_name', 'last_name')
+
+        self.fields['manager'].queryset = elevated_qs
+        self.fields['finance_reviewer'].queryset = elevated_qs
+
     def clean_month(self):
-        month = self.cleaned_data['month']
-        from datetime import date
-        return date(month.year, month.month, 1)
+        month = self.cleaned_data.get('month')
+        if not month:
+            today = date.today()
+            return date(today.year, today.month, 1)
+        if hasattr(month, 'year'):
+            return date(month.year, month.month, 1)
+        return month
 
 
 class ClaimEntryForm(forms.ModelForm):

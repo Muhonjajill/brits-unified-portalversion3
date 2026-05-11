@@ -26,10 +26,23 @@ class ClaimForm(models.Model):
     )
     title = models.CharField(max_length=200, blank=True)
     month = models.DateField(help_text="Month this claim covers (use first day of month)")
+
+    # ── Advance tracking ────────────────────────────────────────────────────────
     advance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    carry_forward = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00'),
+        help_text="Balance carried forward from the previous approved claim"
+    )
+    previous_claim = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='next_claims',
+        help_text="The prior approved claim whose balance was carried into this one"
+    )
+
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default=STATUS_DRAFT)
 
-    # Approval chain (HR removed — Manager → Finance only)
     manager = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -43,7 +56,6 @@ class ClaimForm(models.Model):
         related_name='claims_to_finance_review'
     )
 
-    # Finance integrity — actual disbursement tracking
     amount_paid = models.DecimalField(
         max_digits=10, decimal_places=2, default=Decimal('0.00'),
         help_text="Amount actually disbursed by Finance"
@@ -68,10 +80,23 @@ class ClaimForm(models.Model):
 
     class Meta:
         ordering = ['-created_at']
-        app_label = 'core'
 
     def __str__(self):
         return f"{self.employee.get_full_name()} — {self.month.strftime('%B %Y')} ({self.get_status_display()})"
+
+    def get_auto_title(self):
+        first = self.employee.first_name or self.employee.username
+        suffix = "'s" if not first.endswith('s') else "'"
+        return f"{first}{suffix} Claim Form"
+
+    @property
+    def display_title(self):
+        return self.title or self.get_auto_title()
+
+    @property
+    def total_advance(self):
+        """Combined advance: carried-forward balance + new advance issued."""
+        return self.carry_forward + self.advance
 
     @property
     def subtotal(self):
@@ -79,12 +104,12 @@ class ClaimForm(models.Model):
 
     @property
     def total_minus_advance(self):
-        return self.subtotal - self.advance
+        return self.subtotal - self.total_advance
 
     @property
     def balance_due(self):
-        """Amount still owed after advance and any recorded payment."""
-        return self.subtotal - self.advance - self.amount_paid
+        """Amount still owed after advance/carry-forward and any recorded payment."""
+        return self.subtotal - self.total_advance - self.amount_paid
 
     @property
     def is_fully_paid(self):
@@ -144,6 +169,8 @@ class ClaimForm(models.Model):
 
     def get_previous_claim(self):
         """Most recent finance-approved claim for this employee before this month."""
+        if not self.employee or not self.month:
+            return None
         return (
             ClaimForm.objects.filter(
                 employee=self.employee,
@@ -153,6 +180,21 @@ class ClaimForm(models.Model):
             .order_by('-month')
             .first()
         )
+
+    def compute_carry_forward(self):
+        """
+        Calculate the balance that should be carried forward from the last
+        finance-approved claim.
+        balance_due = subtotal - total_advance - amount_paid
+        Positive = employer still owes employee (will be added as advance next time).
+        Negative = employee was overpaid (deducted from next claim advance).
+        Returns (prev_claim, carry_forward_amount).
+        """
+        prev = self.get_previous_claim()
+        if prev is None:
+            return None, Decimal('0.00')
+        carry = prev.balance_due  # subtotal - total_advance - amount_paid
+        return prev, carry
 
     def get_claim_history(self):
         """All prior claims for this employee, newest first."""
@@ -167,7 +209,6 @@ class ClaimEntry(models.Model):
     claim = models.ForeignKey(ClaimForm, on_delete=models.CASCADE, related_name='entries')
     date = models.DateField()
     site = models.CharField(max_length=200)
-    # Renamed from job_card_id → ticket_number
     ticket_number = models.CharField(max_length=100, blank=True, help_text="Ticket / job reference number")
     ticket_url = models.URLField(max_length=500, blank=True, help_text="Direct URL to the ticket (optional)")
     transport_to = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
@@ -180,7 +221,6 @@ class ClaimEntry(models.Model):
 
     class Meta:
         ordering = ['date', 'order']
-        app_label = 'core'
 
     def __str__(self):
         return f"{self.date} — {self.site}"

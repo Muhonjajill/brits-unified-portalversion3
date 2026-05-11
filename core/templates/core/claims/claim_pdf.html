@@ -5,24 +5,24 @@
 <title>{{ claim.employee.get_full_name }} — Claim Form {{ claim.month|date:"F Y" }}</title>
 <style>
   @page { size: A4 landscape; margin: 1.5cm; }
-  body { font-family: Arial, sans-serif; font-size: 10pt; color: #222; }
-  h1 { text-align: center; font-size: 14pt; margin-bottom: 4px; text-transform: uppercase; }
-  .sub-title { text-align: center; font-size: 9pt; color: #555; margin-bottom: 16px; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10pt; color: #343a40; }
+  h1 { text-align: center; font-size: 14pt; margin-bottom: 4px; text-transform: uppercase; color: #123692; }
+  .sub-title { text-align: center; font-size: 9pt; color: #6c757d; margin-bottom: 16px; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-  th { background: #1F3864; color: #fff; font-size: 9pt; padding: 5px 6px; text-align: center; }
-  td { border: 1px solid #bbb; padding: 4px 6px; font-size: 9pt; }
+  th { background: #123692; color: #fff; font-size: 9pt; padding: 5px 6px; text-align: center; }
+  td { border: 1px solid #dee2e6; padding: 4px 6px; font-size: 9pt; }
   td.amount { text-align: right; }
   td.center { text-align: center; }
-  .totals-row td { font-weight: bold; background: #f0f0f0; }
+  .totals-row td { font-weight: bold; background: #f8f9fa; }
   .net-row td { background: #dce6f1; }
   .paid-row td { background: #d4edda; }
   .signatures { margin-top: 24px; }
   .sig-row { display: flex; gap: 40px; margin-bottom: 32px; }
-  .sig-block { flex: 1; border-top: 1px solid #555; padding-top: 4px; font-size: 9pt; }
+  .sig-block { flex: 1; border-top: 1px solid #6c757d; padding-top: 4px; font-size: 9pt; color: #343a40; }
   .meta-table td { border: none; padding: 2px 8px 2px 0; }
   .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px;
                   font-size: 8pt; font-weight: bold; background: #198754; color: #fff; }
-  a { color: #1F3864; }
+  a { color: #123692; }
 </style>
 </head>
 <body>

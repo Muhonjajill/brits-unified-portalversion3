@@ -8,6 +8,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.paginator import Paginator
+from decimal import Decimal
 
 from .models import ClaimForm, ClaimEntry
 from .forms import ClaimFormForm, ClaimEntryFormSet, ApprovalActionForm, FinancePaymentForm
@@ -22,8 +23,17 @@ def _is_elevated(user):
     role = getattr(user, 'role', '').lower() if hasattr(user, 'role') else ''
     if role in ('manager', 'director'):
         return True
-    # Fallback: check Django groups
     return user.groups.filter(name__in=['Manager', 'Director', 'Superadmin']).exists()
+
+
+def _is_finance(user):
+    """True if the user is a Finance reviewer / elevated user who can record disbursements."""
+    if user.is_superuser:
+        return True
+    role = getattr(user, 'role', '').lower() if hasattr(user, 'role') else ''
+    if role in ('finance', 'director', 'manager'):
+        return True
+    return user.groups.filter(name__in=['Finance', 'Director', 'Superadmin']).exists()
 
 
 def _can_delete(user):
@@ -81,7 +91,6 @@ def claim_list(request):
     user = request.user
     elevated = _is_elevated(user)
 
-    # Claims the current user can see
     if elevated:
         all_claims_qs = ClaimForm.objects.select_related('employee', 'manager', 'finance_reviewer')
     else:
@@ -89,7 +98,6 @@ def claim_list(request):
             employee=user
         ).select_related('employee', 'manager', 'finance_reviewer')
 
-    # Search / filter
     search = request.GET.get('q', '').strip()
     status_filter = request.GET.get('status', '').strip()
     employee_filter = request.GET.get('emp', '').strip()
@@ -105,18 +113,15 @@ def claim_list(request):
     if employee_filter and elevated:
         all_claims_qs = all_claims_qs.filter(employee__id=employee_filter)
 
-    # Pending approvals for this user
     pending_approvals = ClaimForm.objects.filter(
         Q(manager=user, status=ClaimForm.STATUS_SUBMITTED) |
         Q(finance_reviewer=user, status=ClaimForm.STATUS_MANAGER_APPROVED)
     ).select_related('employee')
 
-    # Paginate main list
     paginator = Paginator(all_claims_qs, 15)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Summary stats for elevated users
     summary = None
     if elevated:
         summary = {
@@ -150,27 +155,59 @@ def claim_list(request):
 
 @login_required
 def claim_create(request):
+    user = request.user
+
+    # Default carry-forward values
+    prev_claim_ref = None
+    carry_amount = Decimal('0.00')
+
     if request.method == 'POST':
+
         form = ClaimFormForm(request.POST)
         formset = ClaimEntryFormSet(request.POST)
+
         if form.is_valid() and formset.is_valid():
+
             claim = form.save(commit=False)
-            claim.employee = request.user
+            claim.employee = user
+
+            # Auto title
+            claim.title = claim.get_auto_title()
+
+            # Compute carry-forward AFTER month exists
+            prev_claim_ref, carry_amount = claim.compute_carry_forward()
+
+            if prev_claim_ref:
+                claim.carry_forward = carry_amount
+                claim.previous_claim = prev_claim_ref
+
             claim.save()
+
             formset.instance = claim
             formset.save()
+
             action = request.POST.get('action', 'save')
+
             if action == 'submit':
                 claim.status = ClaimForm.STATUS_SUBMITTED
                 claim.submitted_at = timezone.now()
                 claim.save()
+
                 _notify_next_approver(claim)
+
                 messages.success(request, "Claim submitted for manager approval.")
             else:
                 messages.success(request, "Claim saved as draft.")
+
             return redirect('claim_detail', pk=claim.pk)
+
     else:
-        form = ClaimFormForm()
+        from datetime import date as _date
+        today = _date.today()
+        auto_month = _date(today.year, today.month, 1)
+        form = ClaimFormForm(
+            initial={'advance': Decimal('0.00'), 'month': auto_month}
+        )
         formset = ClaimEntryFormSet()
 
     return render(request, 'core/claims/claim_form.html', {
@@ -178,14 +215,21 @@ def claim_create(request):
         'formset': formset,
         'page_title': 'New Claim',
         'is_new': True,
-        'can_view_logs': request.user.has_perm('core.view_fileaccesslog'),
+        'prev_claim_ref': prev_claim_ref,
+        'carry_amount': carry_amount,
+        'can_view_logs': user.has_perm('core.view_fileaccesslog'),
     })
 
 
 @login_required
 def claim_edit(request, pk):
     claim = get_object_or_404(ClaimForm, pk=pk, employee=request.user)
-    if claim.status not in (ClaimForm.STATUS_DRAFT, ClaimForm.STATUS_REJECTED):
+    # Allow editing draft, rejected, AND manager_approved/submitted for progressive edits
+    editable_statuses = (
+        ClaimForm.STATUS_DRAFT,
+        ClaimForm.STATUS_REJECTED,
+    )
+    if claim.status not in editable_statuses:
         messages.error(request, "Only draft or rejected claims can be edited.")
         return redirect('claim_detail', pk=pk)
 
@@ -193,7 +237,10 @@ def claim_edit(request, pk):
         form = ClaimFormForm(request.POST, instance=claim)
         formset = ClaimEntryFormSet(request.POST, instance=claim)
         if form.is_valid() and formset.is_valid():
-            claim = form.save()
+            claim = form.save(commit=False)
+            # Keep auto-title in sync
+            claim.title = claim.get_auto_title()
+            claim.save()
             formset.save()
             action = request.POST.get('action', 'save')
             if action == 'submit':
@@ -209,12 +256,17 @@ def claim_edit(request, pk):
         form = ClaimFormForm(instance=claim)
         formset = ClaimEntryFormSet(instance=claim)
 
+    prev_claim_ref = claim.previous_claim
+    carry_amount = claim.carry_forward
+
     return render(request, 'core/claims/claim_form.html', {
         'form': form,
         'formset': formset,
         'claim': claim,
         'page_title': 'Edit Claim',
         'is_new': False,
+        'prev_claim_ref': prev_claim_ref,
+        'carry_amount': carry_amount,
         'can_view_logs': request.user.has_perm('core.view_fileaccesslog'),
     })
 
@@ -231,22 +283,23 @@ def claim_detail(request, pk):
 
     user = request.user
     elevated = _is_elevated(user)
+    is_finance_user = _is_finance(user)
     allowed = [claim.employee, claim.manager, claim.finance_reviewer]
 
     if user not in allowed and not elevated:
         messages.error(request, "You do not have access to this claim.")
         return redirect('claim_list')
 
-    # Previous claim history for finance integrity panel
     prev_claim = claim.get_previous_claim()
-    claim_history = claim.get_claim_history()[:5]  # last 5 for sidebar
+    claim_history = claim.get_claim_history()[:5]
 
-    # Finance payment form
+    # Finance payment form — ONLY visible to finance users / elevated
     payment_form = None
-    if (
+    can_record_payment = (
         claim.status == ClaimForm.STATUS_FINANCE_APPROVED
-        and (claim.finance_reviewer == user or elevated)
-    ):
+        and (claim.finance_reviewer == user or is_finance_user or elevated)
+    )
+    if can_record_payment:
         if request.method == 'POST' and 'record_payment' in request.POST:
             payment_form = FinancePaymentForm(request.POST, instance=claim)
             if payment_form.is_valid():
@@ -267,10 +320,12 @@ def claim_detail(request, pk):
         'page_title': f"Claim — {claim.employee.get_full_name()}",
         'can_view_logs': user.has_perm('core.view_fileaccesslog'),
         'elevated': elevated,
+        'is_finance_user': is_finance_user,
         'can_delete': _can_delete(user),
         'prev_claim': prev_claim,
         'claim_history': claim_history,
-        'payment_form': payment_form,
+        'payment_form': payment_form,         # None for non-finance users
+        'can_record_payment': can_record_payment,
     })
 
 
@@ -387,7 +442,7 @@ def claim_export_excel(request, pk):
             if border_: cell.border = border_
 
         ws.merge_cells('A1:K1')
-        ws['A1'] = f"{claim.employee.get_full_name().upper()} CLAIM FORM"
+        ws['A1'] = f"{claim.display_title.upper()} — {claim.month.strftime('%B %Y').upper()}"
         style_cell(ws['A1'], font=header_font, align=center)
         ws.row_dimensions[1].height = 28
 
@@ -429,14 +484,24 @@ def claim_export_excel(request, pk):
         ws.cell(subtotal_row, 11, float(claim.advance)).number_format = '#,##0.00'
         ws.cell(subtotal_row, 11).font = bold
 
-        tma_row = subtotal_row + 1
+        # Carry-forward row (if any)
+        if claim.carry_forward:
+            cf_row = subtotal_row + 1
+            ws.merge_cells(f'A{cf_row}:I{cf_row}')
+            ws.cell(cf_row, 1, 'Carry-forward from previous claim').font = bold
+            ws.cell(cf_row, 1).alignment = right
+            ws.cell(cf_row, 11, float(claim.carry_forward)).number_format = '#,##0.00'
+            ws.cell(cf_row, 11).font = bold
+            tma_row = cf_row + 1
+        else:
+            tma_row = subtotal_row + 1
+
         ws.merge_cells(f'A{tma_row}:I{tma_row}')
         ws.cell(tma_row, 1, 'Total Minus Advance').font = bold
         ws.cell(tma_row, 1).alignment = right
         ws.cell(tma_row, 10, float(claim.total_minus_advance)).number_format = '#,##0.00'
         ws.cell(tma_row, 10).font = bold
 
-        # Amount paid row
         paid_row = tma_row + 1
         ws.merge_cells(f'A{paid_row}:I{paid_row}')
         ws.cell(paid_row, 1, 'Amount Paid').font = bold
