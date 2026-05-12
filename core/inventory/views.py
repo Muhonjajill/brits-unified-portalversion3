@@ -281,7 +281,40 @@ def category_create(request):
         form = PartCategoryForm()
     return render(request, 'core/inventory/category_form.html', {'form': form, 'title': 'Add Category'})
 
+@login_required
+def category_edit(request, pk):
+    category = get_object_or_404(PartCategory, pk=pk)
+    if request.method == 'POST':
+        form = PartCategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Category "{category.name}" updated.')
+            return redirect('inventory:categories')
+    else:
+        form = PartCategoryForm(instance=category)
+    return render(request, 'core/inventory/category_form.html', {
+        'form': form,
+        'title': 'Edit Category',
+        'category': category,
+    })
 
+@login_required
+def machine_type_edit(request, pk):
+    machine = get_object_or_404(MachineType, pk=pk)
+    if request.method == 'POST':
+        form = MachineTypeForm(request.POST, instance=machine)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Machine type "{machine.name}" updated.')
+            return redirect('inventory:machine_types')
+    else:
+        form = MachineTypeForm(instance=machine)
+    return render(request, 'core/inventory/machine_type_form.html', {
+        'form': form,
+        'title': 'Edit Machine Type',
+        'machine': machine,
+    })
+    
 @login_required
 def machine_types_list(request):
     machines_qs = MachineType.objects.annotate(part_count=Count('parts')).order_by('name')

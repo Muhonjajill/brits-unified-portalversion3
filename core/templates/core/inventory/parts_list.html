@@ -81,11 +81,13 @@
                     <td>
                         <div class="d-flex gap-1">
                             <a href="{% url 'inventory:part_detail' part.pk %}" class="btn btn-sm btn-outline-primary" title="View"><i class="fa-solid fa-eye"></i></a>
+                            {% if request.user|can_manage %}
                             <a href="{% url 'inventory:part_edit' part.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit"><i class="fa-solid fa-pen"></i></a>
                             <button class="btn btn-sm btn-outline-danger" title="Delete"
                                 onclick="confirmAction('Delete Part','Are you sure you want to delete &quot;{{ part.name }}&quot;? This cannot be undone.','Delete','btn-danger',()=>deletePart({{ part.pk }}))">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>

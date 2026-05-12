@@ -30,3 +30,12 @@ def can_delete(context):
     if user.is_superuser:
         return True
     return user.groups.filter(name__in=['Director', 'Manager']).exists()
+
+@register.filter
+def can_manage(user):
+    """Returns True for superusers, Directors, and Managers."""
+    if not user or not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    return user.groups.filter(name__in=['Director', 'Manager']).exists()

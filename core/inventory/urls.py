@@ -18,6 +18,9 @@ urlpatterns = [
     path('suppliers/<int:pk>/edit/', views.supplier_edit, name='supplier_edit'),
     path('categories/', views.categories_list, name='categories'),
     path('categories/add/', views.category_create, name='category_create'),
+    path('categories/<int:pk>/edit/', views.category_edit, name='category_edit'),
+    path('machines/<int:pk>/edit/', views.machine_type_edit, name='machine_type_edit'),
+    
     path('machines/', views.machine_types_list, name='machine_types'),
     path('machines/add/', views.machine_type_create, name='machine_type_create'),
     path('reports/', views.reports, name='reports'),

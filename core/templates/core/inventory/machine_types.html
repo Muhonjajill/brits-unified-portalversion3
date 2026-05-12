@@ -28,7 +28,9 @@
                     <th>Name</th>
                     <th>Description</th>
                     <th>Compatible Parts</th>
+                    {% if request.user|can_manage %}
                     <th class="text-end">Actions</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -46,7 +48,11 @@
                             {{ m.part_count }} part{{ m.part_count|pluralize }}
                         </span>
                     </td>
-                    <td class="text-end">
+                    <td class="text-end" style="white-space:nowrap;">
+                        {% if request.user|can_manage %}
+                        <a href="{% url 'inventory:machine_type_edit' m.pk %}" class="btn btn-sm btn-outline-secondary me-1" title="Edit">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
                         <button class="btn btn-sm btn-outline-danger" title="Delete"
                             onclick="confirmAction(
                                 'Delete Machine Type',
@@ -57,6 +63,7 @@
                             )">
                             <i class="fa-solid fa-trash"></i>
                         </button>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

@@ -29,7 +29,9 @@
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Parts Supplied</th>
+                    {% if request.user|can_manage %}
                     <th class="text-end">Actions</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -48,6 +50,7 @@
                     </td>
                     <td class="text-end">
                         <div class="d-flex gap-1 justify-content-end">
+                            {% if request.user|can_manage %}
                             <a href="{% url 'inventory:supplier_edit' supplier.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
                                 <i class="fa-solid fa-pen"></i>
                             </a>
@@ -61,6 +64,7 @@
                                 )">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>

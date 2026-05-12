@@ -28,7 +28,9 @@
                     <th>Name</th>
                     <th>Description</th>
                     <th>Parts</th>
+                    {% if request.user|can_manage %}
                     <th class="text-end">Actions</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
@@ -40,13 +42,17 @@
                         </div>
                     </td>
                     <td><span class="fw-600">{{ cat.name }}</span></td>
-                    <td><span class="text-muted" style="font-size:0.85rem;">{{ cat.description|default:"—"|truncatechars:70 }}</span></td>
+                    <td><span class="text-muted" style="font-size:0.85rem;">{{ cat.description|default:"—"|truncatechars:200 }}</span></td>
                     <td>
                         <span class="badge" style="background:{{ cat.color }}20;color:{{ cat.color }};font-weight:600;">
                             {{ cat.part_count }} part{{ cat.part_count|pluralize }}
                         </span>
                     </td>
-                    <td class="text-end">
+                    <td class="text-end" style="white-space:nowrap;">
+                        {% if request.user|can_manage %}
+                        <a href="{% url 'inventory:category_edit' cat.pk %}" class="btn btn-sm btn-outline-secondary me-1" title="Edit">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </a>
                         <button class="btn btn-sm btn-outline-danger" title="Delete"
                             onclick="confirmAction(
                                 'Delete Category',
@@ -57,6 +63,7 @@
                             )">
                             <i class="fa-solid fa-trash"></i>
                         </button>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
