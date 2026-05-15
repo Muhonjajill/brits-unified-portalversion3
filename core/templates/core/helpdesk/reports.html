@@ -22,6 +22,9 @@
           <button type="submit" name="download" value="excel" class="btn btn-success">
             <i class="fas fa-file-excel" style="display: inline;"></i> Download Excel
           </button>
+          <a href="{% url 'reports' %}" class="btn btn-secondary">
+            <i class="fas fa-times"></i> Clear Filters
+          </a>
           <a href="{% url 'statistics' %}" class="btn btn-info">
             <i class="fas fa-chart-line" style="display: inline;"></i> Statistics
           </a>
@@ -33,12 +36,10 @@
           <label for="customer-select">Customer:</label>
           <select id="customer-select" name="customer" class="form-control"
             {% if user_group == 'Custodian' or user_group == 'Overseer' %}disabled{% endif %}>
-            {% if not selected_customer %}
-              <option value="All">All Customers</option>
-            {% endif %}
+            <option value="All" {% if not request.GET.customer or request.GET.customer == 'All' %}selected{% endif %}>All Customers</option>
             {% for customer in customers %}
               <option value="{{ customer.id }}"
-                {% if selected_customer and selected_customer.id == customer.id %}selected{% endif %}>
+                {% if request.GET.customer == customer.id|stringformat:"s" %}selected{% endif %}>
                 {{ customer.name }}
               </option>
             {% endfor %}
@@ -239,19 +240,17 @@
   <div class="pagination">
     <span class="page-number">
       {% if page_obj.has_previous %}
-        <a href="?page=1">&laquo; First</a>
-        <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+        <a href="?page=1&customer={{ request.GET.customer }}&terminal_name={{ request.GET.terminal_name }}&category={{ request.GET.category }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}">&laquo; First</a>
+        <a href="?page={{ page_obj.previous_page_number }}&customer={{ request.GET.customer }}&terminal_name={{ request.GET.terminal_name }}&category={{ request.GET.category }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}">Previous</a>
       {% endif %}
     </span>
 
-    <span class="page-number">
-      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-    </span>
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
 
     <span class="page-number">
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}">Next</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+        <a href="?page={{ page_obj.next_page_number }}&customer={{ request.GET.customer }}&terminal_name={{ request.GET.terminal_name }}&category={{ request.GET.category }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}">Next</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}&customer={{ request.GET.customer }}&terminal_name={{ request.GET.terminal_name }}&category={{ request.GET.category }}&start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}">Last &raquo;</a>
       {% endif %}
     </span>
   </div>
