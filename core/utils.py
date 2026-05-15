@@ -24,3 +24,6 @@ def can_user_access_customer_terminal(user, terminal):
     elif terminal.is_custodian(user) and user == terminal.customer.custodian:
         return True
     return False
+
+def is_director_or_manager(user):
+    return user.is_superuser or user.groups.filter(name__in=['Director', 'Manager']).exists()
