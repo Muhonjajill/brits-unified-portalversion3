@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import inlineformset_factory
 from django.contrib.auth import get_user_model
-from .models import ClaimForm, ClaimEntry
+from .models import ClaimForm, ClaimEntry, PaymentRecord
 from datetime import date
 
 User = get_user_model()
@@ -139,17 +139,38 @@ class ApprovalActionForm(forms.Form):
     )
 
 
-class FinancePaymentForm(forms.ModelForm):
-    """Finance records the actual disbursement against a finance-approved claim."""
+class PaymentRecordForm(forms.ModelForm):
+    """
+    Finance records a single disbursement against a finance-approved claim.
+    Replaces FinancePaymentForm — supports partial & multiple payments.
+    """
     class Meta:
-        model = ClaimForm
-        fields = ['amount_paid']
+        model = PaymentRecord
+        fields = ['amount', 'note']
         widgets = {
-            'amount_paid': forms.NumberInput(attrs={
+            'amount': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'min': '0',
+                'min': '0.01',
                 'step': '0.01',
                 'placeholder': '0.00',
-            })
+            }),
+            'note': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g. Full payment / Partial — balance pending (optional)',
+                'maxlength': '255',
+            }),
         }
-        labels = {'amount_paid': 'Amount Disbursed (KES)'}
+        labels = {
+            'amount': 'Amount Disbursed (KES)',
+            'note': 'Note',
+        }
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get('amount')
+        if amount is not None and amount <= 0:
+            raise forms.ValidationError("Amount must be greater than zero.")
+        return amount
+
+
+# Keep old name around so existing imports don't break immediately
+FinancePaymentForm = PaymentRecordForm

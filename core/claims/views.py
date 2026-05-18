@@ -10,8 +10,8 @@ from django.template.loader import render_to_string
 from django.core.paginator import Paginator
 from decimal import Decimal
 
-from .models import ClaimForm, ClaimEntry
-from .forms import ClaimFormForm, ClaimEntryFormSet, ApprovalActionForm, FinancePaymentForm
+from .models import ClaimForm, ClaimEntry, PaymentRecord
+from .forms import ClaimFormForm, ClaimEntryFormSet, ApprovalActionForm, PaymentRecordForm
 
 
 # ─── Role helpers ──────────────────────────────────────────────────────────────
@@ -210,6 +210,32 @@ def claim_create(request):
         )
         formset = ClaimEntryFormSet()
 
+        # Show carry-forward preview for new claims
+        # Build a temporary claim-like object to call compute_carry_forward
+        class _TempClaim:
+            employee = user
+            month = auto_month
+            pk = None
+
+            def get_latest_approved_claim(self_):
+                return (
+                    ClaimForm.objects.filter(
+                        employee=user,
+                        status=ClaimForm.STATUS_FINANCE_APPROVED,
+                    )
+                    .order_by('-month', '-finance_actioned_at')
+                    .first()
+                )
+
+            def compute_carry_forward(self_):
+                prev = self_.get_latest_approved_claim()
+                if prev is None:
+                    return None, Decimal('0.00')
+                return prev, prev.balance_due
+
+        tmp = _TempClaim()
+        prev_claim_ref, carry_amount = tmp.compute_carry_forward()
+
     return render(request, 'core/claims/claim_form.html', {
         'form': form,
         'formset': formset,
@@ -224,7 +250,6 @@ def claim_create(request):
 @login_required
 def claim_edit(request, pk):
     claim = get_object_or_404(ClaimForm, pk=pk, employee=request.user)
-    # Allow editing draft, rejected, AND manager_approved/submitted for progressive edits
     editable_statuses = (
         ClaimForm.STATUS_DRAFT,
         ClaimForm.STATUS_REJECTED,
@@ -238,7 +263,6 @@ def claim_edit(request, pk):
         formset = ClaimEntryFormSet(request.POST, instance=claim)
         if form.is_valid() and formset.is_valid():
             claim = form.save(commit=False)
-            # Keep auto-title in sync
             claim.title = claim.get_auto_title()
             claim.save()
             formset.save()
@@ -277,7 +301,7 @@ def claim_edit(request, pk):
 def claim_detail(request, pk):
     claim = get_object_or_404(
         ClaimForm.objects.select_related('employee', 'manager', 'finance_reviewer')
-                         .prefetch_related('entries'),
+                         .prefetch_related('entries', 'payment_records__recorded_by'),
         pk=pk
     )
 
@@ -293,24 +317,53 @@ def claim_detail(request, pk):
     prev_claim = claim.get_previous_claim()
     claim_history = claim.get_claim_history()[:5]
 
-    # Finance payment form — ONLY visible to finance users / elevated
+    # ── Payment recording — finance / elevated only ─────────────────────────────
     payment_form = None
+    payment_records = claim.payment_records.all()
+
     can_record_payment = (
         claim.status == ClaimForm.STATUS_FINANCE_APPROVED
         and (claim.finance_reviewer == user or is_finance_user or elevated)
     )
-    if can_record_payment:
-        if request.method == 'POST' and 'record_payment' in request.POST:
-            payment_form = FinancePaymentForm(request.POST, instance=claim)
-            if payment_form.is_valid():
-                c = payment_form.save(commit=False)
-                c.finance_paid_at = timezone.now()
-                c.finance_paid_by = user
-                c.save()
-                messages.success(request, f"Payment of KES {c.amount_paid:,.2f} recorded.")
-                return redirect('claim_detail', pk=pk)
-        else:
-            payment_form = FinancePaymentForm(instance=claim)
+
+    if can_record_payment and request.method == 'POST' and 'record_payment' in request.POST:
+        payment_form = PaymentRecordForm(request.POST)
+        if payment_form.is_valid():
+            record = payment_form.save(commit=False)
+            record.claim = claim
+            record.recorded_by = user
+            record.paid_at = timezone.now()
+            record.save()  # triggers claim.refresh_amount_paid() automatically
+
+            # Reload claim to get fresh amount_paid
+            claim.refresh_from_db()
+
+            # ── Overpayment check ──────────────────────────────────────────────
+            # If total paid now exceeds what was owed, the surplus becomes the
+            # carry-forward advance on the employee's *next* claim.
+            # We don't need to do anything here — compute_carry_forward() reads
+            # balance_due live, so the next claim created will automatically pick
+            # up the negative balance_due as a deduction from the new advance.
+            # We just surface a clear message to Finance.
+            overpayment = claim.overpayment
+            if overpayment > Decimal('0.00'):
+                messages.warning(
+                    request,
+                    f"⚠️ Payment of KES {record.amount:,.2f} recorded. "
+                    f"This exceeds the net payable by KES {overpayment:,.2f}. "
+                    f"The surplus will automatically be deducted from "
+                    f"{claim.employee.get_full_name()}'s next claim as a carry-forward advance."
+                )
+            else:
+                messages.success(
+                    request,
+                    f"Payment of KES {record.amount:,.2f} recorded successfully."
+                )
+
+            return redirect('claim_detail', pk=pk)
+        # form invalid — fall through to re-render with errors
+    elif can_record_payment:
+        payment_form = PaymentRecordForm()
 
     return render(request, 'core/claims/claim_detail.html', {
         'claim': claim,
@@ -324,7 +377,8 @@ def claim_detail(request, pk):
         'can_delete': _can_delete(user),
         'prev_claim': prev_claim,
         'claim_history': claim_history,
-        'payment_form': payment_form,         # None for non-finance users
+        'payment_form': payment_form,
+        'payment_records': payment_records,
         'can_record_payment': can_record_payment,
     })
 
@@ -390,7 +444,7 @@ def claim_delete(request, pk):
 @login_required
 def claim_export_pdf(request, pk):
     claim = get_object_or_404(
-        ClaimForm.objects.select_related('employee').prefetch_related('entries'),
+        ClaimForm.objects.select_related('employee').prefetch_related('entries', 'payment_records'),
         pk=pk
     )
     allowed = [claim.employee, claim.manager, claim.finance_reviewer]
@@ -411,7 +465,7 @@ def claim_export_pdf(request, pk):
 @login_required
 def claim_export_excel(request, pk):
     claim = get_object_or_404(
-        ClaimForm.objects.select_related('employee').prefetch_related('entries'),
+        ClaimForm.objects.select_related('employee').prefetch_related('entries', 'payment_records'),
         pk=pk
     )
     allowed = [claim.employee, claim.manager, claim.finance_reviewer]
@@ -502,14 +556,46 @@ def claim_export_excel(request, pk):
         ws.cell(tma_row, 10, float(claim.total_minus_advance)).number_format = '#,##0.00'
         ws.cell(tma_row, 10).font = bold
 
-        paid_row = tma_row + 1
+        # Payment records breakdown
+        pr_start = tma_row + 1
+        for i, pr in enumerate(claim.payment_records.all()):
+            pr_row = pr_start + i
+            ws.merge_cells(f'A{pr_row}:I{pr_row}')
+            label = f"Payment #{i+1} — {pr.paid_at.strftime('%d %b %Y')}"
+            if pr.note:
+                label += f" ({pr.note})"
+            ws.cell(pr_row, 1, label).font = bold
+            ws.cell(pr_row, 1).alignment = right
+            ws.cell(pr_row, 10, float(pr.amount)).number_format = '#,##0.00'
+            ws.cell(pr_row, 10).font = bold
+
+        paid_row = pr_start + claim.payment_records.count()
         ws.merge_cells(f'A{paid_row}:I{paid_row}')
-        ws.cell(paid_row, 1, 'Amount Paid').font = bold
+        ws.cell(paid_row, 1, 'Total Amount Paid').font = bold
         ws.cell(paid_row, 1).alignment = right
         ws.cell(paid_row, 10, float(claim.amount_paid)).number_format = '#,##0.00'
         ws.cell(paid_row, 10).font = bold
 
-        sig_row = paid_row + 3
+        # Overpayment / balance row
+        if claim.overpayment > 0:
+            op_row = paid_row + 1
+            ws.merge_cells(f'A{op_row}:I{op_row}')
+            ws.cell(op_row, 1, 'Overpayment (carry-forward to next claim)').font = bold
+            ws.cell(op_row, 1).alignment = right
+            ws.cell(op_row, 10, float(claim.overpayment)).number_format = '#,##0.00'
+            ws.cell(op_row, 10).font = Font(bold=True, color='FF0000')
+            sig_row = op_row + 3
+        elif claim.balance_due > 0:
+            bd_row = paid_row + 1
+            ws.merge_cells(f'A{bd_row}:I{bd_row}')
+            ws.cell(bd_row, 1, 'Outstanding Balance').font = bold
+            ws.cell(bd_row, 1).alignment = right
+            ws.cell(bd_row, 10, float(claim.balance_due)).number_format = '#,##0.00'
+            ws.cell(bd_row, 10).font = Font(bold=True, color='FF0000')
+            sig_row = bd_row + 3
+        else:
+            sig_row = paid_row + 3
+
         ws.cell(sig_row, 1, 'EMPLOYEE SIGN').font = bold
         ws.cell(sig_row, 5, 'DATE').font = bold
         ws.cell(sig_row + 1, 1, 'MANAGER SIGN').font = bold

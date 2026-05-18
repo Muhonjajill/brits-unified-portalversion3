@@ -115,6 +115,7 @@
 .status-danger    { background: #f8d7da;  color: #721c24; }
 .paid-badge   { color: #198754; font-weight: 600; }
 .unpaid-badge { color: #6c757d; }
+.overpaid-badge { color: #dc3545; font-weight: 600; }
 
 /* Comments */
 .comment-block {
@@ -129,6 +130,33 @@
 .finance-payment-card .card-section-title { color: #155724; }
 .finance-payment-card .card-section-title i { color: #198754; }
 
+/* Payment records log card */
+.payment-log-card { border: 2px solid #0dcaf0 !important; }
+.payment-log-card .card-section-title { color: #055160; }
+.payment-log-card .card-section-title i { color: #0dcaf0; }
+
+/* Payment log table */
+.payment-log-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.payment-log-table th {
+  background: #e8f9fd; color: #055160; padding: 8px 12px;
+  font-size: 0.76rem; font-weight: 700; text-align: left;
+  border-bottom: 2px solid #bee5eb;
+}
+.payment-log-table td { padding: 9px 12px; border-bottom: 1px solid #f0f2f5; vertical-align: middle; }
+.payment-log-table tbody tr:last-child td { border-bottom: none; }
+.payment-log-table tfoot td {
+  padding: 9px 12px; font-weight: 700; background: #e8f9fd;
+  border-top: 2px solid #bee5eb;
+}
+.payment-log-table .amount-col { text-align: right; font-weight: 600; color: #155724; }
+.payment-log-table .tfoot-amount { text-align: right; font-weight: 700; color: #123692; font-size: 0.92rem; }
+.payment-log-wrap { padding: 0 24px 20px; overflow-x: auto; }
+
+/* Overpayment warning in payment log */
+.overpayment-row td { background: #fff3cd !important; color: #664d03 !important; }
+.overpayment-row .amount-col { color: #dc3545 !important; }
+
+/* Finance integrity grid */
 .finance-integrity-grid {
   display: flex; flex-wrap: wrap; gap: 16px;
   padding: 8px 24px 16px;
@@ -139,6 +167,8 @@
 }
 .integrity-item label { font-size: 0.72rem; font-weight: 600; color: #6c757d; text-transform: uppercase; display: block; margin-bottom: 4px; }
 .integrity-item strong { font-size: 0.95rem; color: var(--claims-text, #343a40); }
+.integrity-item.overpay-item { background: #fff3cd; }
+.integrity-item.overpay-item strong { color: #dc3545; }
 
 .approver-hint {
   font-size: 0.83rem; color: #555;
@@ -146,6 +176,13 @@
   margin: 0 24px 16px; border-left: 3px solid #c0d0f0;
 }
 .approver-hint i { color: #123692; }
+
+.overpayment-hint {
+  font-size: 0.83rem; color: #664d03;
+  background: #fff3cd; border-radius: 8px; padding: 10px 16px;
+  margin: 0 24px 12px; border-left: 3px solid #fd7e14;
+}
+.overpayment-hint i { color: #fd7e14; }
 
 /* Approval panel */
 .approval-panel { border: 2px solid #123692 !important; }
@@ -207,6 +244,13 @@
 .form-control:focus { border-color: #123692; box-shadow: 0 0 0 3px rgba(31,56,100,.1); outline: none; }
 .field-group label { display: block; font-size: 0.78rem; font-weight: 600; color: #6c757d; text-transform: uppercase; letter-spacing:.04em; margin-bottom: 6px; }
 .field-error { font-size: 0.8rem; color: #dc3545; margin-top: 4px; }
+
+/* Partially paid progress bar */
+.pay-progress-wrap { padding: 0 24px 16px; }
+.pay-progress-label { font-size: 0.78rem; color: #6c757d; margin-bottom: 6px; display: flex; justify-content: space-between; }
+.pay-progress-bar { height: 10px; border-radius: 5px; background: #e9ecef; overflow: hidden; }
+.pay-progress-fill { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #198754, #20c997); transition: width .4s; }
+.pay-progress-fill.overpaid { background: linear-gradient(90deg, #fd7e14, #dc3545); }
 </style>
 
 
@@ -229,7 +273,7 @@
 
   {% if messages %}
     {% for msg in messages %}
-      <div class="alert alert-{{ msg.tags }}">{{ msg }}</div>
+      <div class="alert alert-{{ msg.tags }}" style="border-radius:10px; margin-bottom:16px;">{{ msg }}</div>
     {% endfor %}
   {% endif %}
 
@@ -270,15 +314,116 @@
       {% endif %}
       {% if claim.amount_paid %}
       <div>
-        <label>Amount Paid</label>
-        <strong class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ claim.amount_paid|floatformat:2 }}</strong>
+        <label>Total Amount Paid</label>
+        {% if claim.overpayment > 0 %}
+          <strong class="overpaid-badge"><i class="fas fa-exclamation-triangle"></i> KES {{ claim.amount_paid|floatformat:2 }}</strong>
+        {% else %}
+          <strong class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ claim.amount_paid|floatformat:2 }}</strong>
+        {% endif %}
       </div>
       {% if claim.finance_paid_at %}
-      <div><label>Paid On</label><strong>{{ claim.finance_paid_at|date:"d M Y H:i" }}</strong></div>
+      <div><label>Last Payment On</label><strong>{{ claim.finance_paid_at|date:"d M Y H:i" }}</strong></div>
+      {% endif %}
+      {% if claim.overpayment > 0 %}
+      <div><label>Overpayment (→ next claim)</label><strong class="overpaid-badge">KES {{ claim.overpayment|floatformat:2 }}</strong></div>
       {% endif %}
       {% endif %}
     </div>
   </div>
+
+  {# ── Payment records log — visible to finance/elevated only ── #}
+  {% if payment_records and is_finance_user %}
+  <div class="claim-meta-card payment-log-card">
+    <h3 class="card-section-title">
+      <i class="fas fa-receipt"></i> Payment Disbursement Log
+      <span style="font-size:0.75em; font-weight:400; color:#6c757d; margin-left:8px;">(Finance only)</span>
+    </h3>
+
+    {# Payment progress bar #}
+    {% if claim.total_minus_advance > 0 %}
+    <div class="pay-progress-wrap">
+      {% with pct=claim.amount_paid|floatformat:0 net=claim.total_minus_advance|floatformat:0 %}
+      <div class="pay-progress-label">
+        <span>Paid: KES {{ claim.amount_paid|floatformat:2 }}</span>
+        <span>Net Payable: KES {{ claim.total_minus_advance|floatformat:2 }}</span>
+      </div>
+      {% endwith %}
+      <div class="pay-progress-bar">
+        {% if claim.overpayment > 0 %}
+          <div class="pay-progress-fill overpaid" style="width:100%;"></div>
+        {% else %}
+          {% widthratio claim.amount_paid claim.total_minus_advance 100 as pct_int %}
+          <div class="pay-progress-fill" style="width:{{ pct_int|default:0 }}%;"></div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if claim.overpayment > 0 %}
+    <div class="overpayment-hint" style="margin-top:0;">
+      <i class="fas fa-exclamation-triangle"></i>
+      <strong>Overpayment detected:</strong> KES {{ claim.overpayment|floatformat:2 }} above the net payable.
+      This surplus will automatically appear as a carry-forward advance deduction on
+      <strong>{{ claim.employee.get_full_name }}</strong>'s next claim.
+    </div>
+    {% endif %}
+
+    <div class="payment-log-wrap">
+      <table class="payment-log-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date &amp; Time</th>
+            <th>Recorded By</th>
+            <th>Note</th>
+            <th style="text-align:right;">Amount (KES)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in payment_records %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ record.paid_at|date:"d M Y H:i" }}</td>
+            <td>{{ record.recorded_by.get_full_name|default:"—" }}</td>
+            <td>{{ record.note|default:"—" }}</td>
+            <td class="amount-col">{{ record.amount|floatformat:2 }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" style="text-align:right; font-weight:700;">Total Paid</td>
+            <td class="tfoot-amount">KES {{ claim.amount_paid|floatformat:2 }}</td>
+          </tr>
+          <tr>
+            <td colspan="4" style="text-align:right; font-weight:700; color:#6c757d;">Net Payable</td>
+            <td class="tfoot-amount" style="color:#6c757d;">KES {{ claim.total_minus_advance|floatformat:2 }}</td>
+          </tr>
+          {% if claim.overpayment > 0 %}
+          <tr class="overpayment-row">
+            <td colspan="4" style="text-align:right; font-weight:700;">
+              <i class="fas fa-exclamation-triangle"></i> Overpayment (carry-forward to next claim)
+            </td>
+            <td class="amount-col">KES {{ claim.overpayment|floatformat:2 }}</td>
+          </tr>
+          {% elif claim.balance_due > 0 %}
+          <tr>
+            <td colspan="4" style="text-align:right; font-weight:700; color:#dc3545;">Outstanding Balance</td>
+            <td class="tfoot-amount" style="color:#dc3545;">KES {{ claim.balance_due|floatformat:2 }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" style="text-align:right; font-weight:700; color:#198754;">
+              <i class="fas fa-check-circle"></i> Fully Settled
+            </td>
+            <td class="tfoot-amount" style="color:#198754;">—</td>
+          </tr>
+          {% endif %}
+        </tfoot>
+      </table>
+    </div>
+  </div>
+  {% endif %}
 
   {# ── Previous claim history panel ── #}
   {% if claim_history %}
@@ -287,7 +432,6 @@
       <i class="fas fa-history"></i> Previous Claims — {{ claim.employee.get_full_name }}
     </h3>
 
-    {# carry-forward alert banner #}
     {% if prev_claim %}
     <div class="prev-claim-alert" style="margin-bottom:16px;">
       <i class="fas fa-info-circle"></i>
@@ -296,7 +440,9 @@
       KES {{ prev_claim.advance|floatformat:2 }} advance issued.
       {% if prev_claim.amount_paid %}
         <span class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ prev_claim.amount_paid|floatformat:2 }} paid</span>
-        {% if prev_claim.balance_due > 0 %}
+        {% if prev_claim.overpayment > 0 %}
+          &mdash; <span class="overpaid-badge"><i class="fas fa-exclamation-triangle"></i> KES {{ prev_claim.overpayment|floatformat:2 }} overpaid — carries forward.</span>
+        {% elif prev_claim.balance_due > 0 %}
           &mdash; <span style="color:var(--claims-danger); font-weight:600;">KES {{ prev_claim.balance_due|floatformat:2 }} outstanding</span>
           (carried into this claim's advance).
         {% else %}
@@ -341,13 +487,13 @@
             </td>
             <td class="amount">
               {% if prev.amount_paid %}
-                {% with bal=prev.balance_due %}
-                  {% if bal > 0 %}
-                    <span style="color:var(--claims-danger);">KES {{ bal|floatformat:2 }}</span>
-                  {% else %}
-                    <span style="color:var(--claims-success);">Settled</span>
-                  {% endif %}
-                {% endwith %}
+                {% if prev.overpayment > 0 %}
+                  <span class="overpaid-badge"><i class="fas fa-exclamation-triangle"></i> +KES {{ prev.overpayment|floatformat:2 }}</span>
+                {% elif prev.balance_due > 0 %}
+                  <span style="color:var(--claims-danger);">KES {{ prev.balance_due|floatformat:2 }}</span>
+                {% else %}
+                  <span style="color:var(--claims-success);">Settled</span>
+                {% endif %}
               {% else %}
                 —
               {% endif %}
@@ -434,11 +580,18 @@
           {% if claim.amount_paid %}
           <tr class="totals-row">
             <td colspan="9" class="totals-label">
-              <span class="paid-badge"><i class="fas fa-check-circle"></i> Amount Paid</span>
+              <span class="paid-badge"><i class="fas fa-check-circle"></i> Total Amount Paid</span>
             </td>
             <td class="amount grand-total" style="color:var(--claims-success);">KES {{ claim.amount_paid|floatformat:2 }}</td>
           </tr>
-          {% if claim.balance_due > 0 %}
+          {% if claim.overpayment > 0 %}
+          <tr class="totals-row" style="background:#fff3cd;">
+            <td colspan="9" class="totals-label" style="color:#dc3545;">
+              <i class="fas fa-exclamation-triangle"></i> Overpayment (→ next claim carry-forward)
+            </td>
+            <td class="amount grand-total" style="color:#dc3545;">KES {{ claim.overpayment|floatformat:2 }}</td>
+          </tr>
+          {% elif claim.balance_due > 0 %}
           <tr class="totals-row">
             <td colspan="9" class="totals-label" style="color:var(--claims-danger);">Outstanding Balance</td>
             <td class="amount grand-total" style="color:var(--claims-danger);">KES {{ claim.balance_due|floatformat:2 }}</td>
@@ -480,8 +633,10 @@
     </h3>
     <p class="approver-hint">
       <i class="fas fa-info-circle"></i>
-      Record the actual amount disbursed to <strong>{{ claim.employee.get_full_name }}</strong>.
-      This is tracked for integrity purposes and feeds into the next claim's carry-forward.
+      Record each disbursement made to <strong>{{ claim.employee.get_full_name }}</strong>.
+      Multiple partial payments are supported — each is logged above for full transparency.
+      If you disburse <em>more</em> than the net payable, the surplus automatically becomes
+      a carry-forward deduction on the employee's next claim.
     </p>
     <div class="finance-integrity-grid">
       <div class="integrity-item">
@@ -507,19 +662,46 @@
         <label>Already Paid</label>
         <strong class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ claim.amount_paid|floatformat:2 }}</strong>
       </div>
+      <div class="integrity-item {% if claim.overpayment > 0 %}overpay-item{% endif %}">
+        <label>{% if claim.overpayment > 0 %}Overpayment{% else %}Balance Remaining{% endif %}</label>
+        {% if claim.overpayment > 0 %}
+          <strong class="overpaid-badge"><i class="fas fa-exclamation-triangle"></i> KES {{ claim.overpayment|floatformat:2 }}</strong>
+        {% else %}
+          <strong style="color:#dc3545;">KES {{ claim.balance_due|floatformat:2 }}</strong>
+        {% endif %}
+      </div>
       {% endif %}
     </div>
+
+    {% if claim.overpayment > 0 %}
+    <div class="overpayment-hint">
+      <i class="fas fa-exclamation-triangle"></i>
+      <strong>Note:</strong> The total paid (KES {{ claim.amount_paid|floatformat:2 }}) already
+      exceeds the net payable by <strong>KES {{ claim.overpayment|floatformat:2 }}</strong>.
+      This overpayment will automatically be carried forward to
+      <strong>{{ claim.employee.get_full_name }}</strong>'s next claim.
+      Recording an additional payment will increase the carry-forward further.
+    </div>
+    {% endif %}
+
     <form method="post" id="paymentForm">
       {% csrf_token %}
-      <div class="meta-grid" style="grid-template-columns:280px auto; align-items:flex-end; gap:12px; margin-top:16px;">
-        <div class="field-group" style="margin:0;">
-          <label>{{ payment_form.amount_paid.label }}</label>
-          {{ payment_form.amount_paid }}
-          {% if payment_form.amount_paid.errors %}
-            <div class="field-error">{{ payment_form.amount_paid.errors }}</div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap; padding:0 24px 16px; align-items:flex-end;">
+        <div class="field-group" style="margin:0; flex:1; min-width:200px;">
+          <label>{{ payment_form.amount.label }}</label>
+          {{ payment_form.amount }}
+          {% if payment_form.amount.errors %}
+            <div class="field-error">{{ payment_form.amount.errors }}</div>
           {% endif %}
         </div>
-        <button type="button" class="btn-submit-claim" style="height:40px;"
+        <div class="field-group" style="margin:0; flex:2; min-width:240px;">
+          <label>{{ payment_form.note.label }} <span style="font-weight:400;text-transform:none;">(optional)</span></label>
+          {{ payment_form.note }}
+          {% if payment_form.note.errors %}
+            <div class="field-error">{{ payment_form.note.errors }}</div>
+          {% endif %}
+        </div>
+        <button type="button" class="btn-submit-claim" style="height:40px; flex-shrink:0;"
                 onclick="openClaimModal('paymentModal')">
           <i class="fas fa-money-bill-wave"></i> Record Payment
         </button>
@@ -633,6 +815,7 @@
         A reason is required when rejecting a claim.
       </div>
     </div>
+    <br>
     <div class="claim-modal-actions">
       <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('rejectModal')">
         <i class="fas fa-times"></i> Cancel
@@ -655,12 +838,13 @@
     <h3 class="claim-modal-title">Confirm Payment Recording</h3>
     <div class="claim-modal-divider"></div>
     <p class="claim-modal-body">
-      You are recording a payment for <strong>{{ claim.employee.get_full_name }}</strong>.
+      You are recording a disbursement for <strong>{{ claim.employee.get_full_name }}</strong>.
       Net payable is <strong>KES {{ claim.total_minus_advance|floatformat:2 }}</strong>.
     </p>
     <p class="claim-modal-warning">
       <i class="fas fa-exclamation-triangle"></i>
-      Ensure the amount matches what was actually disbursed. This feeds into the next claim's carry-forward automatically.
+      If the amount exceeds the net payable, the surplus is automatically carried forward
+      as an advance deduction on the employee's <strong>next</strong> claim.
     </p>
     <div class="claim-modal-actions">
       <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('paymentModal')">

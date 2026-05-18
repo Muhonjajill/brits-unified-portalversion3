@@ -56,9 +56,12 @@ class ClaimForm(models.Model):
         related_name='claims_to_finance_review'
     )
 
+    # ── amount_paid is now the SUM of all PaymentRecord entries ─────────────────
+    # Kept as a cached/denormalised field for fast querying & carry-forward maths.
+    # Always refresh via refresh_amount_paid() after adding a PaymentRecord.
     amount_paid = models.DecimalField(
         max_digits=10, decimal_places=2, default=Decimal('0.00'),
-        help_text="Amount actually disbursed by Finance"
+        help_text="Total amount actually disbursed by Finance (sum of payment records)"
     )
     finance_paid_at = models.DateTimeField(null=True, blank=True)
     finance_paid_by = models.ForeignKey(
@@ -108,8 +111,21 @@ class ClaimForm(models.Model):
 
     @property
     def balance_due(self):
-        """Amount still owed after advance/carry-forward and any recorded payment."""
+        """
+        Amount still owed after advance/carry-forward and any recorded payments.
+        Positive  → employer still owes the employee.
+        Negative  → employee was overpaid (excess becomes next claim's carry-forward).
+        """
         return self.subtotal - self.total_advance - self.amount_paid
+
+    @property
+    def overpayment(self):
+        """
+        How much Finance has paid above and beyond what was owed.
+        Returns 0 if the claim has not been overpaid.
+        """
+        excess = self.amount_paid - self.total_minus_advance
+        return max(excess, Decimal('0.00'))
 
     @property
     def is_fully_paid(self):
@@ -167,6 +183,21 @@ class ClaimForm(models.Model):
             self.finance_actioned_at = now
         self.save()
 
+    def refresh_amount_paid(self):
+        """
+        Recompute the denormalised amount_paid from PaymentRecord rows.
+        Call this after every PaymentRecord insert/update/delete.
+        """
+        from django.db.models import Sum
+        total = self.payment_records.aggregate(s=Sum('amount'))['s'] or Decimal('0.00')
+        self.amount_paid = total
+        # Keep finance_paid_at / finance_paid_by pointing at the most recent record
+        last = self.payment_records.order_by('-paid_at').first()
+        if last:
+            self.finance_paid_at = last.paid_at
+            self.finance_paid_by = last.recorded_by
+        self.save(update_fields=['amount_paid', 'finance_paid_at', 'finance_paid_by'])
+
     def get_previous_claim(self):
         """Most recent finance-approved claim for this employee before this month."""
         if not self.employee or not self.month:
@@ -181,19 +212,40 @@ class ClaimForm(models.Model):
             .first()
         )
 
+    def get_latest_approved_claim(self):
+        """
+        Most recent finance-approved claim for this employee, regardless of month.
+        Used for same-month carry-forward scenarios.
+        """
+        if not self.employee:
+            return None
+        return (
+            ClaimForm.objects.filter(
+                employee=self.employee,
+                status=self.STATUS_FINANCE_APPROVED,
+            )
+            .exclude(pk=self.pk)
+            .order_by('-month', '-finance_actioned_at')
+            .first()
+        )
+
     def compute_carry_forward(self):
         """
         Calculate the balance that should be carried forward from the last
-        finance-approved claim.
+        finance-approved claim — including same-month claims.
+
         balance_due = subtotal - total_advance - amount_paid
-        Positive = employer still owes employee (will be added as advance next time).
-        Negative = employee was overpaid (deducted from next claim advance).
+        Positive  → employer still owes employee (carried forward as advance).
+        Negative  → employee was overpaid (deducted from next claim advance).
+
         Returns (prev_claim, carry_forward_amount).
         """
-        prev = self.get_previous_claim()
+        # Use latest approved claim (not restricted to earlier months) so that
+        # overpayments in the same month are also captured.
+        prev = self.get_latest_approved_claim()
         if prev is None:
             return None, Decimal('0.00')
-        carry = prev.balance_due  # subtotal - total_advance - amount_paid
+        carry = prev.balance_due  # can be negative (overpayment)
         return prev, carry
 
     def get_claim_history(self):
@@ -203,6 +255,53 @@ class ClaimForm(models.Model):
             .exclude(pk=self.pk)
             .order_by('-month')
         )
+
+
+class PaymentRecord(models.Model):
+    """
+    Individual disbursement made by Finance against a ClaimForm.
+    Replaces the single amount_paid field with a full audit trail.
+    Multiple records can exist per claim (e.g. partial payments).
+    """
+    claim = models.ForeignKey(
+        ClaimForm,
+        on_delete=models.CASCADE,
+        related_name='payment_records'
+    )
+    amount = models.DecimalField(
+        max_digits=10, decimal_places=2,
+        help_text="Amount disbursed in this payment"
+    )
+    note = models.CharField(
+        max_length=255, blank=True,
+        help_text="Optional note (e.g. 'Partial payment — balance pending')"
+    )
+    paid_at = models.DateTimeField(default=timezone.now)
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='payment_records_created'
+    )
+
+    class Meta:
+        ordering = ['paid_at']
+
+    def __str__(self):
+        return (
+            f"KES {self.amount} → {self.claim.employee.get_full_name()} "
+            f"({self.claim.month.strftime('%b %Y')}) on {self.paid_at:%d %b %Y}"
+        )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Keep the denormalised total in sync automatically
+        self.claim.refresh_amount_paid()
+
+    def delete(self, *args, **kwargs):
+        claim = self.claim
+        super().delete(*args, **kwargs)
+        claim.refresh_amount_paid()
 
 
 class ClaimEntry(models.Model):
