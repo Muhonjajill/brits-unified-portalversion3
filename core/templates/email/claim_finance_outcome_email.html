@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Claim — Finance Decision</title>
+<style>
+  body { margin:0; padding:0; background:#f4f6f9; font-family: Arial, Helvetica, sans-serif; color:#1a1a2e; }
+  .wrapper { max-width:640px; margin:32px auto; background:#ffffff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.10); }
+  .header-approved { background:#14532d; padding:28px 32px; }
+  .header-rejected  { background:#7f1d1d; padding:28px 32px; }
+  .header-approved h1, .header-rejected h1 { margin:0; color:#ffffff; font-size:20px; letter-spacing:.4px; }
+  .header-approved p,  .header-rejected p  { margin:6px 0 0; color:#a7f3d0; font-size:13px; }
+  .header-rejected p { color:#fca5a5; }
+  .body { padding:28px 32px; }
+  .body p { font-size:14px; line-height:1.7; margin:0 0 14px; }
+  .badge-approved { display:inline-block; background:#d1fae5; color:#065f46; padding:4px 14px; border-radius:20px; font-size:13px; font-weight:bold; }
+  .badge-rejected  { display:inline-block; background:#fee2e2; color:#7f1d1d; padding:4px 14px; border-radius:20px; font-size:13px; font-weight:bold; }
+  .meta-table { width:100%; border-collapse:collapse; margin-bottom:20px; font-size:13px; }
+  .meta-table td { padding:7px 10px; border:1px solid #e2e8f0; }
+  .meta-table tr:nth-child(odd) td { background:#f8fafc; }
+  .meta-table .label { font-weight:bold; color:#1F3864; width:38%; }
+  .entry-table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:20px; }
+  .entry-table th { background:#1F3864; color:#fff; padding:6px 8px; text-align:center; white-space:nowrap; }
+  .entry-table td { padding:5px 8px; border:1px solid #dde3ec; text-align:right; }
+  .entry-table td.left { text-align:left; }
+  .entry-table td.center { text-align:center; }
+  .entry-table tr:nth-child(odd) td { background:#f8fafc; }
+  .fin-table { width:100%; border-collapse:collapse; font-size:13px; margin-bottom:20px; }
+  .fin-table td { padding:7px 12px; border-bottom:1px solid #e8edf4; }
+  .fin-table .label { color:#555; }
+  .fin-table .amount { text-align:right; font-weight:bold; }
+  .fin-table .total-row td { background:#1F3864; color:#fff; font-weight:bold; font-size:14px; }
+  .fin-table .paid-row td { background:#d1fae5; color:#065f46; font-weight:bold; }
+  .fin-table .warn-row td { background:#fff3cd; color:#7a5000; }
+  .fin-table .over-row td { background:#fee2e2; color:#7f1d1d; font-weight:bold; }
+  .payment-table { width:100%; border-collapse:collapse; font-size:13px; margin-bottom:18px; }
+  .payment-table th { background:#374151; color:#fff; padding:6px 10px; text-align:left; font-size:12px; }
+  .payment-table td { padding:6px 10px; border:1px solid #e2e8f0; }
+  .payment-table tr:nth-child(odd) td { background:#f8fafc; }
+  .comment-box { background:#fef9ec; border-left:4px solid #f59e0b; padding:12px 16px; border-radius:4px; font-size:13px; margin-bottom:20px; }
+  .comment-box.reject { background:#fff1f2; border-left-color:#ef4444; }
+  .cf-note { background:#eef4ff; border-left:4px solid #3b82f6; padding:10px 14px; border-radius:4px; font-size:13px; margin-bottom:18px; }
+  .cta { text-align:center; margin:24px 0; }
+  .cta a { background:#1F3864; color:#ffffff; text-decoration:none; padding:13px 32px; border-radius:5px; font-size:14px; font-weight:bold; display:inline-block; }
+  .footer { background:#f0f4f8; padding:16px 32px; font-size:11px; color:#888; text-align:center; border-top:1px solid #dde3ec; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- Adaptive header -->
+  {% if claim.status == 'finance_approved' %}
+  <div class="header-approved">
+    <h1>Your Claim Has Been Approved ✔</h1>
+    <p>BRITS Claims Management System</p>
+  </div>
+  {% else %}
+  <div class="header-rejected">
+    <h1>Your Claim Has Been Rejected</h1>
+    <p>BRITS Claims Management System</p>
+  </div>
+  {% endif %}
+
+  <div class="body">
+
+    <p>Hi <strong>{{ claim.employee.get_full_name }}</strong>,</p>
+
+    {% if claim.status == 'finance_approved' %}
+    <p>
+      Your expense claim for <strong>{{ claim.month|date:"F Y" }}</strong> has been
+      <span class="badge-approved">✔ Finance Approved</span>.
+      Payment will be processed according to your organisation's disbursement schedule.
+    </p>
+    {% else %}
+    <p>
+      Your expense claim for <strong>{{ claim.month|date:"F Y" }}</strong> has been
+      <span class="badge-rejected">✖ Rejected by Finance</span>.
+      Please review the comments below and contact your manager or Finance team
+      if you have questions.
+    </p>
+    {% endif %}
+
+    <!-- Finance comment -->
+    {% if claim.finance_comment %}
+    <div class="comment-box {% if claim.status == 'rejected' %}reject{% endif %}">
+      <strong>Finance comment:</strong><br>
+      {{ claim.finance_comment }}
+    </div>
+    {% endif %}
+
+    <!-- Manager comment (for context) -->
+    {% if claim.manager_comment %}
+    <div class="comment-box">
+      <strong>Manager comment:</strong><br>
+      {{ claim.manager_comment }}
+    </div>
+    {% endif %}
+
+    <!-- Claim meta -->
+    <table class="meta-table">
+      <tr><td class="label">Employee</td><td>{{ claim.employee.get_full_name }}</td></tr>
+      <tr><td class="label">Claim Period</td><td>{{ claim.month|date:"F Y" }}</td></tr>
+      <tr><td class="label">Submitted</td><td>{{ claim.submitted_at|date:"d M Y, H:i" }}</td></tr>
+      {% if claim.manager %}<tr><td class="label">Approved by Manager</td><td>{{ claim.manager.get_full_name }}{% if claim.manager_actioned_at %} on {{ claim.manager_actioned_at|date:"d M Y" }}{% endif %}</td></tr>{% endif %}
+      {% if claim.finance_reviewer %}<tr><td class="label">Finance Reviewer</td><td>{{ claim.finance_reviewer.get_full_name }}{% if claim.finance_actioned_at %} on {{ claim.finance_actioned_at|date:"d M Y" }}{% endif %}</td></tr>{% endif %}
+      <tr><td class="label">Status</td><td>{{ claim.get_status_display }}</td></tr>
+    </table>
+
+    <!-- Expense entries -->
+    {% if claim.entries.all %}
+    <p><strong>Expense Entries</strong></p>
+    <table class="entry-table">
+      <thead>
+        <tr>
+          <th>Date</th><th>Site</th><th>Ticket #</th>
+          <th>To</th><th>From</th>
+          <th>B/fast</th><th>Lunch</th><th>Dinner</th><th>Bed</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in claim.entries.all %}
+        <tr>
+          <td class="center">{{ entry.date|date:"d/m/Y" }}</td>
+          <td class="left">{{ entry.site|default:"—" }}</td>
+          <td class="center">
+            {% if entry.ticket_url %}
+              <a href="{{ entry.ticket_url }}">{{ entry.ticket_number|default:"—" }}</a>
+            {% else %}
+              {{ entry.ticket_number|default:"—" }}
+            {% endif %}
+          </td>
+          <td>{{ entry.transport_to|floatformat:2 }}</td>
+          <td>{{ entry.transport_from|floatformat:2 }}</td>
+          <td>{{ entry.breakfast|floatformat:2 }}</td>
+          <td>{{ entry.lunch|floatformat:2 }}</td>
+          <td>{{ entry.dinner|floatformat:2 }}</td>
+          <td>{{ entry.bed|floatformat:2 }}</td>
+          <td><strong>{{ entry.total|floatformat:2 }}</strong></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Carry-forward notice -->
+    {% if claim.carry_forward %}
+    <div class="cf-note">
+      {% if claim.carry_forward > 0 %}
+        ℹ️ This claim includes a <strong>carry-forward advance of KES {{ claim.carry_forward|floatformat:2 }}</strong>
+        from the previous approved claim
+        {% if claim.previous_claim %}({{ claim.previous_claim.month|date:"F Y" }}){% endif %}.
+      {% else %}
+        ℹ️ This claim includes an <strong>overpayment deduction of KES {{ claim.carry_forward|floatformat:2 }}</strong>
+        carried forward from the previous claim.
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Financial summary -->
+    <table class="fin-table">
+      <tr><td class="label">Sub-total (expenses)</td><td class="amount">KES {{ claim.subtotal|floatformat:2 }}</td></tr>
+      <tr><td class="label">Advance issued</td><td class="amount">KES {{ claim.advance|floatformat:2 }}</td></tr>
+      {% if claim.carry_forward %}
+      <tr><td class="label">Carry-forward</td><td class="amount">KES {{ claim.carry_forward|floatformat:2 }}</td></tr>
+      {% endif %}
+      <tr class="total-row"><td>Net Payable</td><td class="amount">KES {{ claim.total_minus_advance|floatformat:2 }}</td></tr>
+    </table>
+
+    <!-- Payment records breakdown (only if any payments made) -->
+    {% if claim.payment_records.all %}
+    <p><strong>Payment Records</strong></p>
+    <table class="payment-table">
+      <thead>
+        <tr><th>#</th><th>Date</th><th>Amount (KES)</th><th>Note</th></tr>
+      </thead>
+      <tbody>
+        {% for pr in claim.payment_records.all %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ pr.paid_at|date:"d M Y" }}</td>
+          <td style="text-align:right;font-weight:bold;">{{ pr.amount|floatformat:2 }}</td>
+          <td>{{ pr.note|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <table class="fin-table">
+      <tr class="paid-row"><td>Total Amount Paid</td><td class="amount">KES {{ claim.amount_paid|floatformat:2 }}</td></tr>
+      {% if claim.balance_due > 0 %}
+      <tr class="warn-row"><td>Outstanding Balance</td><td class="amount">KES {{ claim.balance_due|floatformat:2 }}</td></tr>
+      {% endif %}
+      {% if claim.overpayment > 0 %}
+      <tr class="over-row"><td>Overpayment (deducted from next claim)</td><td class="amount">KES {{ claim.overpayment|floatformat:2 }}</td></tr>
+      {% endif %}
+    </table>
+    {% endif %}
+
+    {% if claim_url %}
+    <div class="cta">
+      <a href="{{ claim_url }}">View Claim Details →</a>
+    </div>
+    {% endif %}
+
+    {% if claim.status == 'rejected' %}
+    <p style="font-size:13px;color:#666;">
+      If you disagree with this decision, please speak to your line manager or the Finance team
+      directly. You may edit your rejected claim and re-submit for review.
+    </p>
+    {% else %}
+    <p style="font-size:13px;color:#666;">
+      Payment will be disbursed according to the standard payroll/disbursement schedule.
+      If you have questions about timing, please contact the Finance team.
+    </p>
+    {% endif %}
+
+  </div>
+
+  <div class="footer">
+    This is an automated notification from the BRITS Claims Management System.<br>
+    Please do not reply directly to this email.
+  </div>
+
+</div>
+</body>
+</html>

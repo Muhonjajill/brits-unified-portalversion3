@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.utils import timezone
 from django.http import HttpResponse
 from django.db.models import Q, Sum
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.paginator import Paginator
@@ -44,44 +44,128 @@ def _can_delete(user):
 # ─── Email helpers ─────────────────────────────────────────────────────────────
 
 def _send_claim_email(subject, template, context, recipient_email):
+    """Send an HTML claim notification email."""
     try:
-        body = render_to_string(template, context)
-        send_mail(
+        html_body = render_to_string(template, context)
+        msg = EmailMessage(
             subject=subject,
-            message=body,
+            body=html_body,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[recipient_email],
-            fail_silently=True,
+            to=[recipient_email],
         )
+        msg.content_subtype = 'html'
+        msg.send(fail_silently=True)
     except Exception:
         pass
 
 
-def _notify_next_approver(claim):
-    if claim.status == ClaimForm.STATUS_SUBMITTED and claim.manager:
+def _build_claim_url(request, claim):
+    """Absolute URL to the claim detail page."""
+    try:
+        from django.urls import reverse
+        return request.build_absolute_uri(reverse('claim_detail', kwargs={'pk': claim.pk}))
+    except Exception:
+        return ''
+
+
+def _notify_submitted(claim, request=None):
+    """
+    Notify the assigned manager when an employee submits a claim.
+    """
+    if claim.manager and claim.manager.email:
+        claim_url = _build_claim_url(request, claim) if request else ''
         _send_claim_email(
-            subject=f"[BRITS] Claim awaiting your approval — {claim.employee.get_full_name()}",
-            template='core/claims/email_approval_request.txt',
-            context={'claim': claim, 'role': 'Manager'},
+            subject=f"[BRITS] Claim submitted — {claim.employee.get_full_name()} ({claim.month.strftime('%B %Y')})",
+            template='email/claim_submitted_email.html',
+            context={
+                'claim': claim,
+                'approver_name': claim.manager.get_full_name() or claim.manager.username,
+                'role': 'Manager',
+                'claim_url': claim_url,
+            },
             recipient_email=claim.manager.email,
         )
-    elif claim.status == ClaimForm.STATUS_MANAGER_APPROVED and claim.finance_reviewer:
+
+
+def _notify_manager_actioned(claim, request=None):
+    """
+    After manager approves → notify Finance reviewer.
+    After manager rejects  → notify Employee.
+    """
+    claim_url = _build_claim_url(request, claim) if request else ''
+
+    if claim.status == ClaimForm.STATUS_MANAGER_APPROVED and claim.finance_reviewer and claim.finance_reviewer.email:
         _send_claim_email(
-            subject=f"[BRITS] Claim awaiting Finance approval — {claim.employee.get_full_name()}",
-            template='core/claims/email_approval_request.txt',
-            context={'claim': claim, 'role': 'Finance'},
+            subject=f"[BRITS] Claim awaiting Finance approval — {claim.employee.get_full_name()} ({claim.month.strftime('%B %Y')})",
+            template='email/claim_manager_actioned_email.html',
+            context={
+                'claim': claim,
+                'recipient_name': claim.finance_reviewer.get_full_name() or claim.finance_reviewer.username,
+                'claim_url': claim_url,
+            },
             recipient_email=claim.finance_reviewer.email,
         )
 
-
-def _notify_employee_outcome(claim):
-    if claim.status in (ClaimForm.STATUS_FINANCE_APPROVED, ClaimForm.STATUS_REJECTED):
+    elif claim.status == ClaimForm.STATUS_REJECTED and claim.employee and claim.employee.email:
         _send_claim_email(
-            subject=f"[BRITS] Your claim has been {claim.get_status_display().lower()}",
-            template='core/claims/email_outcome.txt',
-            context={'claim': claim},
+            subject=f"[BRITS] Your claim has been rejected — {claim.month.strftime('%B %Y')}",
+            template='email/claim_manager_actioned_email.html',
+            context={
+                'claim': claim,
+                'recipient_name': claim.employee.get_full_name() or claim.employee.username,
+                'claim_url': claim_url,
+            },
             recipient_email=claim.employee.email,
         )
+
+
+def _notify_finance_outcome(claim, request=None):
+    """
+    After Finance approves or rejects → notify the Employee.
+    """
+    if claim.employee and claim.employee.email:
+        claim_url = _build_claim_url(request, claim) if request else ''
+        status_label = 'approved' if claim.status == ClaimForm.STATUS_FINANCE_APPROVED else 'rejected'
+        _send_claim_email(
+            subject=f"[BRITS] Your claim has been {status_label} — {claim.month.strftime('%B %Y')}",
+            template='email/claim_finance_outcome_email.html',
+            context={
+                'claim': claim,
+                'claim_url': claim_url,
+            },
+            recipient_email=claim.employee.email,
+        )
+
+
+# ── Shims — keep existing call sites working ──────────────────────────────────
+
+def _notify_next_approver(claim, request=None):
+    """
+    Called after submit (→ manager) or after manager approval (→ finance).
+    Routes to the correct helper based on claim status.
+    """
+    if claim.status == ClaimForm.STATUS_SUBMITTED:
+        _notify_submitted(claim, request)
+    elif claim.status == ClaimForm.STATUS_MANAGER_APPROVED:
+        _notify_manager_actioned(claim, request)
+
+
+def _notify_employee_outcome(claim, request=None):
+    """
+    Called after finance approves or after any rejection.
+    - Finance approved or finance rejected → _notify_finance_outcome (employee gets finance email)
+    - Manager rejected → _notify_manager_actioned (employee gets manager-actioned email)
+    Distinguish manager vs finance rejection by checking finance_actioned_at.
+    """
+    if claim.status == ClaimForm.STATUS_FINANCE_APPROVED:
+        _notify_finance_outcome(claim, request)
+    elif claim.status == ClaimForm.STATUS_REJECTED:
+        if claim.finance_actioned_at:
+            # Rejected at Finance stage
+            _notify_finance_outcome(claim, request)
+        else:
+            # Rejected at Manager stage
+            _notify_manager_actioned(claim, request)
 
 
 # ─── Claim list ────────────────────────────────────────────────────────────────
@@ -193,7 +277,7 @@ def claim_create(request):
                 claim.submitted_at = timezone.now()
                 claim.save()
 
-                _notify_next_approver(claim)
+                _notify_next_approver(claim, request)
 
                 messages.success(request, "Claim submitted for manager approval.")
             else:
@@ -211,7 +295,6 @@ def claim_create(request):
         formset = ClaimEntryFormSet()
 
         # Show carry-forward preview for new claims
-        # Build a temporary claim-like object to call compute_carry_forward
         class _TempClaim:
             employee = user
             month = auto_month
@@ -271,7 +354,7 @@ def claim_edit(request, pk):
                 claim.status = ClaimForm.STATUS_SUBMITTED
                 claim.submitted_at = timezone.now()
                 claim.save()
-                _notify_next_approver(claim)
+                _notify_next_approver(claim, request)
                 messages.success(request, "Claim re-submitted for approval.")
             else:
                 messages.success(request, "Claim updated.")
@@ -315,7 +398,10 @@ def claim_detail(request, pk):
         return redirect('claim_list')
 
     prev_claim = claim.get_previous_claim()
-    claim_history = claim.get_claim_history()[:5]
+    #claim_history = claim.get_claim_history()[:5]
+    claim_history_qs = claim.get_claim_history()
+    history_paginator = Paginator(claim_history_qs, 5)
+    history_page_obj = history_paginator.get_page(request.GET.get('history_page'))
 
     # ── Payment recording — finance / elevated only ─────────────────────────────
     payment_form = None
@@ -335,16 +421,8 @@ def claim_detail(request, pk):
             record.paid_at = timezone.now()
             record.save()  # triggers claim.refresh_amount_paid() automatically
 
-            # Reload claim to get fresh amount_paid
             claim.refresh_from_db()
 
-            # ── Overpayment check ──────────────────────────────────────────────
-            # If total paid now exceeds what was owed, the surplus becomes the
-            # carry-forward advance on the employee's *next* claim.
-            # We don't need to do anything here — compute_carry_forward() reads
-            # balance_due live, so the next claim created will automatically pick
-            # up the negative balance_due as a deduction from the new advance.
-            # We just surface a clear message to Finance.
             overpayment = claim.overpayment
             if overpayment > Decimal('0.00'):
                 messages.warning(
@@ -361,7 +439,6 @@ def claim_detail(request, pk):
                 )
 
             return redirect('claim_detail', pk=pk)
-        # form invalid — fall through to re-render with errors
     elif can_record_payment:
         payment_form = PaymentRecordForm()
 
@@ -376,7 +453,9 @@ def claim_detail(request, pk):
         'is_finance_user': is_finance_user,
         'can_delete': _can_delete(user),
         'prev_claim': prev_claim,
-        'claim_history': claim_history,
+        #'claim_history': claim_history,
+        'claim_history': history_page_obj,
+        'history_page_obj': history_page_obj,
         'payment_form': payment_form,
         'payment_records': payment_records,
         'can_record_payment': can_record_payment,
@@ -396,8 +475,10 @@ def claim_approve(request, pk):
     form = ApprovalActionForm(request.POST)
     if form.is_valid():
         claim.approve(request.user, comment=form.cleaned_data.get('comment', ''))
-        _notify_next_approver(claim)
-        _notify_employee_outcome(claim)
+        _notify_next_approver(claim, request)
+        # Only notify the employee when Finance is the final approver
+        if claim.status == ClaimForm.STATUS_FINANCE_APPROVED:
+            _notify_employee_outcome(claim, request)
         messages.success(request, f"Claim approved. Status: {claim.get_status_display()}")
     return redirect('claim_detail', pk=pk)
 
@@ -417,7 +498,7 @@ def claim_reject(request, pk):
             messages.error(request, "A comment is required when rejecting a claim.")
             return redirect('claim_detail', pk=pk)
         claim.reject(request.user, comment=comment)
-        _notify_employee_outcome(claim)
+        _notify_employee_outcome(claim, request)
         messages.warning(request, "Claim rejected. Employee has been notified.")
     return redirect('claim_detail', pk=pk)
 
@@ -538,7 +619,6 @@ def claim_export_excel(request, pk):
         ws.cell(subtotal_row, 11, float(claim.advance)).number_format = '#,##0.00'
         ws.cell(subtotal_row, 11).font = bold
 
-        # Carry-forward row (if any)
         if claim.carry_forward:
             cf_row = subtotal_row + 1
             ws.merge_cells(f'A{cf_row}:I{cf_row}')
@@ -556,7 +636,6 @@ def claim_export_excel(request, pk):
         ws.cell(tma_row, 10, float(claim.total_minus_advance)).number_format = '#,##0.00'
         ws.cell(tma_row, 10).font = bold
 
-        # Payment records breakdown
         pr_start = tma_row + 1
         for i, pr in enumerate(claim.payment_records.all()):
             pr_row = pr_start + i
@@ -576,7 +655,6 @@ def claim_export_excel(request, pk):
         ws.cell(paid_row, 10, float(claim.amount_paid)).number_format = '#,##0.00'
         ws.cell(paid_row, 10).font = bold
 
-        # Overpayment / balance row
         if claim.overpayment > 0:
             op_row = paid_row + 1
             ws.merge_cells(f'A{op_row}:I{op_row}')

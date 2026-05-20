@@ -481,7 +481,20 @@ document.addEventListener('keydown', function(e) {
     if (nt) nt.textContent = (gt - a - cf).toFixed(2);
   }
 
+  //document.body.dataset.carryForward = '{{ carry_amount|default:"0"|floatformat:2 }}'.replace(/,/g,'');
+
   document.body.dataset.carryForward = '{{ carry_amount|default:"0"|floatformat:2 }}'.replace(/,/g,'');
+
+  (function() {
+    const cf = parseFloat(document.body.dataset.carryForward) || 0;
+    if (cf !== 0) {
+      const advInput = document.getElementById('id_advance_field');
+      if (advInput && (!advInput.value || parseFloat(advInput.value) === 0)) {
+        advInput.value = Math.abs(cf).toFixed(2);
+        recalc();
+      }
+    }
+  })();
 
   document.addEventListener('input', e => {
     if (e.target.matches('.money-field') || e.target.id === 'id_advance_field') recalc();

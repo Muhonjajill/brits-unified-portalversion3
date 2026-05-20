@@ -231,6 +231,28 @@
 .ticket-link { color: #123692; text-decoration: none; font-weight: 600; }
 .ticket-link:hover { text-decoration: underline; }
 
+/* History pagination */
+.history-pagination {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 24px 16px; gap: 12px; flex-wrap: wrap;
+}
+.history-pagination .page-info {
+  font-size: 0.78rem; color: #6c757d; white-space: nowrap;
+}
+.history-pager { display: flex; gap: 4px; align-items: center; }
+.history-pager a,
+.history-pager span {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 30px; height: 30px; padding: 0 8px;
+  border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+  border: 1.5px solid #dee2e6; text-decoration: none;
+  transition: background .15s;
+}
+.history-pager a { background: #fff; color: #123692; border-color: #c0d0f0; }
+.history-pager a:hover { background: #e8f0fc; }
+.history-pager span.current { background: #123692; color: #fff; border-color: #123692; }
+.history-pager span.disabled { background: #f8f9fa; color: #adb5bd; border-color: #e9ecef; cursor: default; }
+
 .prev-claim-alert {
   background: #f0f7ff; border-radius: 8px; border-left: 3px solid #123692;
   padding: 10px 16px; font-size: 0.85rem; color: var(--claims-text, #343a40); margin: 0 24px 0;
@@ -427,9 +449,12 @@
 
   {# ── Previous claim history panel ── #}
   {% if claim_history %}
-  <div class="claim-meta-card claim-history-card">
+  <div class="claim-meta-card claim-history-card" id="claimHistory">
     <h3 class="card-section-title">
       <i class="fas fa-history"></i> Previous Claims — {{ claim.employee.get_full_name }}
+      <span style="font-size:0.75em; font-weight:400; color:#6c757d; margin-left:6px;">
+        ({{ history_page_obj.paginator.count }} total)
+      </span>
     </h3>
 
     {% if prev_claim %}
@@ -500,10 +525,46 @@
             </td>
             <td><span class="status-badge status-{{ prev.status_color }}">{{ prev.get_status_display }}</span></td>
           </tr>
+          {% empty %}
+          <tr><td colspan="7" class="empty-cell">No previous claims found.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
+    {# ── History pagination ── #}
+    {% if history_page_obj.has_other_pages %}
+    <div class="history-pagination">
+      <span class="page-info">
+        Page {{ history_page_obj.number }} of {{ history_page_obj.paginator.num_pages }}
+        &mdash; {{ history_page_obj.paginator.count }} record{{ history_page_obj.paginator.count|pluralize }}
+      </span>
+      <nav class="history-pager">
+        {% if history_page_obj.has_previous %}
+          <a href="?history_page={{ history_page_obj.previous_page_number }}#claimHistory"
+             title="Previous"><i class="fas fa-chevron-left"></i></a>
+        {% else %}
+          <span class="disabled"><i class="fas fa-chevron-left"></i></span>
+        {% endif %}
+
+        {% for num in history_page_obj.paginator.page_range %}
+          {% if history_page_obj.number == num %}
+            <span class="current">{{ num }}</span>
+          {% elif num >= history_page_obj.number|add:"-2" and num <= history_page_obj.number|add:"2" %}
+            <a href="?history_page={{ num }}#claimHistory">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if history_page_obj.has_next %}
+          <a href="?history_page={{ history_page_obj.next_page_number }}#claimHistory"
+             title="Next"><i class="fas fa-chevron-right"></i></a>
+        {% else %}
+          <span class="disabled"><i class="fas fa-chevron-right"></i></span>
+        {% endif %}
+      </nav>
+    </div>
+    {% endif %}
+
   </div>
   {% endif %}
 
