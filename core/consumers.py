@@ -175,8 +175,14 @@ class EscalationConsumer(AsyncWebsocketConsumer):
 
         return False
 
-    async def new_ticket_notification(self, event):
+    """async def new_ticket_notification(self, event):
         await self.send_json({
             "type": "new_ticket_notification",
             "ticket": event["ticket"],
-        })
+        })"""
+
+    async def new_ticket_notification(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "new_ticket_notification",
+            "ticket": event["ticket"],
+        }))
