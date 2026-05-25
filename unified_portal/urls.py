@@ -20,7 +20,7 @@ from django.conf.urls import handler403
 from core import views as core_views
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("brits-admin-helpdesk-2026G/", admin.site.urls),
     path('', include('core.urls')),
     path('', include('core.claims.urls')),
     path('inventory/', include('core.inventory.urls')),

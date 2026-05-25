@@ -20,17 +20,23 @@ document.addEventListener('DOMContentLoaded', () => {
       body: formData
     });
 
+    // Handle lockout
+    if (response.status === 429) {
+      showErrorModal('Account Locked', 'Too many failed login attempts. Your account has been temporarily locked. Please try again in 1 hour.');
+      return;
+    }
+
     const data = await response.json();
 
     if (data.status === 'otp_sent') {
       console.log("OTP modal triggered");
       otpModal.style.display = 'flex';
     } else {
-      // ✅ Use modal instead of alert
+      // Use modal instead of alert
       showErrorModal('Login Failed', data.message || 'Login failed. Please try again.');
     }
   } catch (error){
-    // ✅ Use modal instead of alert
+    // Use modal instead of alert
     showErrorModal('Connection Error', 'An error occurred. Please try again.');
   }finally {
       loader.style.display = 'none'; 

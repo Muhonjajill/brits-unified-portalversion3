@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'channels',
     'core.inventory',
     'django.contrib.humanize',
+    'axes',
 ]
 
 MIDDLEWARE = [
@@ -59,6 +60,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = "unified_portal.urls"
@@ -131,6 +133,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+EMAIL_TIMEOUT = 10
 #EMAIL_HOST_USER = 'brts.support@blueriverafrica.net'
 #EMAIL_HOST_PASSWORD = '8E@77fHhG6729tPFVzaS'
 EMAIL_HOST_USER = 'godblessodhiambo@gmail.com'
@@ -225,6 +228,7 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 #MEDIA_ROOT = BASE_DIR / 'media'
@@ -250,3 +254,17 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 60.0,  
     },
 }
+
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+AXES_FAILURE_LIMIT = 5      
+AXES_COOLOFF_TIME = 1         
+AXES_LOCKOUT_CALLABLE = None
+AXES_RESET_ON_SUCCESS = True  
+
+# Lock by username only, not IP
+AXES_ONLY_USER_FAILURES = True        
+AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = False  

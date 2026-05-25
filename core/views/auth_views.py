@@ -33,6 +33,8 @@ class RegistrationForm(forms.ModelForm):
         model = User
         fields = ['username', 'email', 'password']
 
+@login_required
+@user_passes_test(lambda u: u.is_staff or u.is_superuser)
 def register_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -73,7 +75,7 @@ def login_view(request):
         if form.is_valid():
             username = form.cleaned_data['username']
             password = form.cleaned_data["password"]
-            user = authenticate(username=username, password=password)
+            user = authenticate(request, username=username, password=password)
             if user is not None:
                 user_roles = list(user.groups.values_list('name', flat=True))
                 allowed_roles = ['Director', 'Manager', 'Staff', 'Customer'] 
@@ -146,7 +148,7 @@ def verify_otp_view(request):
                 elif otp_instance.is_expired():
                     return JsonResponse({'status': 'error', 'message': 'Expired OTP'})
                 else:
-                    auth_login(request, user)
+                    auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                     if 'pre_otp_user' in request.session:
                         del request.session['pre_otp_user']
                     otp_instance.delete()  
