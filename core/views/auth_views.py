@@ -163,7 +163,6 @@ def verify_otp_view(request):
 
 
 # Email notification functions
-
 def send_inhouse_user_email(request, user, password, role):
     """Send welcome email to in-house users"""
     token = default_token_generator.make_token(user)

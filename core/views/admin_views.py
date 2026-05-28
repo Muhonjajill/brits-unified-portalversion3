@@ -8,6 +8,7 @@ from .auth_views import (
     send_user_updated_email,
 )
 
+@login_required(login_url='login')
 def admin_dashboard(request):
     query = request.GET.get('q', '').strip()
     users_qs = User.objects.select_related('profile')
@@ -612,6 +613,7 @@ def assign_role(request):
     
     return redirect('admin_dashboard')
 
+@login_required(login_url='login')
 def manage_file_categories(request):
     categories = FileCategory.objects.all()
 
