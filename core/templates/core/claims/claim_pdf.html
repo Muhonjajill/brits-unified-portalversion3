@@ -53,7 +53,7 @@
     <tr>
       <th>Date</th><th>Site</th><th>Ticket No.</th>
       <th>To (KES)</th><th>From (KES)</th>
-      <th>Breakfast</th><th>Lunch</th><th>Dinner</th><th>Bed</th>
+      <th>Breakfast</th><th>Lunch</th><th>Dinner</th><th>Bed</th><th>Other Expenditure</th>
       <th>Total (KES)</th>
     </tr>
   </thead>
@@ -79,31 +79,32 @@
       <td class="amount">{{ entry.lunch|floatformat:2 }}</td>
       <td class="amount">{{ entry.dinner|floatformat:2 }}</td>
       <td class="amount">{{ entry.bed|floatformat:2 }}</td>
+      <td class="amount">{{ entry.other_expenditure|floatformat:2 }}</td>
       <td class="amount"><strong>{{ entry.total|floatformat:2 }}</strong></td>
     </tr>
     {% endfor %}
   </tbody>
   <tfoot>
     <tr class="totals-row">
-      <td colspan="9" style="text-align:right">Sub-total</td>
+      <td colspan="10" style="text-align:right">Sub-total</td>
       <td class="amount">KES {{ claim.subtotal|floatformat:2 }}</td>
     </tr>
     <tr class="totals-row">
-      <td colspan="9" style="text-align:right">Advance</td>
+      <td colspan="10" style="text-align:right">Advance</td>
       <td class="amount">KES {{ claim.advance|floatformat:2 }}</td>
     </tr>
     <tr class="totals-row net-row">
-      <td colspan="9" style="text-align:right">Total Minus Advance</td>
+      <td colspan="10" style="text-align:right">Total Minus Advance</td>
       <td class="amount">KES {{ claim.total_minus_advance|floatformat:2 }}</td>
     </tr>
     {% if claim.amount_paid %}
     <tr class="totals-row paid-row">
-      <td colspan="9" style="text-align:right">Amount Paid</td>
+      <td colspan="10" style="text-align:right">Amount Paid</td>
       <td class="amount">KES {{ claim.amount_paid|floatformat:2 }}</td>
     </tr>
     {% if claim.balance_due > 0 %}
     <tr class="totals-row" style="background:#f8d7da;">
-      <td colspan="9" style="text-align:right; color:#721c24;">Outstanding Balance</td>
+      <td colspan="10" style="text-align:right; color:#721c24;">Outstanding Balance</td>
       <td class="amount" style="color:#721c24;">KES {{ claim.balance_due|floatformat:2 }}</td>
     </tr>
     {% endif %}

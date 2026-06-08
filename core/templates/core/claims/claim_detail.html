@@ -82,7 +82,7 @@
 }
 .claim-entries-card h3.card-section-title { padding: 16px 24px 12px; border-bottom: 1px solid #f0f2f5; margin-bottom: 14px; }
 .entries-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0 12px; }
-.entries-table.view-table { width: 100%; border-collapse: collapse; min-width: 750px; font-size: 0.85rem; }
+.entries-table.view-table { width: 100%; border-collapse: collapse; min-width: 900px; font-size: 0.85rem; }
 .entries-table.view-table thead th {
   background: #123692; color: #fff; padding: 10px 10px;
   font-size: 0.78rem; font-weight: 600; text-align: center;
@@ -584,6 +584,7 @@
             <th>Lunch</th>
             <th>Dinner</th>
             <th>Bed</th>
+            <th>Other Expenditure</th>
             <th>Total (KES)</th>
           </tr>
         </thead>
@@ -611,50 +612,51 @@
             <td class="amount">{{ entry.lunch|floatformat:2 }}</td>
             <td class="amount">{{ entry.dinner|floatformat:2 }}</td>
             <td class="amount">{{ entry.bed|floatformat:2 }}</td>
+            <td class="amount">{{ entry.other_expenditure|floatformat:2 }}</td>
             <td class="amount row-total">{{ entry.total|floatformat:2 }}</td>
           </tr>
           {% empty %}
-          <tr><td colspan="10" class="empty-cell">No entries found.</td></tr>
+          <tr><td colspan="11" class="empty-cell">No entries found.</td></tr>
           {% endfor %}
         </tbody>
         <tfoot>
           <tr class="totals-row">
-            <td colspan="9" class="totals-label">Sub-total</td>
+            <td colspan="10" class="totals-label">Sub-total</td>
             <td class="amount grand-total">KES {{ claim.subtotal|floatformat:2 }}</td>
           </tr>
           {% if claim.carry_forward %}
           <tr class="totals-row" style="background:#fff8ec;">
-            <td colspan="9" class="totals-label" style="color:var(--claims-warning,#fd7e14);">
+            <td colspan="10" class="totals-label" style="color:var(--claims-warning,#fd7e14);">
               <i class="fas fa-history"></i> Carry-forward ({{ claim.previous_claim.month|date:"M Y"|default:"prev." }})
             </td>
             <td class="amount" style="color:var(--claims-warning,#fd7e14);">KES {{ claim.carry_forward|floatformat:2 }}</td>
           </tr>
           {% endif %}
           <tr class="totals-row">
-            <td colspan="9" class="totals-label">Advance (this claim)</td>
+            <td colspan="10" class="totals-label">Advance (this claim)</td>
             <td class="amount">KES {{ claim.advance|floatformat:2 }}</td>
           </tr>
           <tr class="totals-row net-row">
-            <td colspan="9" class="totals-label">Total Minus Advance</td>
+            <td colspan="10" class="totals-label">Total Minus Advance</td>
             <td class="amount grand-total">KES {{ claim.total_minus_advance|floatformat:2 }}</td>
           </tr>
           {% if claim.amount_paid %}
           <tr class="totals-row">
-            <td colspan="9" class="totals-label">
+            <td colspan="10" class="totals-label">
               <span class="paid-badge"><i class="fas fa-check-circle"></i> Total Amount Paid</span>
             </td>
             <td class="amount grand-total" style="color:var(--claims-success);">KES {{ claim.amount_paid|floatformat:2 }}</td>
           </tr>
           {% if claim.overpayment > 0 %}
           <tr class="totals-row" style="background:#fff3cd;">
-            <td colspan="9" class="totals-label" style="color:#dc3545;">
+            <td colspan="10" class="totals-label" style="color:#dc3545;">
               <i class="fas fa-exclamation-triangle"></i> Overpayment (→ next claim carry-forward)
             </td>
             <td class="amount grand-total" style="color:#dc3545;">KES {{ claim.overpayment|floatformat:2 }}</td>
           </tr>
           {% elif claim.balance_due > 0 %}
           <tr class="totals-row">
-            <td colspan="9" class="totals-label" style="color:var(--claims-danger);">Outstanding Balance</td>
+            <td colspan="10" class="totals-label" style="color:var(--claims-danger);">Outstanding Balance</td>
             <td class="amount grand-total" style="color:var(--claims-danger);">KES {{ claim.balance_due|floatformat:2 }}</td>
           </tr>
           {% endif %}

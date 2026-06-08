@@ -178,6 +178,17 @@
   background: #e8f0fc; color: #123692; border-radius: 20px;
   padding: 4px 14px; font-size: 0.85rem; font-weight: 600;
 }
+
+/* The form entries table has a Ticket URL column — don't use fixed layout */
+.cf-page .entries-table {
+  table-layout: fixed;
+  min-width: 1100px;
+}
+
+/* Let each column size naturally from its min-width th attribute */
+.cf-page .entries-table th {
+  white-space: nowrap;
+}
 </style>
 
 <div class="cf-page">
@@ -263,6 +274,7 @@
                 <th style="min-width:70px;">Lunch</th>
                 <th style="min-width:70px;">Dinner</th>
                 <th style="min-width:70px;">Bed</th>
+                <th style="min-width:100px;">Other Exp</th>
                 <th style="min-width:80px;">Total</th>
                 <th style="width:36px;"></th>
               </tr>
@@ -270,7 +282,7 @@
             <tbody id="entries-body">
               {% for entry_form in formset %}
                 <tr class="entry-row {% if entry_form.instance.pk %}existing{% endif %}">
-                  <td>{{ entry_form.date }}{{ entry_form.id }}{% if entry_form.DELETE %}{{ entry_form.DELETE }}{% endif %}</td>
+                  <td>{{ entry_form.date }}{{ entry_form.id }}{% if entry_form.DELETE %}<div style="display:none;">{{ entry_form.DELETE }}</div>{% endif %}</td>
                   <td>{{ entry_form.site }}</td>
                   <td>{{ entry_form.ticket_number }}</td>
                   <td>{{ entry_form.ticket_url }}</td>
@@ -280,6 +292,7 @@
                   <td>{{ entry_form.lunch }}</td>
                   <td>{{ entry_form.dinner }}</td>
                   <td>{{ entry_form.bed }}</td>
+                  <td>{{ entry_form.other_expenditure }}</td>
                   <td class="row-total grand-total" style="text-align:right;">0.00</td>
                   <td>
                     <button type="button" class="btn-remove-row" onclick="removeRow(this)" title="Remove">
@@ -298,6 +311,7 @@
                 <td id="col-total-lunch"     class="amount">0.00</td>
                 <td id="col-total-dinner"    class="amount">0.00</td>
                 <td id="col-total-bed"       class="amount">0.00</td>
+                <td id="col-total-other"       class="amount">0.00</td>
                 <td id="grand-subtotal"      class="grand-total">0.00</td>
                 <td></td>
               </tr>
@@ -305,7 +319,7 @@
               {# ── Carry-forward row (read-only) ── #}
               {% if carry_amount and carry_amount != 0 %}
               <tr class="totals-row carry-row">
-                <td colspan="10" class="totals-label">
+                <td colspan="11" class="totals-label">
                   <i class="fas fa-history"></i>
                   Carry-forward ({{ prev_claim_ref.month|date:"M Y" }})
                 </td>
@@ -316,7 +330,7 @@
 
               {# ── Advance row — full-width input ── #}
               <tr class="totals-row advance-row">
-                <td colspan="9" class="totals-label">
+                <td colspan="10" class="totals-label">
                   <label for="id_advance_field" style="margin:0; cursor:pointer; font-weight:600;">
                     <i class="fas fa-hand-holding-usd" style="color:#123692;"></i>
                     Advance Received (KES)
@@ -338,7 +352,7 @@
               </tr>
 
               <tr class="totals-row net-row">
-                <td colspan="10" class="totals-label">Total Minus Advance</td>
+                <td colspan="11" class="totals-label">Total Minus Advance</td>
                 <td id="net-total" class="grand-total">0.00</td>
                 <td></td>
               </tr>
@@ -456,12 +470,12 @@ document.addEventListener('keydown', function(e) {
 });
 
 (function () {
-  const COL_IDS = ['col-total-to','col-total-from','col-total-breakfast','col-total-lunch','col-total-dinner','col-total-bed'];
+  const COL_IDS = ['col-total-to','col-total-from','col-total-breakfast','col-total-lunch','col-total-dinner','col-total-bed', 'col-total-other'];
   function val(i) { return parseFloat(i?.value || 0) || 0; }
 
   function recalc() {
     const rows = document.querySelectorAll('#entries-body .entry-row:not(.deleted)');
-    let ct = [0,0,0,0,0,0], gt = 0;
+    let ct = [0,0,0,0,0,0,0], gt = 0;
     rows.forEach(row => {
       const inputs = row.querySelectorAll('.money-field');
       let rs = 0;
@@ -504,7 +518,7 @@ document.addEventListener('keydown', function(e) {
 
   let fc = parseInt(document.querySelector('#id_entries-TOTAL_FORMS').value), pfx = 'entries';
 
-  document.getElementById('add-row-btn').addEventListener('click', function () {
+  /*document.getElementById('add-row-btn').addEventListener('click', function () {
     const tb = document.getElementById('entries-body'), fr = tb.querySelector('.entry-row');
     if (!fr) return;
     const nr = fr.cloneNode(true);
@@ -515,6 +529,45 @@ document.addEventListener('keydown', function(e) {
     tb.appendChild(nr); fc++;
     document.querySelector('#id_entries-TOTAL_FORMS').value = fc;
     recalc();
+  });*/
+
+  document.getElementById('add-row-btn').addEventListener('click', function () {
+      const tb = document.getElementById('entries-body');
+      const fr = tb.querySelector('.entry-row');
+      if (!fr) return;
+
+      const nr = fr.cloneNode(true);
+      nr.classList.remove('existing', 'deleted');
+      nr.style.display = '';
+
+      // 1. Rename all field names/ids first
+      nr.innerHTML = nr.innerHTML.replace(
+          new RegExp(pfx + '-\\d+-', 'g'),
+          pfx + '-' + fc + '-'
+      );
+
+      // 2. NOW query the renamed inputs
+      nr.querySelectorAll('input:not([type="hidden"]), select').forEach(i => {
+          if (i.type === 'checkbox') i.checked = false;
+          else i.value = '';   
+      });
+
+      // Clear the pk field so Django creates a new object
+      const idInput = nr.querySelector('input[name="' + pfx + '-' + fc + '-id"]');
+      if (idInput) idInput.value = '';
+
+      // Ensure DELETE is unchecked
+      const delInput = nr.querySelector('input[name="' + pfx + '-' + fc + '-DELETE"]');
+      if (delInput) delInput.checked = false;
+
+      // Reset the row total display
+      const rt = nr.querySelector('.row-total');
+      if (rt) rt.textContent = '0.00';
+
+      tb.appendChild(nr);
+      fc++;
+      document.querySelector('#id_entries-TOTAL_FORMS').value = fc;
+      recalc();
   });
 
   window.removeRow = function (btn) {

@@ -169,22 +169,23 @@ textarea.form-control { resize: vertical; }
   /* Fixed layout + explicit min-width stops the browser from
      squashing columns to fit — user scrolls instead           */
   table-layout: fixed;
-  min-width: 1120px;
+  min-width: 1032px;
 }
 
 /* ── Column widths ── */
-.entries-table th:nth-child(1)  { width: 148px; } /* Date       */
-.entries-table th:nth-child(2)  { width: 120px; } /* Site       */
-.entries-table th:nth-child(3)  { width: 108px; } /* Ticket No. */
-.entries-table th:nth-child(4)  { width: 170px; } /* Ticket URL */
-.entries-table th:nth-child(5)  { width: 84px;  } /* To (KES)   */
-.entries-table th:nth-child(6)  { width: 84px;  } /* From (KES) */
-.entries-table th:nth-child(7)  { width: 80px;  } /* Breakfast  */
-.entries-table th:nth-child(8)  { width: 70px;  } /* Lunch      */
-.entries-table th:nth-child(9)  { width: 70px;  } /* Dinner     */
-.entries-table th:nth-child(10) { width: 68px;  } /* Bed        */
-.entries-table th:nth-child(11) { width: 82px;  } /* Total      */
-.entries-table th:nth-child(12) { width: 36px;  } /* × remove   */
+.entries-table th:nth-child(1)  { width: 110px; } /* Date       */
+.entries-table th:nth-child(2)  { width: 110px; } /* Site       */
+.entries-table th:nth-child(3)  { width: 90px;  } /* Ticket No. */
+.entries-table th:nth-child(4)  { width: 140px; } /* Ticket URL */
+.entries-table th:nth-child(5)  { width: 72px;  } /* To (KES)   */
+.entries-table th:nth-child(6)  { width: 72px;  } /* From (KES) */
+.entries-table th:nth-child(7)  { width: 68px;  } /* Breakfast  */
+.entries-table th:nth-child(8)  { width: 62px;  } /* Lunch      */
+.entries-table th:nth-child(9)  { width: 62px;  } /* Dinner     */
+.entries-table th:nth-child(10) { width: 58px;  } /* Bed        */
+.entries-table th:nth-child(11) { width: 80px;  } /* Other Exp  */
+.entries-table th:nth-child(12) { width: 72px;  } /* Total      */
+.entries-table th:nth-child(13) { width: 36px;  } /* × remove   */
 
 .entries-table th {
   background: var(--claims-primary);
@@ -424,11 +425,29 @@ textarea.form-control { resize: vertical; }
   padding: 12px 16px; text-align: left;
   font-weight: 600; white-space: nowrap;
 }
+
+.claims-table .action-cell {
+  min-width: 180px;
+  vertical-align: middle;
+}
+
 .claims-table td {
   padding: 12px 16px;
   border-bottom: 1px solid #f0f0f0;
   vertical-align: middle;
 }
+
+.claims-table th:last-child {
+  min-width: 180px;
+}
+
+/* Make individual action buttons smaller in the list view */
+.claims-table .btn-action {
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
 .claims-table tr:last-child td { border-bottom: none; }
 .claims-table tbody tr:hover td { background: #f0f4ff; }
 .action-cell { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }

@@ -202,7 +202,7 @@ def claim_list(request):
         Q(finance_reviewer=user, status=ClaimForm.STATUS_MANAGER_APPROVED)
     ).select_related('employee')
 
-    paginator = Paginator(all_claims_qs, 15)
+    paginator = Paginator(all_claims_qs, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -576,14 +576,14 @@ def claim_export_excel(request, pk):
             if fill: cell.fill = fill
             if border_: cell.border = border_
 
-        ws.merge_cells('A1:K1')
+        ws.merge_cells('A1:L1')
         ws['A1'] = f"{claim.display_title.upper()} — {claim.month.strftime('%B %Y').upper()}"
         style_cell(ws['A1'], font=header_font, align=center)
         ws.row_dimensions[1].height = 28
 
         headers = ['DATE', 'SITE', 'TICKET NO.', 'TO', 'FROM',
-                   'BREAKFAST', 'LUNCH', 'DINNER', 'BED', 'TOTAL', 'ADVANCE']
-        col_widths = [14, 22, 16, 10, 10, 12, 10, 10, 10, 12, 12]
+           'BREAKFAST', 'LUNCH', 'DINNER', 'BED', 'OTHER EXPENDITURE', 'TOTAL', 'ADVANCE']
+        col_widths = [14, 22, 16, 10, 10, 12, 10, 10, 10, 16, 12, 12]
         for col_idx, (h, w) in enumerate(zip(headers, col_widths), start=1):
             cell = ws.cell(row=2, column=col_idx, value=h)
             style_cell(cell, font=navy_font, align=center, fill=navy_fill, border_=border)
@@ -595,7 +595,7 @@ def claim_export_excel(request, pk):
                 entry.date, entry.site, entry.ticket_number,
                 float(entry.transport_to), float(entry.transport_from),
                 float(entry.breakfast), float(entry.lunch),
-                float(entry.dinner), float(entry.bed),
+                float(entry.dinner), float(entry.bed), float(entry.other_expenditure),
                 float(entry.total), '',
             ]
             for col_idx, val in enumerate(row_data, start=1):
@@ -611,17 +611,17 @@ def claim_export_excel(request, pk):
         last_data_row = 2 + claim.entries.count()
         subtotal_row = last_data_row + 2
 
-        ws.merge_cells(f'A{subtotal_row}:I{subtotal_row}')
+        ws.merge_cells(f'A{subtotal_row}:J{subtotal_row}')
         ws.cell(subtotal_row, 1, 'Sub total').font = bold
         ws.cell(subtotal_row, 1).alignment = right
-        ws.cell(subtotal_row, 10, float(claim.subtotal)).number_format = '#,##0.00'
-        ws.cell(subtotal_row, 10).font = bold
-        ws.cell(subtotal_row, 11, float(claim.advance)).number_format = '#,##0.00'
+        ws.cell(subtotal_row, 11, float(claim.subtotal)).number_format = '#,##0.00'
         ws.cell(subtotal_row, 11).font = bold
+        ws.cell(subtotal_row, 12, float(claim.advance)).number_format = '#,##0.00'
+        ws.cell(subtotal_row, 12).font = bold
 
         if claim.carry_forward:
             cf_row = subtotal_row + 1
-            ws.merge_cells(f'A{cf_row}:I{cf_row}')
+            ws.merge_cells(f'A{cf_row}:J{cf_row}')
             ws.cell(cf_row, 1, 'Carry-forward from previous claim').font = bold
             ws.cell(cf_row, 1).alignment = right
             ws.cell(cf_row, 11, float(claim.carry_forward)).number_format = '#,##0.00'
@@ -630,46 +630,46 @@ def claim_export_excel(request, pk):
         else:
             tma_row = subtotal_row + 1
 
-        ws.merge_cells(f'A{tma_row}:I{tma_row}')
+        ws.merge_cells(f'A{tma_row}:J{tma_row}')
         ws.cell(tma_row, 1, 'Total Minus Advance').font = bold
         ws.cell(tma_row, 1).alignment = right
-        ws.cell(tma_row, 10, float(claim.total_minus_advance)).number_format = '#,##0.00'
-        ws.cell(tma_row, 10).font = bold
+        ws.cell(tma_row, 11, float(claim.total_minus_advance)).number_format = '#,##0.00'
+        ws.cell(tma_row, 11).font = bold
 
         pr_start = tma_row + 1
         for i, pr in enumerate(claim.payment_records.all()):
             pr_row = pr_start + i
-            ws.merge_cells(f'A{pr_row}:I{pr_row}')
+            ws.merge_cells(f'A{pr_row}:J{pr_row}')
             label = f"Payment #{i+1} — {pr.paid_at.strftime('%d %b %Y')}"
             if pr.note:
                 label += f" ({pr.note})"
             ws.cell(pr_row, 1, label).font = bold
             ws.cell(pr_row, 1).alignment = right
-            ws.cell(pr_row, 10, float(pr.amount)).number_format = '#,##0.00'
-            ws.cell(pr_row, 10).font = bold
+            ws.cell(pr_row, 11, float(pr.amount)).number_format = '#,##0.00'
+            ws.cell(pr_row, 11).font = bold
 
         paid_row = pr_start + claim.payment_records.count()
-        ws.merge_cells(f'A{paid_row}:I{paid_row}')
+        ws.merge_cells(f'A{paid_row}:J{paid_row}')
         ws.cell(paid_row, 1, 'Total Amount Paid').font = bold
         ws.cell(paid_row, 1).alignment = right
-        ws.cell(paid_row, 10, float(claim.amount_paid)).number_format = '#,##0.00'
-        ws.cell(paid_row, 10).font = bold
+        ws.cell(paid_row, 11, float(claim.amount_paid)).number_format = '#,##0.00'
+        ws.cell(paid_row, 11).font = bold
 
         if claim.overpayment > 0:
             op_row = paid_row + 1
-            ws.merge_cells(f'A{op_row}:I{op_row}')
+            ws.merge_cells(f'A{op_row}:J{op_row}')
             ws.cell(op_row, 1, 'Overpayment (carry-forward to next claim)').font = bold
             ws.cell(op_row, 1).alignment = right
-            ws.cell(op_row, 10, float(claim.overpayment)).number_format = '#,##0.00'
-            ws.cell(op_row, 10).font = Font(bold=True, color='FF0000')
+            ws.cell(op_row, 11, float(claim.overpayment)).number_format = '#,##0.00'
+            ws.cell(op_row, 11).font = Font(bold=True, color='FF0000')
             sig_row = op_row + 3
         elif claim.balance_due > 0:
             bd_row = paid_row + 1
-            ws.merge_cells(f'A{bd_row}:I{bd_row}')
+            ws.merge_cells(f'A{bd_row}:J{bd_row}')
             ws.cell(bd_row, 1, 'Outstanding Balance').font = bold
             ws.cell(bd_row, 1).alignment = right
-            ws.cell(bd_row, 10, float(claim.balance_due)).number_format = '#,##0.00'
-            ws.cell(bd_row, 10).font = Font(bold=True, color='FF0000')
+            ws.cell(bd_row, 11, float(claim.balance_due)).number_format = '#,##0.00'
+            ws.cell(bd_row, 11).font = Font(bold=True, color='FF0000')
             sig_row = bd_row + 3
         else:
             sig_row = paid_row + 3

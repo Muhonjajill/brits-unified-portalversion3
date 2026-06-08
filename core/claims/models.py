@@ -319,6 +319,7 @@ class ClaimEntry(models.Model):
     lunch = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     dinner = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     bed = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    other_expenditure = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     order = models.PositiveIntegerField(default=0)
 
     class Meta:
@@ -332,5 +333,5 @@ class ClaimEntry(models.Model):
         return (
             self.transport_to + self.transport_from +
             self.breakfast + self.lunch +
-            self.dinner + self.bed
+            self.dinner + self.bed + self.other_expenditure
         )

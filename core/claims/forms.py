@@ -73,7 +73,7 @@ class ClaimEntryForm(forms.ModelForm):
         fields = [
             'date', 'site', 'ticket_number', 'ticket_url',
             'transport_to', 'transport_from',
-            'breakfast', 'lunch', 'dinner', 'bed',
+            'breakfast', 'lunch', 'dinner', 'bed', 'other_expenditure',
         ]
         widgets = {
             'date': forms.DateInput(attrs={
@@ -114,6 +114,12 @@ class ClaimEntryForm(forms.ModelForm):
                 'class': 'form-control form-control-sm money-field',
                 'min': '0', 'step': '0.01', 'placeholder': '0'
             }),
+            'other_expenditure': forms.NumberInput(attrs={
+                'class': 'form-control form-control-sm money-field',
+                'min': '0',
+                'step': '0.01',
+                'placeholder': '0',
+            }),
         }
 
 
@@ -121,7 +127,7 @@ ClaimEntryFormSet = inlineformset_factory(
     ClaimForm,
     ClaimEntry,
     form=ClaimEntryForm,
-    extra=5,
+    extra=10,
     can_delete=True,
     min_num=1,
     validate_min=True,
