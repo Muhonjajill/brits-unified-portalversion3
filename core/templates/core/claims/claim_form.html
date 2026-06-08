@@ -478,14 +478,16 @@ document.addEventListener('keydown', function(e) {
     const cf = parseFloat(document.body.dataset.carryForward || '0') || 0;
 
     if (da) da.textContent = a.toFixed(2);
-    if (nt) nt.textContent = (gt - a - cf).toFixed(2);
+    //if (nt) nt.textContent = (gt - a - cf).toFixed(2);
+    //if (nt) nt.textContent = (gt - a - cf).toFixed(2);
+    if (nt) nt.textContent = (gt - a + cf).toFixed(2);
   }
 
   //document.body.dataset.carryForward = '{{ carry_amount|default:"0"|floatformat:2 }}'.replace(/,/g,'');
 
   document.body.dataset.carryForward = '{{ carry_amount|default:"0"|floatformat:2 }}'.replace(/,/g,'');
 
-  (function() {
+  /*(function() {
     const cf = parseFloat(document.body.dataset.carryForward) || 0;
     if (cf !== 0) {
       const advInput = document.getElementById('id_advance_field');
@@ -494,7 +496,7 @@ document.addEventListener('keydown', function(e) {
         recalc();
       }
     }
-  })();
+  })();*/
 
   document.addEventListener('input', e => {
     if (e.target.matches('.money-field') || e.target.id === 'id_advance_field') recalc();

@@ -354,7 +354,7 @@
   </div>
 
   {# ── Payment records log — visible to finance/elevated only ── #}
-  {% if payment_records and is_finance_user %}
+  {% if payment_records and can_record_payment %}
   <div class="claim-meta-card payment-log-card">
     <h3 class="card-section-title">
       <i class="fas fa-receipt"></i> Payment Disbursement Log
@@ -686,7 +686,7 @@
   {% endif %}
 
   {# ── Finance payment recording panel — VISIBLE ONLY TO FINANCE / ELEVATED ── #}
-  {% if payment_form and is_finance_user %}
+  {% if payment_form and can_record_payment %}
   <div class="claim-meta-card finance-payment-card">
     <h3 class="card-section-title">
       <i class="fas fa-money-bill-wave"></i> Record Disbursement
