@@ -236,7 +236,6 @@ def claim_list(request):
 
 
 # ─── Create / Edit ─────────────────────────────────────────────────────────────
-
 @login_required
 def claim_create(request):
     user = request.user
@@ -284,6 +283,7 @@ def claim_create(request):
                 messages.success(request, "Claim saved as draft.")
 
             return redirect('claim_detail', pk=claim.pk)
+
 
     else:
         from datetime import date as _date
@@ -359,6 +359,7 @@ def claim_edit(request, pk):
             else:
                 messages.success(request, "Claim updated.")
             return redirect('claim_detail', pk=pk)
+
     else:
         form = ClaimFormForm(instance=claim)
         formset = ClaimEntryFormSet(instance=claim)

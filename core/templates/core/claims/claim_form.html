@@ -408,8 +408,10 @@
       </div>
     </div>
 
-    <button type="submit" name="action" value="save"   id="doSave"   style="display:none"></button>
-    <button type="submit" name="action" value="submit" id="doSubmit" style="display:none"></button>
+    <!--<button type="submit" name="action" value="save"   id="doSave"   style="display:none"></button>
+    <button type="submit" name="action" value="submit" id="doSubmit" style="display:none"></button>-->
+    {# remove the old display:none buttons and replace with: #}
+    <input type="hidden" name="action" id="action-input" value="save">
   </form>
 </div>
 
@@ -426,7 +428,10 @@
       <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('saveDraftModal')">
         <i class="fas fa-times"></i> Cancel
       </button>
-      <button class="claim-modal-btn claim-modal-btn--primary" onclick="document.getElementById('doSave').click()">
+      <!--<button class="claim-modal-btn claim-modal-btn--primary" onclick="document.getElementById('doSave').click()">
+        <i class="fas fa-save"></i> Save Draft
+      </button>-->
+      <button class="claim-modal-btn claim-modal-btn--primary" onclick="submitClaim('save')">
         <i class="fas fa-save"></i> Save Draft
       </button>
     </div>
@@ -446,7 +451,10 @@
       <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('submitClaimModal')">
         <i class="fas fa-times"></i> Cancel
       </button>
-      <button class="claim-modal-btn claim-modal-btn--success" onclick="document.getElementById('doSubmit').click()">
+      <!--<button class="claim-modal-btn claim-modal-btn--success" onclick="document.getElementById('doSubmit').click()">
+        <i class="fas fa-paper-plane"></i> Submit Claim
+      </button>-->
+      <button class="claim-modal-btn claim-modal-btn--success" onclick="submitClaim('submit')">
         <i class="fas fa-paper-plane"></i> Submit Claim
       </button>
     </div>
@@ -454,6 +462,56 @@
 </div>
 
 <script>
+/*function submitClaim(action) {
+  document.getElementById('action-input').value = action;
+  closeClaimModal('saveDraftModal');
+  closeClaimModal('submitClaimModal');
+
+  // Remove empty rows entirely and reindex
+  const rows = document.querySelectorAll('#entries-body .entry-row:not(.deleted)');
+  let newIndex = 0;
+  rows.forEach(function(row) {
+    const filled = Array.from(row.querySelectorAll('input:not([type=hidden]):not([type=checkbox]), select'))
+      .some(function(i) { return i.value && i.value.trim() !== ''; });
+    if (!filled) {
+      row.remove();
+    } else {
+      // Reindex this row to newIndex
+      row.innerHTML = row.innerHTML.replace(/entries-\d+-/g, 'entries-' + newIndex + '-');
+      newIndex++;
+    }
+  });
+  document.querySelector('#id_entries-TOTAL_FORMS').value = newIndex;
+  document.getElementById('claim-form').submit();
+}*/
+
+function submitClaim(action) {
+  document.getElementById('action-input').value = action;
+  closeClaimModal('saveDraftModal');
+  closeClaimModal('submitClaimModal');
+
+  // Remove empty unfilled rows before submitting
+  let removedCount = 0;
+  document.querySelectorAll('#entries-body .entry-row').forEach(function(row) {
+    if (row.classList.contains('deleted')) {
+      removedCount++;
+      return;
+    }
+    const dateVal = row.querySelector('input[name$="-date"]');
+    const siteVal = row.querySelector('input[name$="-site"]');
+    const isEmpty = (!dateVal || !dateVal.value.trim()) && (!siteVal || !siteVal.value.trim());
+    if (isEmpty) {
+      row.remove();
+      removedCount++;
+    }
+  });
+
+  const totalForms = document.querySelector('#id_entries-TOTAL_FORMS');
+  totalForms.value = parseInt(totalForms.value) - removedCount;
+
+  document.getElementById('claim-form').submit();
+}
+
 function openClaimModal(id) {
   document.getElementById(id).classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -518,19 +576,6 @@ document.addEventListener('keydown', function(e) {
 
   let fc = parseInt(document.querySelector('#id_entries-TOTAL_FORMS').value), pfx = 'entries';
 
-  /*document.getElementById('add-row-btn').addEventListener('click', function () {
-    const tb = document.getElementById('entries-body'), fr = tb.querySelector('.entry-row');
-    if (!fr) return;
-    const nr = fr.cloneNode(true);
-    nr.classList.remove('existing', 'deleted'); nr.style.display = '';
-    nr.innerHTML = nr.innerHTML.replace(new RegExp(pfx + '-(\\d+)-', 'g'), pfx + '-' + fc + '-');
-    nr.querySelectorAll('input:not([type=hidden])').forEach(i => { if (i.type !== 'checkbox') i.value = ''; });
-    const rt = nr.querySelector('.row-total'); if (rt) rt.textContent = '0.00';
-    tb.appendChild(nr); fc++;
-    document.querySelector('#id_entries-TOTAL_FORMS').value = fc;
-    recalc();
-  });*/
-
   document.getElementById('add-row-btn').addEventListener('click', function () {
       const tb = document.getElementById('entries-body');
       const fr = tb.querySelector('.entry-row');
@@ -540,27 +585,31 @@ document.addEventListener('keydown', function(e) {
       nr.classList.remove('existing', 'deleted');
       nr.style.display = '';
 
-      // 1. Rename all field names/ids first
       nr.innerHTML = nr.innerHTML.replace(
           new RegExp(pfx + '-\\d+-', 'g'),
           pfx + '-' + fc + '-'
       );
 
-      // 2. NOW query the renamed inputs
       nr.querySelectorAll('input:not([type="hidden"]), select').forEach(i => {
           if (i.type === 'checkbox') i.checked = false;
-          else i.value = '';   
+          else i.value = '';
       });
 
-      // Clear the pk field so Django creates a new object
       const idInput = nr.querySelector('input[name="' + pfx + '-' + fc + '-id"]');
       if (idInput) idInput.value = '';
 
-      // Ensure DELETE is unchecked
-      const delInput = nr.querySelector('input[name="' + pfx + '-' + fc + '-DELETE"]');
-      if (delInput) delInput.checked = false;
+      // Ensure DELETE checkbox exists — inject if missing
+      let delInput = nr.querySelector('input[name="' + pfx + '-' + fc + '-DELETE"]');
+      if (!delInput) {
+          delInput = document.createElement('input');
+          delInput.type = 'checkbox';
+          delInput.name = pfx + '-' + fc + '-DELETE';
+          delInput.id = 'id_' + pfx + '-' + fc + '-DELETE';
+          delInput.style.display = 'none';
+          nr.querySelector('td').appendChild(delInput);
+      }
+      delInput.checked = false;
 
-      // Reset the row total display
       const rt = nr.querySelector('.row-total');
       if (rt) rt.textContent = '0.00';
 
@@ -576,6 +625,23 @@ document.addEventListener('keydown', function(e) {
     else { row.remove(); fc--; document.querySelector('#id_entries-TOTAL_FORMS').value = fc; }
     recalc();
   };
+
+   // Pre-submit: mark empty rows deleted, remove JS-added rows with no DELETE checkbox
+  document.getElementById('claim-form').addEventListener('submit', function () {
+    document.querySelectorAll('#entries-body .entry-row:not(.deleted)').forEach(function (row) {
+      const filled = Array.from(row.querySelectorAll('input:not([type=hidden]):not([type=checkbox]), select'))
+        .some(function (i) { return i.value && i.value.trim() !== ''; });
+      if (!filled) {
+        const dc = row.querySelector('input[type=checkbox][name$="-DELETE"]');
+        if (dc) {
+          dc.checked = true;
+          row.style.display = 'none';
+        } else {
+          row.remove();
+        }
+      }
+    });
+  });
 
   recalc();
 })();

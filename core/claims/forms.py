@@ -3,6 +3,7 @@ from django.forms import inlineformset_factory
 from django.contrib.auth import get_user_model
 from .models import ClaimForm, ClaimEntry, PaymentRecord
 from datetime import date
+from decimal import Decimal 
 
 User = get_user_model()
 
@@ -34,24 +35,32 @@ class ClaimFormForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+         #Make these fields compulsory
+        self.fields['manager'].required = True
+        self.fields['finance_reviewer'].required = True
+
+
         # Auto-default month to the 1st of the current month (new claims only)
         if not self.instance.pk and 'month' not in self.initial:
             today = date.today()
             self.initial['month'] = date(today.year, today.month, 1)
 
-        # Restrict approval chain dropdowns to Managers / Directors / Superadmins
+        # Restrict approval chain dropdowns to Managers / Directors
         try:
             from django.db.models import Q
-            elevated_qs = User.objects.filter(is_active=True).filter(
+            elevated_qs = User.objects.filter(
+                is_active=True
+            ).filter(
                 Q(role__iexact='manager') |
-                Q(role__iexact='director') |
-                Q(is_superuser=True)
+                Q(role__iexact='director')
             ).order_by('first_name', 'last_name')
+
         except Exception:
             from django.db.models import Q
-            elevated_qs = User.objects.filter(is_active=True).filter(
-                Q(groups__name__in=['Manager', 'Director', 'Superadmin']) |
-                Q(is_superuser=True)
+            elevated_qs = User.objects.filter(
+                is_active=True
+            ).filter(
+                Q(groups__name__in=['Manager', 'Director'])
             ).distinct().order_by('first_name', 'last_name')
 
         self.fields['manager'].queryset = elevated_qs
@@ -68,6 +77,35 @@ class ClaimFormForm(forms.ModelForm):
 
 
 class ClaimEntryForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Allow blank numeric fields — empty string treated as 0
+        for field_name in ['transport_to', 'transport_from', 'breakfast',
+                           'lunch', 'dinner', 'bed', 'other_expenditure']:
+            self.fields[field_name].required = False
+
+    def clean_transport_to(self):
+        return self.cleaned_data.get('transport_to') or Decimal('0.00')
+
+    def clean_transport_from(self):
+        return self.cleaned_data.get('transport_from') or Decimal('0.00')
+
+    def clean_breakfast(self):
+        return self.cleaned_data.get('breakfast') or Decimal('0.00')
+
+    def clean_lunch(self):
+        return self.cleaned_data.get('lunch') or Decimal('0.00')
+
+    def clean_dinner(self):
+        return self.cleaned_data.get('dinner') or Decimal('0.00')
+
+    def clean_bed(self):
+        return self.cleaned_data.get('bed') or Decimal('0.00')
+
+    def clean_other_expenditure(self):
+        return self.cleaned_data.get('other_expenditure') or Decimal('0.00')        
+
+
     class Meta:
         model = ClaimEntry
         fields = [
@@ -127,7 +165,7 @@ ClaimEntryFormSet = inlineformset_factory(
     ClaimForm,
     ClaimEntry,
     form=ClaimEntryForm,
-    extra=10,
+    extra=1,
     can_delete=True,
     min_num=1,
     validate_min=True,
