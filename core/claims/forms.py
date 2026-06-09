@@ -49,11 +49,11 @@ class ClaimFormForm(forms.ModelForm):
         try:
             from django.db.models import Q
             elevated_qs = User.objects.filter(
-                is_active=True
-            ).filter(
-                Q(role__iexact='manager') |
-                Q(role__iexact='director')
-            ).order_by('first_name', 'last_name')
+                is_active=True,
+                is_superuser=False,
+                is_staff=False,
+                groups__name__in=['Manager', 'Director']
+            ).distinct().order_by('first_name', 'last_name')
 
         except Exception:
             from django.db.models import Q
