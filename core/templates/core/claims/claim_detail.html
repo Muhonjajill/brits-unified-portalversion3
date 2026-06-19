@@ -184,7 +184,7 @@
 }
 .overpayment-hint i { color: #fd7e14; }
 
-/* Approval panel */
+/* Approval panel (kept for manager approval card which still uses this) */
 .approval-panel { border: 2px solid #123692 !important; }
 .approval-panel .card-section-title { color: #123692; }
 
@@ -722,20 +722,44 @@
   </div>
   {% endif %}
 
-  {# ── Finance payment recording panel — VISIBLE ONLY TO FINANCE / ELEVATED ── #}
-  {% if payment_form and can_record_payment %}
-  <div class="claim-meta-card finance-payment-card">
-    <h3 class="card-section-title">
-      <i class="fas fa-money-bill-wave"></i> Record Disbursement
-      <span style="font-size:0.75em; font-weight:400; color:var(--claims-muted); margin-left:8px;">(Finance only)</span>
-    </h3>
+  {% if can_approve and claim.next_approver_role != "Finance" %}
+  <div class="claim-meta-card approval-panel">
+    <h3 class="card-section-title">Action Required</h3>
     <p class="approver-hint">
       <i class="fas fa-info-circle"></i>
-      Record each disbursement made to <strong>{{ claim.employee.get_full_name }}</strong>.
-      Multiple partial payments are supported — each is logged above for full transparency.
-      If you disburse <em>more</em> than the net payable, the surplus automatically becomes
-      a carry-forward deduction on the employee's next claim.
+      You are reviewing this claim as <strong>{{ claim.next_approver_role }}</strong>.
     </p>
+
+    <form method="post" action="{% url 'claim_approve' claim.pk %}" id="approveForm">
+      {% csrf_token %}
+      <input type="hidden" name="comment" id="approveCommentInput">
+    </form>
+    <form method="post" action="{% url 'claim_reject' claim.pk %}" id="rejectForm">
+      {% csrf_token %}
+      <input type="hidden" name="comment" id="rejectCommentInput">
+    </form>
+
+    <div class="form-actions">
+      <button type="button" class="btn-submit-claim" onclick="openClaimModal('approveModal')">
+        <i class="fas fa-check-circle"></i> Approve Claim
+      </button>
+      <button type="button" class="btn-reject" onclick="openClaimModal('rejectModal')">
+        <i class="fas fa-times-circle"></i> Reject Claim
+      </button>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if can_approve and claim.next_approver_role == "Finance" or payment_form and can_record_payment %}
+  <div class="claim-meta-card finance-payment-card">
+
+    {# ── Card header ── #}
+    <h3 class="card-section-title">
+      <i class="fas fa-coins"></i> Finance Actions
+      <span style="font-size:0.75em; font-weight:400; color:var(--claims-muted); margin-left:8px;">(Finance only)</span>
+    </h3>
+
+    {# ── Financial integrity summary (always shown) ── #}
     <div class="finance-integrity-grid">
       <div class="integrity-item">
         <label>Claimed Sub-total</label>
@@ -771,20 +795,74 @@
       {% endif %}
     </div>
 
+    {# ── Divider between integrity grid and action sections ── #}
+    <hr style="margin:0 24px 20px; border:none; border-top:1px solid #e9ecef;">
+
+   
+    {% if can_approve and claim.next_approver_role == "Finance" %}
+    <div style="padding:0 24px 20px;">
+      <p style="font-size:0.88rem; font-weight:700; color:#123692; margin:0 0 6px; display:flex; align-items:center; gap:6px;">
+        <i class="fas fa-clipboard-check"></i> Approve or Reject
+      </p>
+      <p class="approver-hint" style="margin:0 0 16px;">
+        <i class="fas fa-info-circle"></i>
+        You are reviewing this claim as <strong>Finance</strong>.
+        Approving will allow you to record disbursements below.
+      </p>
+
+      <form method="post" action="{% url 'claim_approve' claim.pk %}" id="approveForm">
+        {% csrf_token %}
+        <input type="hidden" name="comment" id="approveCommentInput">
+      </form>
+      <form method="post" action="{% url 'claim_reject' claim.pk %}" id="rejectForm">
+        {% csrf_token %}
+        <input type="hidden" name="comment" id="rejectCommentInput">
+      </form>
+
+      <div class="form-actions" style="padding:0;">
+        <button type="button" class="btn-submit-claim" onclick="openClaimModal('approveModal')">
+          <i class="fas fa-check-circle"></i> Approve Claim
+        </button>
+        <button type="button" class="btn-reject" onclick="openClaimModal('rejectModal')">
+          <i class="fas fa-times-circle"></i> Reject Claim
+        </button>
+      </div>
+    </div>
+
+    {# Dashed divider only if disbursement section also appears #}
+    {% if payment_form and can_record_payment %}
+    <hr style="margin:0 24px 20px; border:none; border-top:2px dashed #c0d0f0;">
+    {% endif %}
+    {% endif %}
+
+    
+    {% if payment_form and can_record_payment %}
+    <div style="padding:0 24px 4px;">
+      <p style="font-size:0.88rem; font-weight:700; color:#198754; margin:0 0 6px; display:flex; align-items:center; gap:6px;">
+        <i class="fas fa-money-bill-wave"></i> Record Disbursement
+      </p>
+      <p class="approver-hint" style="margin:0 0 16px; border-left-color:#198754;">
+        <i class="fas fa-info-circle"></i>
+        Record each disbursement made to <strong>{{ claim.employee.get_full_name }}</strong>.
+        Multiple partial payments are supported — each is logged in the payment log above.
+        If you disburse <em>more</em> than the net payable, the surplus automatically becomes
+        a carry-forward deduction on the employee's next claim.
+      </p>
+    </div>
+
     {% if claim.overpayment > 0 %}
     <div class="overpayment-hint">
       <i class="fas fa-exclamation-triangle"></i>
-      <strong>Note:</strong> The total paid (KES {{ claim.amount_paid|floatformat:2 }}) already
-      exceeds the net payable by <strong>KES {{ claim.overpayment|floatformat:2 }}</strong>.
-      This overpayment will automatically be carried forward to
-      <strong>{{ claim.employee.get_full_name }}</strong>'s next claim.
-      Recording an additional payment will increase the carry-forward further.
+      <strong>Note:</strong> Total paid (KES {{ claim.amount_paid|floatformat:2 }}) already
+      exceeds net payable by <strong>KES {{ claim.overpayment|floatformat:2 }}</strong>.
+      This surplus carries forward to <strong>{{ claim.employee.get_full_name }}</strong>'s next claim.
+      An additional payment will increase the carry-forward further.
     </div>
     {% endif %}
 
     <form method="post" id="paymentForm">
       {% csrf_token %}
-      <div style="display:flex; gap:12px; flex-wrap:wrap; padding:0 24px 16px; align-items:flex-end;">
+      <div style="display:flex; gap:12px; flex-wrap:wrap; padding:0 24px 20px; align-items:flex-end;">
         <div class="field-group" style="margin:0; flex:1; min-width:200px;">
           <label>{{ payment_form.amount.label }}</label>
           {{ payment_form.amount }}
@@ -803,38 +881,16 @@
                 onclick="openClaimModal('paymentModal')">
           <i class="fas fa-money-bill-wave"></i> Record Payment
         </button>
+        {% if claim.amount_paid %}
+        <a href="{% url 'claim_list' %}" class="btn-action" style="height:40px; align-self:flex-end; border-color:#198754; color:#198754; background:#e6f4ea;">
+          <i class="fas fa-check-double"></i> Close Claim
+        </a>
+        {% endif %}
       </div>
       <input type="hidden" name="record_payment" value="1">
     </form>
-  </div>
-  {% endif %}
+    {% endif %}
 
-  {# ── Approval action panel ── #}
-  {% if can_approve %}
-  <div class="claim-meta-card approval-panel">
-    <h3 class="card-section-title">Action Required</h3>
-    <p class="approver-hint">
-      <i class="fas fa-info-circle"></i>
-      You are reviewing this claim as <strong>{{ claim.next_approver_role }}</strong>.
-    </p>
-
-    <form method="post" action="{% url 'claim_approve' claim.pk %}" id="approveForm">
-      {% csrf_token %}
-      <input type="hidden" name="comment" id="approveCommentInput">
-    </form>
-    <form method="post" action="{% url 'claim_reject' claim.pk %}" id="rejectForm">
-      {% csrf_token %}
-      <input type="hidden" name="comment" id="rejectCommentInput">
-    </form>
-
-    <div class="form-actions">
-      <button type="button" class="btn-submit-claim" onclick="openClaimModal('approveModal')">
-        <i class="fas fa-check-circle"></i> Approve Claim
-      </button>
-      <button type="button" class="btn-reject" onclick="openClaimModal('rejectModal')">
-        <i class="fas fa-times-circle"></i> Reject Claim
-      </button>
-    </div>
   </div>
   {% endif %}
 
