@@ -108,7 +108,6 @@ class ClaimForm(models.Model):
 
     @property
     def total_minus_advance(self):
-        #return self.subtotal - self.total_advance
         return self.subtotal - self.advance + self.carry_forward
 
     @property
@@ -118,7 +117,7 @@ class ClaimForm(models.Model):
         Positive  → employer still owes the employee.
         Negative  → employee was overpaid (excess becomes next claim's carry-forward).
         """
-        #return self.subtotal - self.total_advance - self.amount_paid
+        
         return self.subtotal - self.advance + self.carry_forward - self.amount_paid
 
     @property

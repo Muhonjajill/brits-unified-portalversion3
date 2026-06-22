@@ -84,6 +84,10 @@ class ClaimEntryForm(forms.ModelForm):
                            'lunch', 'dinner', 'bed', 'other_expenditure']:
             self.fields[field_name].required = False
 
+        # Site name is compulsory for every entry row
+        self.fields['site'].required = True
+        self.fields['site'].widget.attrs['required'] = 'required'
+
     def clean_transport_to(self):
         return self.cleaned_data.get('transport_to') or Decimal('0.00')
 

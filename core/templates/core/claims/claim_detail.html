@@ -328,10 +328,13 @@
     </div>
   </div>
 
+  {# ── Flash messages are rendered into the loading overlay via JS, not as a page banner ── #}
   {% if messages %}
-    {% for msg in messages %}
-      <div class="alert alert-{{ msg.tags }}" style="border-radius:10px; margin-bottom:16px;">{{ msg }}</div>
-    {% endfor %}
+    <div id="djangoMessages" style="display:none;">
+      {% for msg in messages %}
+        <div class="django-message" data-tags="{{ msg.tags }}">{{ msg }}</div>
+      {% endfor %}
+    </div>
   {% endif %}
 
   {# ── Approval progress tracker ── #}
@@ -751,7 +754,7 @@
   {% endif %}
 
   {% if can_approve and claim.next_approver_role == "Finance" or payment_form and can_record_payment %}
-  <div class="claim-meta-card finance-payment-card">
+  <div class="claim-meta-card finance-payment-card" id="financeActionsCard">
 
     {# ── Card header ── #}
     <h3 class="card-section-title">
@@ -1075,6 +1078,34 @@ function showOverlay(message) {
   overlay.classList.remove('hidden');
 }
 
+// Show the overlay in its "success" (checkmark) state with a given message,
+// then auto-dismiss after a short delay. Used to surface Django flash
+// messages (e.g. "Claim approved successfully") without a page-top banner.
+function showSuccessOverlay(message, autoHideMs) {
+  const overlay = document.getElementById('loadingOverlay');
+  const spinnerInner = overlay.querySelector('.spinner-inner');
+  const msg = document.getElementById('loadingMsg');
+  const successState = document.getElementById('loadingSuccess');
+  const successMsg = document.getElementById('loadingSuccessMsg');
+
+  if (successMsg) successMsg.textContent = message || 'Done!';
+  spinnerInner.style.display = 'none';
+  if (msg) msg.classList.add('hidden');
+  successState.classList.remove('hidden');
+  overlay.classList.remove('hidden');
+
+  if (autoHideMs !== 0) {
+    setTimeout(function () {
+      overlay.classList.add('hidden');
+      // Reset state for next use
+      setTimeout(function () {
+        spinnerInner.style.display = 'block';
+        successState.classList.add('hidden');
+      }, 350);
+    }, autoHideMs || 2200);
+  }
+}
+
 function submitApprove() {
   document.getElementById('approveCommentInput').value = document.getElementById('approveCommentBox').value;
   closeClaimModal('approveModal');
@@ -1109,6 +1140,63 @@ document.addEventListener('DOMContentLoaded', function() {
     deleteForm.addEventListener('submit', function() {
       showOverlay('Deleting claim...');
     });
+  }
+
+  // ── Surface Django flash messages inside the loading overlay instead of a page banner ──
+  // Messages are shortened to brief fixed labels rather than echoing the full
+  // (often long) Django message text, so the overlay stays quick to read.
+  const messagesContainer = document.getElementById('djangoMessages');
+  if (messagesContainer) {
+    const msgEls = messagesContainer.querySelectorAll('.django-message');
+    if (msgEls.length) {
+      const combined = Array.from(msgEls).map(function (el) { return el.textContent.trim(); }).join(' ').toLowerCase();
+      const isError = Array.from(msgEls).some(function (el) {
+        const tags = (el.dataset.tags || '').toLowerCase();
+        return tags.indexOf('error') !== -1 || tags.indexOf('danger') !== -1;
+      });
+
+      let shortMsg;
+      if (isError) {
+        shortMsg = 'Something went wrong';
+      } else if (combined.indexOf('payment') !== -1 || combined.indexOf('disburs') !== -1) {
+        shortMsg = 'Payment recorded';
+      } else if (combined.indexOf('reject') !== -1) {
+        shortMsg = 'Claim rejected';
+      } else if (combined.indexOf('delet') !== -1) {
+        shortMsg = 'Claim deleted';
+      } else if (combined.indexOf('submit') !== -1) {
+        // Checked before "approv" — a "submitted for approval" message
+        // contains the substring "approv" and would otherwise be misread
+        // as an approval action.
+        shortMsg = 'Claim submitted';
+      } else if (combined.indexOf('approv') !== -1) {
+        shortMsg = 'Claim approved';
+      } else if (combined.indexOf('draft') !== -1 || combined.indexOf('sav') !== -1) {
+        shortMsg = 'Draft saved';
+      } else {
+        shortMsg = 'Done';
+      }
+
+      showSuccessOverlay(shortMsg, isError ? 3500 : 1800);
+    }
+  }
+
+  // ── Finance reviewer convenience: after a finance approval (or whenever the
+  // Finance Actions / disbursement card is the relevant next step), keep the
+  // page anchored there instead of snapping back to the top, so the reviewer
+  // doesn't forget to record/close the disbursement. ──
+  const financeCard = document.getElementById('financeActionsCard');
+  if (financeCard) {
+    // If we just came from an approve/reject/payment POST (flash message present)
+    // or the payment form is present and awaiting action, scroll to the card.
+    const hasFlash = !!(messagesContainer && messagesContainer.querySelectorAll('.django-message').length);
+    const awaitingDisbursement = document.getElementById('paymentForm') !== null;
+    if (hasFlash || awaitingDisbursement) {
+      // Wait a tick so layout is settled, then scroll without jumping the overlay around.
+      setTimeout(function () {
+        financeCard.scrollIntoView({ behavior: 'instant', block: 'start' });
+      }, 0);
+    }
   }
 });
 </script>

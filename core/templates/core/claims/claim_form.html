@@ -250,10 +250,13 @@
     </a>
   </div>
 
+  {# ── Flash messages are rendered into the loading overlay via JS, not as a page banner ── #}
   {% if messages %}
-    {% for msg in messages %}
-      <div class="alert alert-{{ msg.tags }}" style="border-radius:10px; margin-bottom:16px;">{{ msg }}</div>
-    {% endfor %}
+    <div id="djangoMessages" style="display:none;">
+      {% for msg in messages %}
+        <div class="django-message" data-tags="{{ msg.tags }}">{{ msg }}</div>
+      {% endfor %}
+    </div>
   {% endif %}
 
   {# ── Carry-forward notice ── #}
@@ -387,7 +390,7 @@
               </tr>
 
               <tr class="totals-row net-row">
-                <td colspan="11" class="totals-label">Total Minus Advance</td>
+                <td colspan="11" class="totals-label">Balance Payable to Employee</td>
                 <td id="net-total" class="grand-total">0.00</td>
                 <td></td>
               </tr>
@@ -590,8 +593,7 @@ document.addEventListener('keydown', function(e) {
     const cf = parseFloat(document.body.dataset.carryForward || '0') || 0;
 
     if (da) da.textContent = a.toFixed(2);
-    //if (nt) nt.textContent = (gt - a - cf).toFixed(2);
-    //if (nt) nt.textContent = (gt - a - cf).toFixed(2);
+    
     if (nt) nt.textContent = (gt - a + cf).toFixed(2);
   }
 
@@ -714,6 +716,61 @@ function showOverlay(message) {
   successState.classList.add('hidden');
   overlay.classList.remove('hidden');
 }
+
+// Show the overlay in its "success" (checkmark) state with a given message,
+// then auto-dismiss after a short delay. Used to surface Django flash
+// messages (e.g. "Draft saved successfully") without a page-top banner.
+function showSuccessOverlay(message, autoHideMs) {
+  const overlay = document.getElementById('loadingOverlay');
+  const spinnerInner = overlay.querySelector('.spinner-inner');
+  const msg = document.getElementById('loadingMsg');
+  const successState = document.getElementById('loadingSuccess');
+  const successMsg = document.getElementById('loadingSuccessMsg');
+
+  if (successMsg) successMsg.textContent = message || 'Done!';
+  spinnerInner.style.display = 'none';
+  if (msg) msg.classList.add('hidden');
+  successState.classList.remove('hidden');
+  overlay.classList.remove('hidden');
+
+  if (autoHideMs !== 0) {
+    setTimeout(function () {
+      overlay.classList.add('hidden');
+      setTimeout(function () {
+        spinnerInner.style.display = 'block';
+        successState.classList.add('hidden');
+      }, 350);
+    }, autoHideMs || 2200);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const messagesContainer = document.getElementById('djangoMessages');
+  if (messagesContainer) {
+    const msgEls = messagesContainer.querySelectorAll('.django-message');
+    if (msgEls.length) {
+      const combined = Array.from(msgEls).map(function (el) { return el.textContent.trim(); }).join(' ').toLowerCase();
+      const isError = Array.from(msgEls).some(function (el) {
+        const tags = (el.dataset.tags || '').toLowerCase();
+        return tags.indexOf('error') !== -1 || tags.indexOf('danger') !== -1;
+      });
+
+      let shortMsg;
+      if (isError) {
+        shortMsg = 'Something went wrong';
+      } else if (combined.indexOf('submit') !== -1) {
+        shortMsg = 'Claim submitted';
+      } else if (combined.indexOf('draft') !== -1 || combined.indexOf('sav') !== -1) {
+        shortMsg = 'Draft saved';
+      } else {
+        shortMsg = 'Done';
+      }
+
+      showSuccessOverlay(shortMsg, isError ? 3500 : 1800);
+    }
+  }
+});
 </script>
+
 
 {% endblock %}
