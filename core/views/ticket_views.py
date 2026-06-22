@@ -820,7 +820,8 @@ def resolve_ticket_view(request, ticket_id):
     return render(request, 'core/helpdesk/permission_denied.html')
 
 
-@user_passes_test(is_director)
+#@user_passes_test(is_director)
+@user_passes_test(is_director_or_manager)
 def delete_ticket(request, ticket_id):
     ticket = get_object_or_404(Ticket, id=ticket_id)
     ticket.delete()

@@ -117,7 +117,13 @@ def login_view(request):
                 
                 print("Generated otp:", otp)
 
-                email.send()
+                #email.send()
+
+                try:
+                    email.send()
+                except Exception as e:
+                    print(f"OTP email failed (network issue): {e}")
+
                 return JsonResponse({'status': 'otp_sent'})
             else:
                 return JsonResponse({'status': 'error', 'message': 'Invalid username or password'})

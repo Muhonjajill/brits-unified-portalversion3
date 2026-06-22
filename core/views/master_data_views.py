@@ -1,5 +1,5 @@
 from .imports import *
-from .utility import export_tickets_to_excel
+from .utility import export_report_tickets_to_excel
 
 @login_required
 def problem_category(request):
@@ -815,7 +815,7 @@ def reports(request):
         customer_name = Customer.objects.get(id=customer).name if customer and customer not in ['All', 'None'] else None
         terminal_filter = terminal_name if terminal_name else None
 
-        return export_tickets_to_excel(
+        return export_report_tickets_to_excel(
             tickets,
             customer_name=customer_name,
             terminal_name=terminal_filter,
@@ -876,3 +876,4 @@ def reports(request):
     }
 
     return render(request, 'core/helpdesk/reports.html', context)
+

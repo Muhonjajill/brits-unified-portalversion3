@@ -102,7 +102,7 @@
             {% endif %}
           </td>
           <td>
-            {% if request.user.is_superuser %}
+            {% if request.user.is_superuser or request.user.groups.all.0.name == 'Manager' or request.user.groups.all.0.name == 'Director' %}
             <a href="#" 
                class="view-link text-danger delete-ticket-btn"
                data-ticket-id="{{ ticket.id }}"
