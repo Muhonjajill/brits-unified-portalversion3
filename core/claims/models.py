@@ -99,8 +99,7 @@ class ClaimForm(models.Model):
     @property
     def total_advance(self):
         """Combined advance: carried-forward balance + new advance issued."""
-        #return self.carry_forward + self.advance
-        return self.advance
+        return self.carry_forward + self.advance
 
     @property
     def subtotal(self):
@@ -108,33 +107,46 @@ class ClaimForm(models.Model):
 
     @property
     def total_minus_advance(self):
-        return self.subtotal - self.advance + self.carry_forward
+        """
+        Total advance received (new advance + carry-forward) minus expenditure.
+        Negative  → employer still owes the employee this amount.
+        Positive  → employee was over-advanced (overpayment).
+        """
+        return (self.advance + self.carry_forward) - self.subtotal
+
+    @property
+    def net_payable(self):
+        """
+        The absolute amount the employer owes the employee (always positive for display).
+        When total_minus_advance is negative (normal case), this is its absolute value.
+        When positive (overpayment), this is 0 — use overpayment property instead.
+        """
+        return max(-self.total_minus_advance, Decimal('0.00'))
 
     @property
     def balance_due(self):
         """
-        Amount still owed after advance/carry-forward and any recorded payments.
-        Positive  → employer still owes the employee.
-        Negative  → employee was overpaid (excess becomes next claim's carry-forward).
+        Remaining balance after all advances and payments are accounted for.
+        Negative  → employer still owes the employee.
+        Positive  → employee has been overpaid (becomes next claim's carry-forward).
         """
-        
-        return self.subtotal - self.advance + self.carry_forward - self.amount_paid
+        return (self.advance + self.carry_forward) - self.subtotal + self.amount_paid
 
     @property
     def overpayment(self):
         """
         How much Finance has paid above and beyond what was owed.
-        Returns 0 if the claim has not been overpaid.
+        Under the new convention balance_due > 0 means overpaid.
+        Returns 0 if no overpayment.
         """
-        excess = self.amount_paid - self.total_minus_advance
-        return max(excess, Decimal('0.00'))
+        return max(self.balance_due, Decimal('0.00'))
 
     @property
     def is_fully_paid(self):
         return (
             self.status == self.STATUS_FINANCE_APPROVED
             and self.amount_paid > Decimal('0.00')
-            and self.amount_paid >= self.total_minus_advance
+            and self.balance_due >= Decimal('0.00')
         )
 
     @property

@@ -664,12 +664,13 @@ def claim_export_excel(request, pk):
             ws.cell(op_row, 11, float(claim.overpayment)).number_format = '#,##0.00'
             ws.cell(op_row, 11).font = Font(bold=True, color='FF0000')
             sig_row = op_row + 3
-        elif claim.balance_due > 0:
+        elif claim.balance_due < 0:
+            # Negative balance_due = employer still owes employee
             bd_row = paid_row + 1
             ws.merge_cells(f'A{bd_row}:J{bd_row}')
             ws.cell(bd_row, 1, 'Outstanding Balance').font = bold
             ws.cell(bd_row, 1).alignment = right
-            ws.cell(bd_row, 11, float(claim.balance_due)).number_format = '#,##0.00'
+            ws.cell(bd_row, 11, float(abs(claim.balance_due))).number_format = '#,##0.00'
             ws.cell(bd_row, 11).font = Font(bold=True, color='FF0000')
             sig_row = bd_row + 3
         else:

@@ -592,9 +592,18 @@ document.addEventListener('keydown', function(e) {
     const nt = document.getElementById('net-total');
     const cf = parseFloat(document.body.dataset.carryForward || '0') || 0;
 
-    if (da) da.textContent = a.toFixed(2);
+    if (da) da.textContent = (a + cf).toFixed(2);
     
-    if (nt) nt.textContent = (gt - a + cf).toFixed(2);
+    // carry-forward is an overpayment already received by the employee,
+    // so it acts as an extra advance — add it to the advance side.
+    // Negative → company owes the employee; Positive → employee owes the company.
+    const raw = (a + cf) - gt;
+    if (nt) {
+      nt.textContent = raw.toFixed(2);
+      // Green when company owes employee (balance < 0 = payable out),
+      // red when employee has been over-advanced (balance > 0 = employee owes back).
+      nt.style.color = raw < 0 ? 'var(--claims-success, #198754)' : raw > 0 ? '#dc3545' : '';
+    }
   }
 
   //document.body.dataset.carryForward = '{{ carry_amount|default:"0"|floatformat:2 }}'.replace(/,/g,'');

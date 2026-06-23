@@ -40,12 +40,20 @@
     <td style="padding-left:24px"><strong>Submitted:</strong></td><td>{{ claim.submitted_at|date:"d M Y"|default:"—" }}</td>
   </tr>
   <tr>
-    <td><strong>Advance:</strong></td><td>KES {{ claim.advance|floatformat:2 }}</td>
+    <td><strong>Advance (this claim):</strong></td><td>KES {{ claim.advance|floatformat:2 }}</td>
     {% if claim.amount_paid %}
     <td style="padding-left:24px"><strong>Amount Paid:</strong></td>
     <td style="color:#198754; font-weight:bold;">KES {{ claim.amount_paid|floatformat:2 }}</td>
     {% endif %}
   </tr>
+  {% if claim.carry_forward %}
+  <tr>
+    <td><strong>Carry-forward:</strong></td>
+    <td style="color:#856404; font-weight:bold;">KES {{ claim.carry_forward|floatformat:2 }}</td>
+    <td style="padding-left:24px"><strong>Total Advance:</strong></td>
+    <td style="font-weight:bold;">KES {{ claim.total_advance|floatformat:2 }}</td>
+  </tr>
+  {% endif %}
 </table>
 
 <table>
@@ -89,23 +97,36 @@
       <td colspan="10" style="text-align:right">Sub-total</td>
       <td class="amount">KES {{ claim.subtotal|floatformat:2 }}</td>
     </tr>
+    {% if claim.carry_forward %}
+    <tr class="totals-row" style="background:#fff3cd;">
+      <td colspan="10" style="text-align:right; color:#856404;">Carry-forward (previous claim)</td>
+      <td class="amount" style="color:#856404;">KES {{ claim.carry_forward|floatformat:2 }}</td>
+    </tr>
+    {% endif %}
     <tr class="totals-row">
-      <td colspan="10" style="text-align:right">Advance</td>
+      <td colspan="10" style="text-align:right">Advance (this claim)</td>
       <td class="amount">KES {{ claim.advance|floatformat:2 }}</td>
     </tr>
     <tr class="totals-row net-row">
       <td colspan="10" style="text-align:right">Total Minus Advance</td>
-      <td class="amount">KES {{ claim.total_minus_advance|floatformat:2 }}</td>
+      <td class="amount" style="{% if claim.total_minus_advance < 0 %}color:#198754;{% elif claim.total_minus_advance > 0 %}color:#721c24;{% endif %}">
+        KES {{ claim.total_minus_advance|floatformat:2 }}
+      </td>
     </tr>
     {% if claim.amount_paid %}
     <tr class="totals-row paid-row">
       <td colspan="10" style="text-align:right">Amount Paid</td>
       <td class="amount">KES {{ claim.amount_paid|floatformat:2 }}</td>
     </tr>
-    {% if claim.balance_due > 0 %}
+    {% if claim.balance_due < 0 %}
     <tr class="totals-row" style="background:#f8d7da;">
       <td colspan="10" style="text-align:right; color:#721c24;">Outstanding Balance</td>
       <td class="amount" style="color:#721c24;">KES {{ claim.balance_due|floatformat:2 }}</td>
+    </tr>
+    {% elif claim.balance_due > 0 %}
+    <tr class="totals-row" style="background:#d4edda;">
+      <td colspan="10" style="text-align:right; color:#155724;">Overpayment (carry to next claim)</td>
+      <td class="amount" style="color:#155724;">KES {{ claim.balance_due|floatformat:2 }}</td>
     </tr>
     {% endif %}
     {% endif %}

@@ -400,19 +400,19 @@
     </h3>
 
     {# Payment progress bar #}
-    {% if claim.total_minus_advance > 0 %}
+    {% if claim.total_minus_advance < 0 %}
     <div class="pay-progress-wrap">
-      {% with pct=claim.amount_paid|floatformat:0 net=claim.total_minus_advance|floatformat:0 %}
+      {% with pct=claim.amount_paid|floatformat:0 net=claim.net_payable|floatformat:0 %}
       <div class="pay-progress-label">
         <span>Paid: KES {{ claim.amount_paid|floatformat:2 }}</span>
-        <span>Net Payable: KES {{ claim.total_minus_advance|floatformat:2 }}</span>
+        <span>Net Payable: KES {{ claim.net_payable|floatformat:2 }}</span>
       </div>
       {% endwith %}
       <div class="pay-progress-bar">
         {% if claim.overpayment > 0 %}
           <div class="pay-progress-fill overpaid" style="width:100%;"></div>
         {% else %}
-          {% widthratio claim.amount_paid claim.total_minus_advance 100 as pct_int %}
+          {% widthratio claim.amount_paid claim.net_payable 100 as pct_int %}
           <div class="pay-progress-fill" style="width:{{ pct_int|default:0 }}%;"></div>
         {% endif %}
       </div>
@@ -457,7 +457,7 @@
           </tr>
           <tr>
             <td colspan="4" style="text-align:right; font-weight:700; color:#6c757d;">Net Payable</td>
-            <td class="tfoot-amount" style="color:#6c757d;">KES {{ claim.total_minus_advance|floatformat:2 }}</td>
+            <td class="tfoot-amount" style="color:#6c757d;">KES {{ claim.net_payable|floatformat:2 }}</td>
           </tr>
           {% if claim.overpayment > 0 %}
           <tr class="overpayment-row">
@@ -466,10 +466,10 @@
             </td>
             <td class="amount-col">KES {{ claim.overpayment|floatformat:2 }}</td>
           </tr>
-          {% elif claim.balance_due > 0 %}
+          {% elif claim.balance_due < 0 %}
           <tr>
             <td colspan="4" style="text-align:right; font-weight:700; color:#dc3545;">Outstanding Balance</td>
-            <td class="tfoot-amount" style="color:#dc3545;">KES {{ claim.balance_due|floatformat:2 }}</td>
+            <td class="tfoot-amount" style="color:#dc3545;">KES {{ claim.net_payable|floatformat:2 }}</td>
           </tr>
           {% else %}
           <tr>
@@ -505,8 +505,8 @@
         <span class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ prev_claim.amount_paid|floatformat:2 }} paid</span>
         {% if prev_claim.overpayment > 0 %}
           &mdash; <span class="overpaid-badge"><i class="fas fa-exclamation-triangle"></i> KES {{ prev_claim.overpayment|floatformat:2 }} overpaid — carries forward.</span>
-        {% elif prev_claim.balance_due > 0 %}
-          &mdash; <span style="color:var(--claims-danger); font-weight:600;">KES {{ prev_claim.balance_due|floatformat:2 }} outstanding</span>
+        {% elif prev_claim.balance_due < 0 %}
+          &mdash; <span style="color:var(--claims-danger); font-weight:600;">KES {{ prev_claim.net_payable|floatformat:2 }} outstanding</span>
           (carried into this claim's advance).
         {% else %}
           &mdash; <span style="color:var(--claims-success);">Fully settled.</span>
@@ -540,7 +540,7 @@
             </td>
             <td class="amount">KES {{ prev.subtotal|floatformat:2 }}</td>
             <td class="amount">KES {{ prev.advance|floatformat:2 }}</td>
-            <td class="amount">KES {{ prev.total_minus_advance|floatformat:2 }}</td>
+            <td class="amount">KES {{ prev.net_payable|floatformat:2 }}</td>
             <td class="amount">
               {% if prev.amount_paid %}
                 <span class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ prev.amount_paid|floatformat:2 }}</span>
@@ -552,8 +552,8 @@
               {% if prev.amount_paid %}
                 {% if prev.overpayment > 0 %}
                   <span class="overpaid-badge"><i class="fas fa-exclamation-triangle"></i> +KES {{ prev.overpayment|floatformat:2 }}</span>
-                {% elif prev.balance_due > 0 %}
-                  <span style="color:var(--claims-danger);">KES {{ prev.balance_due|floatformat:2 }}</span>
+                {% elif prev.balance_due < 0 %}
+                  <span style="color:var(--claims-danger);">KES {{ prev.net_payable|floatformat:2 }}</span>
                 {% else %}
                   <span style="color:var(--claims-success);">Settled</span>
                 {% endif %}
@@ -676,7 +676,9 @@
           </tr>
           <tr class="totals-row net-row">
             <td colspan="10" class="totals-label">Total Minus Advance</td>
-            <td class="amount grand-total">KES {{ claim.total_minus_advance|floatformat:2 }}</td>
+            <td class="amount grand-total" style="color:{% if claim.total_minus_advance < 0 %}var(--claims-success,#198754){% elif claim.total_minus_advance > 0 %}#dc3545{% endif %};">
+              KES {{ claim.total_minus_advance|floatformat:2 }}
+            </td>
           </tr>
           {% if claim.amount_paid %}
           <tr class="totals-row">
@@ -692,7 +694,7 @@
             </td>
             <td class="amount grand-total" style="color:#dc3545;">KES {{ claim.overpayment|floatformat:2 }}</td>
           </tr>
-          {% elif claim.balance_due > 0 %}
+          {% elif claim.balance_due < 0 %}
           <tr class="totals-row">
             <td colspan="10" class="totals-label" style="color:var(--claims-danger);">Outstanding Balance</td>
             <td class="amount grand-total" style="color:var(--claims-danger);">KES {{ claim.balance_due|floatformat:2 }}</td>
@@ -780,7 +782,7 @@
       </div>
       <div class="integrity-item">
         <label>Net Payable</label>
-        <strong class="grand-total">KES {{ claim.total_minus_advance|floatformat:2 }}</strong>
+        <strong class="grand-total">KES {{ claim.net_payable|floatformat:2 }}</strong>
       </div>
       {% if claim.amount_paid %}
       <div class="integrity-item">
@@ -996,7 +998,7 @@
     <div class="claim-modal-divider"></div>
     <p class="claim-modal-body">
       You are recording a disbursement for <strong>{{ claim.employee.get_full_name }}</strong>.
-      Net payable is <strong>KES {{ claim.total_minus_advance|floatformat:2 }}</strong>.
+      Net payable is <strong>KES {{ claim.net_payable|floatformat:2 }}</strong>.
     </p>
     <p class="claim-modal-warning">
       <i class="fas fa-exclamation-triangle"></i>
