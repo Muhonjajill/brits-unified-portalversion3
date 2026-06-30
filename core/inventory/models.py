@@ -106,12 +106,34 @@ class StockTransaction(models.Model):
     machine_serial = models.CharField(max_length=100, blank=True)
     machine_type = models.ForeignKey(MachineType, on_delete=models.SET_NULL, null=True, blank=True)
     reference_number = models.CharField(max_length=100, blank=True)
+    ticket_number = models.CharField(
+        max_length=100, blank=True,
+        help_text="Optional support/job ticket number associated with this transaction (entered manually)."
+    )
     notes = models.TextField(blank=True)
     performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     performed_at = models.DateTimeField(default=timezone.now)
 
+    # ── Recipient tracking (additive — does not affect existing logic) ──
+    recipient_user = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='parts_received',
+        help_text="Select the recipient from existing system users, if applicable."
+    )
+    recipient_name = models.CharField(
+        max_length=150, blank=True,
+        help_text="Name of the person the part was issued/given to (free text, used if recipient is not a system user)."
+    )
+
     def __str__(self):
         return f"{self.part.part_number} | {self.get_transaction_type_display()} | {self.quantity}"
+
+    @property
+    def recipient_display(self):
+        """Best-available label for who received this part, for display in lists/reports."""
+        if self.recipient_user_id:
+            return self.recipient_user.get_full_name() or self.recipient_user.username
+        return self.recipient_name or '—'
 
     class Meta:
         ordering = ['-performed_at']

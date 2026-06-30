@@ -1,16 +1,22 @@
 /* statistics.css */
 :root {
-  --primary-color: #123692; 
-  --secondary-color: #6a11cb; 
-  --accent-color: #4fa3f7; 
-  --background-color: #f8f9fa; 
-  --text-color: #333333; 
-  --gray-light: #e9ecef; 
-  --gray-medium: #ced4da; 
-  --shadow-light: rgba(0,0,0,0.08); 
-  --shadow-medium: rgba(0,0,0,0.15); 
-  --border-radius: 12px; 
-  --transition-speed: 0.3s ease; 
+  --primary-color: #123692;
+  --primary-color-light: #123692;
+  --secondary-color: #123692;
+  --accent-color: #4fa3f7;
+  --success-color: #28a745;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --background-color: #f4f6fb;
+  --text-color: #2c2f3a;
+  --text-muted: #6c7384;
+  --gray-light: #e9ecef;
+  --gray-medium: #ced4da;
+  --shadow-light: rgba(18, 54, 146, 0.07);
+  --shadow-medium: rgba(18, 54, 146, 0.16);
+  --border-radius: 16px;
+  --border-radius-sm: 10px;
+  --transition-speed: 0.25s ease;
 
   --card-background: #ffffff;
   --card-text: var(--text-color);
@@ -23,17 +29,18 @@
 }
 
 body.dark-mode {
-  --background-color: #1a1a2e;
-  --text-color: #e0e0e0;
-  --gray-light: #3a3a5a;
-  --gray-medium: #5a5a75;
-  --shadow-light: rgba(0,0,0,0.3);
-  --shadow-medium: rgba(0,0,0,0.5);
-  --card-background: #2c2c4d;
+  --background-color: #14152b;
+  --text-color: #e8e9f1;
+  --text-muted: #a4a8bd;
+  --gray-light: #34355a;
+  --gray-medium: #4d4f78;
+  --shadow-light: rgba(0, 0, 0, 0.35);
+  --shadow-medium: rgba(0, 0, 0, 0.55);
+  --card-background: #1f2142;
   --card-text: var(--text-color);
   --header-color: var(--accent-color);
-  --form-select-bg: #3a3a5a;
-  --form-select-border: #5a5a75;
+  --form-select-bg: #2a2c52;
+  --form-select-border: #4d4f78;
   --button-primary-bg: var(--accent-color);
   --button-primary-hover-bg: #3a8fd9;
 }
@@ -47,26 +54,63 @@ body {
   background-color: var(--background-color);
   color: var(--text-color);
   line-height: 1.6;
-  padding-top: 20px; 
-  transition: background-color var(--transition-speed), color var(--transition-speed); 
-  background-image: radial-gradient(circle at top left, rgba(0,0,0,0.01) 1px, transparent 1px),
-                    radial-gradient(circle at bottom right, rgba(0,0,0,0.01) 1px, transparent 1px);
-  background-size: 20px 20px;
-  background-position: 0 0, 10px 10px;
+  padding-top: 20px;
+  transition: background-color var(--transition-speed), color var(--transition-speed);
 }
 
 .container {
   max-width: 100%;
-  width: 100%; 
+  width: 100%;
   margin: 0 auto;
-  padding: 0 15px; 
+  padding: 0 15px;
 }
 
+/* ===============================
+   Hero Header
+================================== */
+.stats-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  border-radius: var(--border-radius);
+  padding: 1.75rem 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 30px var(--shadow-medium);
+  color: #ffffff;
+}
+
+.stats-hero-icon {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+}
+
+.stats-hero h2 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin: 0;
+}
+
+.stats-hero-subtitle {
+  font-size: 0.95rem;
+  opacity: 0.85;
+  margin-top: 0.15rem;
+}
+
+/* Legacy heading support (kept in case other templates reuse it) */
 h2.text-center {
   font-size: 2.5rem;
   font-weight: 700;
   color: var(--header-color);
-  margin-bottom: 2.5rem !important; 
+  margin-bottom: 2.5rem !important;
   text-transform: uppercase;
   letter-spacing: 1px;
   transition: color var(--transition-speed);
@@ -80,22 +124,64 @@ h2.text-center i {
   font-size: 2rem;
 }
 
+/* ===============================
+   Filters
+================================== */
+.filters-card {
+  background-color: var(--card-background);
+  padding: 1.5rem 1.75rem;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 18px var(--shadow-light);
+  margin-bottom: 2.5rem !important;
+  transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.filters-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--header-color);
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.6px;
+  margin-bottom: 1.1rem;
+}
+
+/* Fallback in case the plain form.row markup is still used elsewhere */
 form.row {
   background-color: var(--card-background);
   padding: 1.5rem;
   border-radius: var(--border-radius);
   box-shadow: 0 4px 15px var(--shadow-light);
-  margin-bottom: 2.5rem !important; 
+  margin-bottom: 2.5rem !important;
   transition: background-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 0.4rem;
+}
+
+.filter-label i {
+  color: var(--accent-color);
+  font-size: 0.85rem;
 }
 
 .form-select,
 .form-select-sm {
   background-color: var(--form-select-bg);
   border: 1px solid var(--form-select-border);
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
-  font-size: 1rem;
+  border-radius: var(--border-radius-sm);
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
   color: var(--card-text);
   cursor: pointer;
   appearance: none;
@@ -109,10 +195,15 @@ form.row {
   transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
 }
 
+.form-select:hover,
+.form-select-sm:hover {
+  border-color: var(--accent-color);
+}
+
 .form-select:focus,
 .form-select-sm:focus {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 0.25rem rgba(18, 54, 146, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(18, 54, 146, 0.2);
   outline: 0;
 }
 
@@ -124,10 +215,12 @@ form.row {
 
 .form-select-sm {
   padding: 0.5rem 2rem 0.5rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
 }
 
-/* Card Styles */
+/* ===============================
+   Cards
+================================== */
 .card {
   background-color: var(--card-background);
   border: none;
@@ -135,11 +228,16 @@ form.row {
   box-shadow: 0 6px 20px var(--shadow-light);
   transition: all var(--transition-speed);
   margin-bottom: 1.5rem;
+  overflow: hidden;
 }
 
 .card:hover {
-  box-shadow: 0 12px 30px var(--shadow-medium);
-  transform: translateY(-5px);
+  box-shadow: 0 14px 32px var(--shadow-medium);
+  transform: translateY(-4px);
+}
+
+.chart-card {
+  border-top: 3px solid var(--accent-color);
 }
 
 .card-header {
@@ -149,17 +247,32 @@ form.row {
   color: var(--card-text);
 }
 
+.card-header h5 {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--header-color);
+}
+
 .card-body {
   padding: 1.5rem !important;
   color: var(--card-text);
 }
 
 .card-title {
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: var(--header-color);
   margin-bottom: 1.5rem;
   transition: color var(--transition-speed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.chart-icon {
+  color: var(--accent-color);
+  font-size: 1rem;
 }
 
 .mb-0 {
@@ -172,23 +285,46 @@ canvas {
   max-height: 400px;
 }
 
-/* Ticket Status Breakdown Section */
+/* ===============================
+   Ticket Status Breakdown
+================================== */
 #ticket-status-breakdown {
   margin-top: 1.5rem;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   background-color: var(--gray-light);
-  border-radius: var(--border-radius);
+  border-radius: var(--border-radius-sm);
   color: var(--text-color);
   transition: background-color var(--transition-speed), color var(--transition-speed);
-  max-height: 120px;
+  max-height: 130px;
   overflow-y: auto;
 }
 
+/* The JS writes plain <p><strong>Label:</strong> n tickets (%)</p> rows */
+#ticket-status-breakdown p {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+  padding: 0.45rem 0.25rem;
+  font-size: 0.92rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+#ticket-status-breakdown p:last-child {
+  border-bottom: none;
+}
+
+#ticket-status-breakdown p strong {
+  color: var(--header-color);
+  font-weight: 600;
+}
+
+/* Legacy support if .status-item markup is ever reintroduced */
 #ticket-status-breakdown .status-item {
   display: flex;
   justify-content: space-between;
   padding: 0.5rem 0;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   font-size: 1rem;
 }
 
@@ -228,14 +364,16 @@ canvas {
   height: 100%;
 }
 
-/* Export Button */
+/* ===============================
+   Export Button
+================================== */
 #export-report {
   background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
   color: var(--button-primary-text);
   border: none;
   border-radius: 50px;
   padding: 1rem 3rem;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -256,18 +394,18 @@ canvas {
 }
 
 #export-report i {
-  font-size: 1.3em;
+  font-size: 1.2em;
   transition: transform var(--transition-speed);
 }
 
 #export-report:hover i {
-  transform: translateY(-2px); 
+  transform: translateY(-2px);
 }
 
 @keyframes pulse-glow {
-  0% { box-shadow: 0 0 0 rgba(79,163,247,0.6); }
-  70% { box-shadow: 0 0 25px rgba(79,163,247,0.4); }
-  100% { box-shadow: 0 0 0 rgba(79,163,247,0.6); }
+  0% { box-shadow: 0 0 0 rgba(79, 163, 247, 0.6); }
+  70% { box-shadow: 0 0 25px rgba(79, 163, 247, 0.4); }
+  100% { box-shadow: 0 0 0 rgba(79, 163, 247, 0.6); }
 }
 
 #export-report.glow {
@@ -280,75 +418,42 @@ canvas {
 }
 
 /* Utility Classes */
-.mb-2 {
-  margin-bottom: 0.5rem !important;
-}
-
-.mb-3 {
-  margin-bottom: 1rem !important;
-}
-
-.mb-4 {
-  margin-bottom: 1.5rem !important;
-}
-
-.mb-5 {
-  margin-bottom: 3rem !important;
-}
-
-.mt-3 {
-  margin-top: 1rem !important;
-}
-
-.mt-4 {
-  margin-top: 1.5rem !important;
-}
-
-.mt-5 {
-  margin-top: 3rem !important;
-}
-
-.text-center {
-  text-align: center !important;
-}
-
-.d-flex {
-  display: flex !important;
-}
-
-.justify-content-between {
-  justify-content: space-between !important;
-}
-
-.align-items-center {
-  align-items: center !important;
-}
-
-.align-items-stretch {
-  align-items: stretch !important;
-}
+.mb-2 { margin-bottom: 0.5rem !important; }
+.mb-3 { margin-bottom: 1rem !important; }
+.mb-4 { margin-bottom: 1.5rem !important; }
+.mb-5 { margin-bottom: 3rem !important; }
+.mt-3 { margin-top: 1rem !important; }
+.mt-4 { margin-top: 1.5rem !important; }
+.mt-5 { margin-top: 3rem !important; }
+.text-center { text-align: center !important; }
+.d-flex { display: flex !important; }
+.justify-content-between { justify-content: space-between !important; }
+.align-items-center { align-items: center !important; }
+.align-items-stretch { align-items: stretch !important; }
 
 /* ===============================
    Responsive Design
 ================================== */
 
 /* Tablet */
-@media (max-width: 992px) { 
-  .container {
-    padding: 0 10px;
+@media (max-width: 992px) {
+  .container { padding: 0 10px; }
+
+  .stats-hero {
+    padding: 1.4rem 1.5rem;
   }
+
+  .stats-hero h2 { font-size: 1.6rem; }
 
   h2.text-center {
     font-size: 2rem;
     margin-bottom: 2rem !important;
   }
 
-  h2.text-center i {
-    font-size: 1.8rem;
-  }
+  h2.text-center i { font-size: 1.8rem; }
 
   .card-title {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     margin-bottom: 1rem;
   }
 
@@ -370,9 +475,7 @@ canvas {
     max-height: 250px;
   }
 
-  .form-select {
-    margin-bottom: 0.75rem;
-  }
+  .form-select { margin-bottom: 0.75rem; }
 
   .col-md-6,
   .col-md-4,
@@ -383,9 +486,17 @@ canvas {
 
 /* Mobile */
 @media (max-width: 768px) {
-  .container {
-    padding: 0 10px;
+  .container { padding: 0 10px; }
+
+  .stats-hero {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+    gap: 0.75rem;
   }
+
+  .stats-hero h2 { font-size: 1.4rem; }
+  .stats-hero-subtitle { font-size: 0.85rem; }
 
   h2.text-center {
     font-size: 1.8rem;
@@ -394,18 +505,15 @@ canvas {
     gap: 0.5rem;
   }
 
-  h2.text-center i {
-    font-size: 1.6rem;
-  }
+  h2.text-center i { font-size: 1.6rem; }
 
+  .filters-card,
   form.row {
     padding: 1rem;
     margin-bottom: 1.5rem !important;
   }
 
-  .row.mb-4 {
-    margin-bottom: 1rem !important;
-  }
+  .row.mb-4 { margin-bottom: 1rem !important; }
 
   .form-select {
     font-size: 0.9rem;
@@ -427,13 +535,8 @@ canvas {
     margin-bottom: 1rem !important;
   }
 
-  .card {
-    margin-bottom: 1rem;
-  }
-
-  .card:hover {
-    transform: none;
-  }
+  .card { margin-bottom: 1rem; }
+  .card:hover { transform: none; }
 
   .card-header {
     padding: 0.75rem 1rem;
@@ -442,16 +545,12 @@ canvas {
     gap: 0.75rem;
   }
 
-  .card-header .form-select-sm {
-    width: 100% !important;
-  }
+  .card-header .form-select-sm { width: 100% !important; }
 
-  .card-body {
-    padding: 1rem !important;
-  }
+  .card-body { padding: 1rem !important; }
 
   .card-title {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     margin-bottom: 0.8rem;
   }
 
@@ -479,8 +578,8 @@ canvas {
     margin-top: 1rem;
   }
 
-  #ticket-status-breakdown .status-item {
-    font-size: 0.9rem;
+  #ticket-status-breakdown p {
+    font-size: 0.85rem;
     padding: 0.4rem 0;
   }
 
@@ -491,13 +590,9 @@ canvas {
     justify-content: center;
   }
 
-  #export-report i {
-    font-size: 1.1em;
-  }
+  #export-report i { font-size: 1.1em; }
 
-  .row.align-items-stretch {
-    align-items: flex-start !important;
-  }
+  .row.align-items-stretch { align-items: flex-start !important; }
 
   .row.align-items-stretch > .col-md-6 .card,
   .row.mb-5 > .col-md-4 .card {
@@ -507,8 +602,12 @@ canvas {
 
 /* Small Mobile */
 @media (max-width: 576px) {
-  .container {
-    padding: 0 8px;
+  .container { padding: 0 8px; }
+
+  .stats-hero-icon {
+    width: 46px;
+    height: 46px;
+    font-size: 1.3rem;
   }
 
   h2.text-center {
@@ -516,13 +615,10 @@ canvas {
     margin-bottom: 1.25rem !important;
   }
 
-  h2.text-center i {
-    font-size: 1.4rem;
-  }
+  h2.text-center i { font-size: 1.4rem; }
 
-  form.row {
-    padding: 0.75rem;
-  }
+  .filters-card,
+  form.row { padding: 0.75rem; }
 
   .form-select {
     font-size: 0.85rem;
@@ -534,18 +630,10 @@ canvas {
     padding: 0.4rem 1.5rem 0.4rem 0.6rem;
   }
 
-  .card-header {
-    padding: 0.65rem 0.85rem;
-  }
+  .card-header { padding: 0.65rem 0.85rem; }
+  .card-body { padding: 0.85rem !important; }
 
-  .card-body {
-    padding: 0.85rem !important;
-  }
-
-  .card-title {
-    font-size: 1rem;
-    margin-bottom: 0.75rem;
-  }
+  .card-title { font-size: 0.95rem; margin-bottom: 0.75rem; }
 
   canvas {
     height: 180px !important;
@@ -570,8 +658,8 @@ canvas {
     font-size: 0.85rem;
   }
 
-  #ticket-status-breakdown .status-item {
-    font-size: 0.85rem;
+  #ticket-status-breakdown p {
+    font-size: 0.8rem;
     padding: 0.35rem 0;
   }
 
@@ -580,41 +668,26 @@ canvas {
     font-size: 0.95rem;
   }
 
-  #export-report i {
-    font-size: 1em;
-  }
+  #export-report i { font-size: 1em; }
 }
 
 /* Extra Small Mobile */
 @media (max-width: 480px) {
-  .container {
-    padding: 0 5px;
-  }
+  .container { padding: 0 5px; }
 
-  h2.text-center {
-    font-size: 1.4rem;
-  }
+  h2.text-center { font-size: 1.4rem; }
+  h2.text-center i { font-size: 1.3rem; }
 
-  h2.text-center i {
-    font-size: 1.3rem;
-  }
-
-  form.row {
-    padding: 0.65rem;
-  }
+  .filters-card,
+  form.row { padding: 0.65rem; }
 
   .form-select {
     font-size: 0.8rem;
     padding: 0.5rem 1.5rem 0.5rem 0.65rem;
   }
 
-  .card-body {
-    padding: 0.75rem !important;
-  }
-
-  .card-title {
-    font-size: 0.95rem;
-  }
+  .card-body { padding: 0.75rem !important; }
+  .card-title { font-size: 0.9rem; }
 
   canvas {
     height: 160px !important;
@@ -642,31 +715,20 @@ canvas {
 
 /* Very Small Devices */
 @media (max-width: 360px) {
-  h2.text-center {
-    font-size: 1.3rem;
-  }
-
-  h2.text-center i {
-    font-size: 1.2rem;
-  }
+  h2.text-center { font-size: 1.3rem; }
+  h2.text-center i { font-size: 1.2rem; }
 
   .form-select {
     font-size: 0.75rem;
     padding: 0.45rem 1.25rem 0.45rem 0.6rem;
   }
 
-  .card-title {
-    font-size: 0.9rem;
-  }
+  .card-title { font-size: 0.9rem; }
 
-  canvas {
-    height: 150px !important;
-  }
+  canvas { height: 150px !important; }
 
   #ticketsTimeChart,
-  #ticketStatusChart {
-    height: 180px !important;
-  }
+  #ticketStatusChart { height: 180px !important; }
 
   #export-report {
     font-size: 0.85rem;
@@ -681,37 +743,24 @@ canvas {
     margin-bottom: 1rem !important;
   }
 
-  .card-body {
-    padding: 1rem !important;
-  }
-
-  canvas {
-    height: 180px !important;
-  }
+  .card-body { padding: 1rem !important; }
+  canvas { height: 180px !important; }
 
   #ticketsTimeChart,
-  #ticketStatusChart {
-    height: 220px !important;
-  }
+  #ticketStatusChart { height: 220px !important; }
 }
 
 /* Disable hover effects on mobile */
 @media (max-width: 768px) {
-  .card:hover {
-    box-shadow: 0 6px 20px var(--shadow-light);
-  }
-
-  #export-report:hover {
-    transform: none;
-  }
+  .card:hover { box-shadow: 0 6px 20px var(--shadow-light); }
+  #export-report:hover { transform: none; }
 }
 
 /* Print Styles */
 @media print {
-  .container {
-    padding: 0;
-  }
+  .container { padding: 0; }
 
+  .filters-card,
   form.row,
   #export-report {
     display: none;
@@ -728,7 +777,5 @@ canvas {
     box-shadow: none;
   }
 
-  canvas {
-    max-height: 300px;
-  }
+  canvas { max-height: 300px; }
 }

@@ -10,16 +10,28 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <h2 class="text-center mb-4">
-    <i class="fas fa-chart-line"></i> Ticket Statistics
-  </h2>
+<div class="container mt-5 stats-page">
+
+  <div class="stats-hero">
+    <div class="stats-hero-icon">
+      <i class="fas fa-chart-line"></i>
+    </div>
+    <div>
+      <h2 class="mb-0">Ticket Statistics</h2>
+      <p class="stats-hero-subtitle mb-0">Live insights into ticket volume, status, and team performance</p>
+    </div>
+  </div>
 
   <!-- Filters -->
-  <form method="get" class="row mb-4">
-    <div class="row mb-4">
+  <form method="get" class="filters-card mb-4">
+    <div class="filters-card-header">
+      <i class="fas fa-sliders-h"></i>
+      <span>Filters</span>
+    </div>
+    <div class="row g-3 align-items-end">
       <!-- Customer Filter -->
-      <div class="col-md-3 mb-2">
+      <div class="col-md-3">
+        <label class="filter-label"><i class="fas fa-building"></i> Customer</label>
         <select id="customer-filter" class="form-select" name="customer"
                 {% if user_group == "Custodian" or user_group == "Overseer" %}disabled{% endif %}>
           {% if user_group == "Custodian" or user_group == "Overseer" %}
@@ -36,7 +48,8 @@
       </div>
 
       <!-- Region Filter -->
-      <div class="col-md-3 mb-2">
+      <div class="col-md-3">
+        <label class="filter-label"><i class="fas fa-map-marker-alt"></i> Region</label>
         <select id="region-filter" class="form-select" name="region"
                 {% if user_group == "Custodian" %}disabled{% endif %}>
           {% if user_group == "Custodian" %}
@@ -55,7 +68,8 @@
       </div>
 
       <!-- Terminal Filter -->
-      <div class="col-md-3 mb-2">
+      <div class="col-md-3">
+        <label class="filter-label"><i class="fas fa-store"></i> Terminal</label>
         <select id="terminal-filter" class="form-select" name="terminal"
                 {% if user_group == "Custodian" %}disabled{% endif %}>
           {% if user_group == "Custodian" %}
@@ -76,7 +90,8 @@
       </div>
 
       <!-- Time Period Filter -->
-      <div class="col-md-3 mb-2">
+      <div class="col-md-3">
+        <label class="filter-label"><i class="fas fa-calendar-alt"></i> Time Period</label>
         <select id="time-period" class="form-select" name="time-period">
           <option value="all_time" {% if time_period == "all_time" %}selected{% endif %}>All Time</option>
           <option value="today" {% if time_period == "today" %}selected{% endif %}>Today</option>
@@ -92,9 +107,9 @@
   <!-- Timeline Charts -->
   <div class="row mb-5 align-items-stretch">
     <div class="col-md-6">
-      <div class="card">
+      <div class="card chart-card">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">Tickets Over Time</h5>
+          <h5 class="mb-0"><i class="fas fa-chart-area chart-icon"></i> Tickets Over Time</h5>
           <select id="timeUnitFilter" class="form-select form-select-sm" style="width: auto;">
             <option value="hour">Hourly</option>
             <option value="day">Daily</option>
@@ -110,9 +125,9 @@
     </div>
 
     <div class="col-md-6">
-      <div class="card">
+      <div class="card chart-card">
         <div class="card-body">
-          <h5 class="card-title text-center">Ticket Statuses</h5>
+          <h5 class="card-title text-center"><i class="fas fa-chart-pie chart-icon"></i> Ticket Statuses</h5>
           <canvas id="ticketStatusChart"></canvas>
           <div id="ticket-status-breakdown" class="mt-3"></div>
         </div>
@@ -121,20 +136,20 @@
   </div>
 
   <!-- SLA & Category -->
-  <div class="row mb-5">
+  <div class="row mb-5 align-items-stretch">
     <div class="col-md-6 {% if hide_sla %}hidden{% endif %}">
-      <div class="card">
+      <div class="card chart-card">
         <div class="card-body">
-          <h5 class="card-title text-center">SLA Escalation</h5>
+          <h5 class="card-title text-center"><i class="fas fa-stopwatch chart-icon"></i> SLA Escalation</h5>
           <canvas id="slaEscalationChart"></canvas>
         </div>
       </div>
     </div>
 
     <div class="col-md-6">
-      <div class="card">
+      <div class="card chart-card">
         <div class="card-body">
-          <h5 class="card-title text-center">Tickets by Category</h5>
+          <h5 class="card-title text-center"><i class="fas fa-tags chart-icon"></i> Tickets by Category</h5>
           <canvas id="ticketsByCategoryChart"></canvas>
         </div>
       </div>
@@ -146,7 +161,7 @@
     <div class="col-md-4 {% if hide_assignee %}hidden{% endif %}">
       <div class="card chart-card">
         <div class="card-body">
-          <h5 class="card-title text-center">Tickets by Assignee</h5>
+          <h5 class="card-title text-center"><i class="fas fa-user-tag chart-icon"></i> Tickets by Assignee</h5>
           <canvas id="ticketsByAssigneeChart"></canvas>
         </div>
       </div>
@@ -155,7 +170,7 @@
     <div class="col-md-4 {% if hide_resolver %}hidden{% endif %}">
       <div class="card chart-card">
         <div class="card-body">
-          <h5 class="card-title text-center">Tickets by Resolver</h5>
+          <h5 class="card-title text-center"><i class="fas fa-user-check chart-icon"></i> Tickets by Resolver</h5>
           <canvas id="ticketsByResolverChart"></canvas>
         </div>
       </div>
@@ -164,7 +179,7 @@
     <div class="col-md-4">
       <div class="card chart-card">
         <div class="card-body">
-          <h5 class="card-title text-center">Unresolved Tickets</h5>
+          <h5 class="card-title text-center"><i class="fas fa-circle-check chart-icon"></i> Unresolved Tickets</h5>
           <canvas id="unresolvedTicketsChart"></canvas>
         </div>
       </div>
@@ -174,9 +189,9 @@
   <!-- Categories & Terminals -->
   <div class="row mb-5 {% if hide_terminal %}hidden{% endif %}">
     <div class="col-md-12">
-      <div class="card">
+      <div class="card chart-card">
         <div class="card-body">
-          <h5 class="card-title text-center">Tickets per Terminal</h5>
+          <h5 class="card-title text-center"><i class="fas fa-server chart-icon"></i> Tickets per Terminal</h5>
           <canvas id="ticketsPerTerminalChart"></canvas>
         </div>
       </div>
@@ -184,7 +199,7 @@
   </div>
 
   <!-- Export -->
-  <div class="text-center mt-4">
+  <div class="text-center mt-4 mb-5">
     <button id="export-report" class="btn btn-lg btn-primary px-5 py-3 rounded-pill shadow-sm glow"
       onclick="window.location.href='{% url 'export_report' %}?time-period={{ time_period }}&customer={{ selected_customer }}&terminal={{ selected_terminal }}&region={{ selected_region }}'">
       <i class="fas fa-download"></i> Export Report to Excel

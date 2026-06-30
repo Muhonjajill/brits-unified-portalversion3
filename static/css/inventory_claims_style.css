@@ -1,0 +1,236 @@
+/* ══════════════════════════════════════════════════════════════
+   Inventory module — cosmetic additions only.
+   Reuses the same design tokens/variables defined in claims.css
+   (--claims-primary, --claims-success, --claims-border, etc).
+   Purely additive: does not redefine or override any existing
+   .data-table / .stat-card / .table / .badge / .stock-badge rules,
+   so current layout and behavior are unaffected.
+
+   Include this file AFTER claims.css in base.html, e.g.:
+   <link rel="stylesheet" href="{% static 'css/claims.css' %}">
+   <link rel="stylesheet" href="{% static 'css/inventory_claims_style.css' %}">
+   ══════════════════════════════════════════════════════════════ */
+
+/* Recipient tag — used in transaction history tables */
+.recipient-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--claims-text, #343a40);
+  background: #f8f9fc;
+  border: 1px solid var(--claims-border, #dee2e6);
+  border-radius: 20px;
+  padding: 2px 10px 2px 8px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.recipient-tag i { color: var(--claims-primary, #123692); opacity: .85; font-size: 0.85em; }
+
+/* Ticket / reference number tag — shown alongside the recipient */
+.ticket-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  font-family: monospace;
+  color: var(--claims-primary, #123692);
+  background: #eef2fb;
+  border: 1px solid #dbe3f7;
+  border-radius: 6px;
+  padding: 1px 8px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.ticket-tag i { font-size: 0.85em; opacity: .8; }
+
+/* Reference number tag — visually distinct (grey) from the ticket tag (blue) */
+.ref-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: monospace;
+  color: var(--claims-muted, #6c757d);
+  background: #f1f3f9;
+  border: 1px solid var(--claims-border, #dee2e6);
+  border-radius: 6px;
+  padding: 1px 8px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.ref-tag i { font-size: 0.85em; opacity: .7; }
+
+.recipient-ticket-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+/* ── Compact "Current Stock" strip (replaces the old full-width stat card) ── */
+.stock-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  background: var(--claims-card, #fff);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,.05);
+  padding: 14px 22px;
+}
+.stock-strip-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.stock-strip-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--claims-muted, #6c757d);
+  font-weight: 600;
+  align-self: center;
+}
+.stock-strip-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.stock-strip-unit {
+  font-size: 0.85rem;
+  color: var(--claims-muted, #6c757d);
+}
+.stock-strip-btn {
+  white-space: nowrap;
+}
+@media (max-width: 576px) {
+  .stock-strip { padding: 12px 16px; }
+  .stock-strip-btn { width: 100%; justify-content: center; }
+}
+
+/* ── Optional field indicator (cosmetic only; backend already treats the
+     field as optional) ── */
+.optional-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  color: var(--claims-muted, #6c757d);
+  background: #f1f3f9;
+  border-radius: 10px;
+  padding: 1px 7px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.txn-history-card .table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.txn-count-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--claims-muted, #6c757d);
+  background: #f1f3f9;
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+.txn-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.txn-table { font-size: 0.84rem; }
+.txn-table thead th {
+  padding: 9px 12px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  white-space: nowrap;
+}
+.txn-table tbody td {
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+.txn-table tbody tr:hover td { background: #f6f8fd; }
+.txn-type-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 20px;
+}
+.txn-stock-flow {
+  white-space: nowrap;
+  font-size: 0.82rem;
+}
+.txn-by-date { white-space: nowrap; }
+.txn-edit-btn {
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  border-radius: 6px;
+}
+
+@media (max-width: 768px) {
+  .txn-table thead { display: none; }
+  .txn-table, .txn-table tbody, .txn-table tr, .txn-table td { display: block; width: 100%; }
+  .txn-table tr {
+    border: 1px solid var(--claims-border, #dee2e6);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+  }
+  .txn-table td {
+    border: none;
+    padding: 4px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .txn-table td.text-end { justify-content: flex-end; }
+}
+
+/* Inventory data-table headers/edit buttons aligned to claims.css palette */
+.data-table .table thead th {
+  background: var(--claims-primary, #123692);
+  color: #fff;
+}
+.data-table .table .btn-outline-secondary:hover {
+  background: var(--claims-secondary, #6c757d);
+  color: #fff;
+}
+
+/* Inventory cards take the same soft elevation as claim cards */
+.form-card,
+.data-table,
+.stat-card {
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,.05);
+}
+
+/* Part Detail — info table rows get a touch more breathing room */
+.form-card table.table-sm tr td {
+  padding: 9px 6px;
+  border-bottom: 1px solid #f1f3f7;
+}
+.form-card table.table-sm tr:last-child td { border-bottom: none; }
+
+/* Part Detail — big stock number card */
+.stat-card .stat-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--claims-muted, #6c757d);
+  font-weight: 600;
+}
+
+/* Edit Transaction modal: align modal header to claims-primary */
+#editTxnModal .modal-header,
+#transactionModal .modal-header {
+  border-bottom: 2px solid var(--claims-primary, #123692);
+}
+#editTxnModal .modal-title i,
+#transactionModal .modal-title i {
+  color: var(--claims-primary, #123692);
+}

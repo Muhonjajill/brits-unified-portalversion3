@@ -23,13 +23,13 @@
 
 <div class="row g-4">
     <!-- Part Info -->
-    <div class="col-lg-4">
+    <div class="col-lg-3">
         <div class="form-card h-100">
             <div class="text-center mb-3">
-                <div style="width:80px;height:80px;background:var(--primary);border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:2rem;color:white;">
+                <div style="width:64px;height:64px;background:var(--primary);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 0.75rem;font-size:1.6rem;color:white;">
                     <i class="fa-solid fa-gear"></i>
                 </div>
-                <h4 class="fw-700 mb-1">{{ part.name }}</h4>
+                <h5 class="fw-700 mb-1">{{ part.name }}</h5>
                 <code class="text-muted">{{ part.part_number }}</code>
             </div>
 
@@ -73,60 +73,132 @@
     </div>
 
     <!-- Stock Level + History -->
-    <div class="col-lg-8">
-        <!-- Big Stock Number -->
-        <div class="stat-card mb-4">
-            <div class="row align-items-center">
-                <div class="col">
-                    <div class="stat-label">Current Stock Level</div>
-                    <div class="display-3 fw-700 {% if part.is_out_of_stock %}text-danger{% elif part.is_low_stock %}text-warning{% else %}text-success{% endif %}" id="stockQty">
-                        {{ part.quantity_in_stock }}
-                    </div>
-                    <div class="text-muted">{{ part.get_unit_display }}(s) in stock</div>
-                </div>
-                <div class="col-auto">
-                    <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#transactionModal">
-                        <i class="fa-solid fa-right-left me-2"></i>Record Transaction
-                    </button>
-                </div>
+    <div class="col-lg-9">
+        <!-- Compact Stock Strip -->
+        <div class="stock-strip mb-3">
+            <div class="stock-strip-figure">
+                <span class="stock-strip-label">Current Stock</span>
+                <span class="stock-strip-value {% if part.is_out_of_stock %}text-danger{% elif part.is_low_stock %}text-warning{% else %}text-success{% endif %}" id="stockQty">{{ part.quantity_in_stock }}</span>
+                <span class="stock-strip-unit">{{ part.get_unit_display }}(s)</span>
             </div>
+            <button class="btn btn-primary stock-strip-btn" data-bs-toggle="modal" data-bs-target="#transactionModal">
+                <i class="fa-solid fa-right-left me-2"></i>Record Transaction
+            </button>
         </div>
 
         <!-- Transaction History -->
-        <div class="data-table">
+        <div class="data-table txn-history-card">
             <div class="table-header">
                 <h5><i class="fa-solid fa-clock-rotate-left me-2"></i>Transaction History</h5>
+                {% if transactions %}<span class="txn-count-badge">{{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }}</span>{% endif %}
             </div>
             {% if transactions %}
-            <table class="table table-hover mb-0">
+            <div class="txn-table-wrap">
+            <table class="table table-hover mb-0 txn-table">
                 <thead>
-                    <tr><th>Type</th><th>Qty</th><th>Before</th><th>After</th><th>Machine</th><th>Reference</th><th>By</th><th>Date</th></tr>
+                    <tr>
+                        <th>Type</th>
+                        <th>Qty</th>
+                        <th>Stock</th>
+                        <th>Machine</th>
+                        <th>Recipient</th>
+                        <th>Reference</th>
+                        <th>Ticket No.</th>
+                        <th>By &amp; Date</th>
+                        <th></th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for txn in transactions %}
                     <tr>
                         <td>
                             {% if txn.transaction_type in 'receipt,return' %}
-                                <span class="badge bg-success">{{ txn.get_transaction_type_display }}</span>
+                                <span class="badge bg-success txn-type-badge">{{ txn.get_transaction_type_display }}</span>
                             {% elif txn.transaction_type in 'issue,damaged' %}
-                                <span class="badge bg-danger">{{ txn.get_transaction_type_display }}</span>
+                                <span class="badge bg-danger txn-type-badge">{{ txn.get_transaction_type_display }}</span>
                             {% else %}
-                                <span class="badge bg-secondary">{{ txn.get_transaction_type_display }}</span>
+                                <span class="badge bg-secondary txn-type-badge">{{ txn.get_transaction_type_display }}</span>
                             {% endif %}
                         </td>
                         <td class="fw-bold {% if txn.quantity < 0 %}text-danger{% else %}text-success{% endif %}">
                             {% if txn.quantity > 0 %}+{% endif %}{{ txn.quantity }}
                         </td>
-                        <td class="text-muted">{{ txn.quantity_before }}</td>
-                        <td class="fw-500">{{ txn.quantity_after }}</td>
+                        <td class="txn-stock-flow">
+                            <span class="text-muted">{{ txn.quantity_before }}</span>
+                            <i class="fa-solid fa-arrow-right-long mx-1 text-muted" style="font-size:0.7em;"></i>
+                            <span class="fw-600">{{ txn.quantity_after }}</span>
+                        </td>
                         <td><small>{{ txn.machine_serial|default:"—" }}</small></td>
-                        <td><small class="text-muted">{{ txn.reference_number|default:"—" }}</small></td>
-                        <td><small>{{ txn.performed_by.get_full_name|default:txn.performed_by.username|default:"—" }}</small></td>
-                        <td><small class="text-muted">{{ txn.performed_at|date:"d M Y H:i" }}</small></td>
+                        <td>
+                            <span class="recipient-tag">
+                                <i class="fa-solid fa-user"></i>{{ txn.recipient_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if txn.reference_number %}
+                            <span class="ref-tag" title="Reference Number">
+                                <i class="fa-solid fa-hashtag"></i>{{ txn.reference_number }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if txn.ticket_number %}
+                            <span class="ticket-tag" title="Ticket Number">
+                                <i class="fa-solid fa-ticket"></i>{{ txn.ticket_number }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="txn-by-date">
+                            <div class="fw-500" style="font-size:0.82rem;">{{ txn.performed_by.get_full_name|default:txn.performed_by.username|default:"—" }}</div>
+                            <small class="text-muted">{{ txn.performed_at|date:"d M Y, H:i" }}</small>
+                        </td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-secondary txn-edit-btn"
+                                title="Edit transaction"
+                                onclick="openEditTxnModal({{ txn.pk }})">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            </div>
+
+            <!-- Pagination (transactions are already paginated server-side at 5/page) -->
+            <div class="px-3 py-2 border-top">
+                {% if page_obj.has_other_pages %}
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-2 px-1">
+                    <p class="text-muted mb-0" style="font-size:0.8rem;">
+                        Showing <strong>{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
+                        of <strong>{{ page_obj.paginator.count }}</strong> records
+                    </p>
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination pagination-sm mb-0" style="gap:3px;">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?{% query_string page=1 %}" style="border-radius:6px;" title="First"><i class="fa-solid fa-angles-left"></i></a></li>
+                            <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.previous_page_number %}" style="border-radius:6px;"><i class="fa-solid fa-angle-left"></i></a></li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angles-left"></i></span></li>
+                            <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angle-left"></i></span></li>
+                            {% endif %}
+                            {% with page_obj.number as cur %}{% for p in page_obj.paginator.page_range %}{% if p >= cur|add:"-2" and p <= cur|add:"2" %}{% if p == cur %}<li class="page-item active"><span class="page-link fw-bold" style="border-radius:6px;background:var(--primary);border-color:var(--primary);">{{ p }}</span></li>{% else %}<li class="page-item"><a class="page-link" href="?{% query_string page=p %}" style="border-radius:6px;">{{ p }}</a></li>{% endif %}{% endif %}{% endfor %}{% endwith %}
+                            {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.next_page_number %}" style="border-radius:6px;"><i class="fa-solid fa-angle-right"></i></a></li>
+                            <li class="page-item"><a class="page-link" href="?{% query_string page=page_obj.paginator.num_pages %}" style="border-radius:6px;" title="Last"><i class="fa-solid fa-angles-right"></i></a></li>
+                            {% else %}
+                            <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angle-right"></i></span></li>
+                            <li class="page-item disabled"><span class="page-link" style="border-radius:6px;"><i class="fa-solid fa-angles-right"></i></span></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+            </div>
             {% else %}
             <div class="text-center py-5 text-muted">
                 <i class="fa-solid fa-receipt fa-2x mb-2"></i>
@@ -168,9 +240,25 @@
                             {{ transaction_form.machine_type }}
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Reference Number</label>
-                        {{ transaction_form.reference_number }}
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Recipient (system user)</label>
+                            {{ transaction_form.recipient_user }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Recipient Name (if not listed above)</label>
+                            {{ transaction_form.recipient_name }}
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Reference Number <span class="optional-tag">Optional</span></label>
+                            {{ transaction_form.reference_number }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Ticket Number <span class="optional-tag">Optional</span></label>
+                            {{ transaction_form.ticket_number }}
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Notes</label>
@@ -187,6 +275,74 @@
         </div>
     </div>
 </div>
+
+<!-- Edit Transaction Modal (recipient / machine / reference / notes only — quantity & type are not editable here, to preserve existing stock calculation logic) -->
+<div class="modal fade" id="editTxnModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa-solid fa-pen me-2"></i>Edit Transaction Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info py-2 mb-3" style="font-size:0.875rem;">
+                    Quantity and transaction type cannot be changed here to keep stock records accurate. Editing updates the recipient, machine, reference, and notes only.
+                </div>
+                <input type="hidden" id="editTxnId">
+                <div class="row g-3">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Machine Serial No.</label>
+                        <input type="text" class="form-control" id="editMachineSerial">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Machine Type</label>
+                        <select class="form-select" id="editMachineType">
+                            <option value="">— None —</option>
+                            {% for mt in transaction_form.machine_type.field.queryset %}
+                            <option value="{{ mt.pk }}">{{ mt.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Recipient (system user)</label>
+                        <select class="form-select" id="editRecipientUser">
+                            <option value="">Select a system user (optional)</option>
+                            {% for ru in transaction_form.recipient_user.field.queryset %}
+                            <option value="{{ ru.pk }}">{{ ru.get_full_name|default:ru.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Recipient Name</label>
+                        <input type="text" class="form-control" id="editRecipientName" placeholder="Recipient name (if not a system user)">
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Reference Number <span class="optional-tag">Optional</span></label>
+                        <input type="text" class="form-control" id="editReferenceNumber">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Ticket Number <span class="optional-tag">Optional</span></label>
+                        <input type="text" class="form-control" id="editTicketNumber">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-control" id="editNotes" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveEditTxn">
+                    <i class="fa-solid fa-floppy-disk me-1"></i> Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -198,7 +354,10 @@ document.getElementById('submitTxn').addEventListener('click', function() {
     data.append('quantity', form.querySelector('[name=quantity]').value);
     data.append('machine_serial', form.querySelector('[name=machine_serial]').value);
     data.append('machine_type', form.querySelector('[name=machine_type]').value);
+    data.append('recipient_user', form.querySelector('[name=recipient_user]') ? form.querySelector('[name=recipient_user]').value : '');
+    data.append('recipient_name', form.querySelector('[name=recipient_name]') ? form.querySelector('[name=recipient_name]').value : '');
     data.append('reference_number', form.querySelector('[name=reference_number]').value);
+    data.append('ticket_number', form.querySelector('[name=ticket_number]') ? form.querySelector('[name=ticket_number]').value : '');
     data.append('notes', form.querySelector('[name=notes]').value);
     data.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
@@ -216,6 +375,53 @@ document.getElementById('submitTxn').addEventListener('click', function() {
             showToast(d.error || 'Transaction failed', 'danger');
         }
         this.disabled = false; this.innerHTML = '<i class="fa-solid fa-check me-1"></i> Record Transaction';
+    });
+});
+
+// ── Edit Transaction modal (recipient / machine / reference / notes only) ──
+function openEditTxnModal(pk) {
+    fetch(`/inventory/transactions/${pk}/`)
+        .then(r => r.json())
+        .then(d => {
+            if (!d.success) { showToast('Could not load transaction.', 'danger'); return; }
+            document.getElementById('editTxnId').value = d.id;
+            document.getElementById('editMachineSerial').value = d.machine_serial || '';
+            document.getElementById('editMachineType').value = d.machine_type || '';
+            document.getElementById('editRecipientUser').value = d.recipient_user || '';
+            document.getElementById('editRecipientName').value = d.recipient_name || '';
+            document.getElementById('editReferenceNumber').value = d.reference_number || '';
+            document.getElementById('editTicketNumber').value = d.ticket_number || '';
+            document.getElementById('editNotes').value = d.notes || '';
+            new bootstrap.Modal(document.getElementById('editTxnModal')).show();
+        })
+        .catch(() => showToast('Could not load transaction.', 'danger'));
+}
+
+document.getElementById('saveEditTxn').addEventListener('click', function() {
+    const pk = document.getElementById('editTxnId').value;
+    if (!pk) return;
+    const data = new FormData();
+    data.append('machine_serial', document.getElementById('editMachineSerial').value);
+    data.append('machine_type', document.getElementById('editMachineType').value);
+    data.append('recipient_user', document.getElementById('editRecipientUser').value);
+    data.append('recipient_name', document.getElementById('editRecipientName').value);
+    data.append('reference_number', document.getElementById('editReferenceNumber').value);
+    data.append('ticket_number', document.getElementById('editTicketNumber').value);
+    data.append('notes', document.getElementById('editNotes').value);
+    data.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+    this.disabled = true; this.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Saving...';
+
+    fetch(`/inventory/transactions/${pk}/edit/`, { method: 'POST', body: data })
+    .then(r => r.json()).then(d => {
+        if (d.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editTxnModal')).hide();
+            showToast(d.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(d.error || 'Update failed', 'danger');
+        }
+        this.disabled = false; this.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i> Save Changes';
     });
 });
 </script>

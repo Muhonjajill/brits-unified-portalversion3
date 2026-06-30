@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .models import SparePart, StockTransaction, StockAlert, PartCategory, MachineType, Supplier
-from .forms import SparePartForm, StockTransactionForm, SupplierForm, PartCategoryForm, MachineTypeForm, StockFilterForm
+from .forms import SparePartForm, StockTransactionForm, StockTransactionEditForm, SupplierForm, PartCategoryForm, MachineTypeForm, StockFilterForm
 import json
 
 
@@ -336,6 +336,45 @@ def machine_type_create(request):
     else:
         form = MachineTypeForm()
     return render(request, 'core/inventory/machine_type_form.html', {'form': form, 'title': 'Add Machine Type'})
+
+
+@login_required
+def transaction_detail(request, pk):
+    """Returns JSON for a transaction, used to populate the Edit Transaction modal."""
+    txn = get_object_or_404(StockTransaction, pk=pk)
+    return JsonResponse({
+        'success': True,
+        'id': txn.pk,
+        'machine_serial': txn.machine_serial,
+        'machine_type': txn.machine_type_id,
+        'recipient_user': txn.recipient_user_id,
+        'recipient_name': txn.recipient_name,
+        'reference_number': txn.reference_number,
+        'ticket_number': txn.ticket_number,
+        'notes': txn.notes,
+    })
+
+
+@login_required
+def transaction_edit(request, pk):
+    """
+    Edits a transaction's non-quantity-affecting details (recipient, machine
+    serial/type, reference number, notes). Quantity, transaction_type, part,
+    and all stock levels/alerts are intentionally left untouched so existing
+    stock calculations and business logic are never altered by an edit.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False}, status=405)
+    txn = get_object_or_404(StockTransaction, pk=pk)
+    form = StockTransactionEditForm(request.POST, instance=txn)
+    if form.is_valid():
+        form.save()
+        return JsonResponse({
+            'success': True,
+            'message': 'Transaction updated successfully.',
+            'recipient_display': txn.recipient_display,
+        })
+    return JsonResponse({'success': False, 'error': str(form.errors)})
 
 
 @login_required

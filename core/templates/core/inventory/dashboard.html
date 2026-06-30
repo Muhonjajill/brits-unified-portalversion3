@@ -182,6 +182,7 @@
                 <th>Type</th>
                 <th>Qty</th>
                 <th>Reference</th>
+                <th>Recipient</th>
                 <th>By</th>
                 <th>Date</th>
             </tr>
@@ -208,6 +209,7 @@
                     {% if txn.quantity > 0 %}+{% endif %}{{ txn.quantity }}
                 </td>
                 <td><small class="text-muted">{{ txn.reference_number|default:"—" }}</small></td>
+                <td><span class="recipient-tag"><i class="fa-solid fa-user me-1 text-muted"></i>{{ txn.recipient_display }}</span></td>
                 <td><small>{{ txn.performed_by.get_full_name|default:txn.performed_by.username }}</small></td>
                 <td><small class="text-muted">{{ txn.performed_at|date:"d M Y H:i" }}</small></td>
             </tr>

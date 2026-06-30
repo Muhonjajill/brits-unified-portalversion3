@@ -34,15 +34,59 @@ class SparePartForm(forms.ModelForm):
 class StockTransactionForm(forms.ModelForm):
     class Meta:
         model = StockTransaction
-        fields = ['transaction_type', 'quantity', 'machine_serial', 'machine_type', 'reference_number', 'notes']
+        fields = [
+            'transaction_type', 'quantity', 'machine_serial', 'machine_type',
+            'recipient_user', 'recipient_name', 'reference_number', 'ticket_number', 'notes',
+        ]
         widgets = {
             'transaction_type': forms.Select(attrs={'class': 'form-select'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
             'machine_serial': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Machine serial number'}),
             'machine_type': forms.Select(attrs={'class': 'form-select'}),
+            'recipient_user': forms.Select(attrs={'class': 'form-select'}),
+            'recipient_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Recipient name (if not a system user)'}),
             'reference_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Job card / PO number'}),
+            'ticket_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Support / job ticket number'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['recipient_user'].required = False
+        self.fields['recipient_name'].required = False
+        self.fields['ticket_number'].required = False
+        self.fields['recipient_user'].empty_label = 'Select a system user (optional)'
+
+
+class StockTransactionEditForm(forms.ModelForm):
+    """
+    Used by the 'Edit Transaction' modal on the part detail / dashboard / reports pages.
+    Intentionally limited to non-quantity-affecting fields so existing stock
+    calculations, alerts, and business logic are never altered by an edit.
+    """
+    class Meta:
+        model = StockTransaction
+        fields = [
+            'machine_serial', 'machine_type',
+            'recipient_user', 'recipient_name',
+            'reference_number', 'ticket_number', 'notes',
+        ]
+        widgets = {
+            'machine_serial': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Machine serial number'}),
+            'machine_type': forms.Select(attrs={'class': 'form-select'}),
+            'recipient_user': forms.Select(attrs={'class': 'form-select'}),
+            'recipient_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Recipient name (if not a system user)'}),
+            'reference_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Job card / PO number'}),
+            'ticket_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Support / job ticket number'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['recipient_user'].required = False
+        self.fields['recipient_name'].required = False
+        self.fields['ticket_number'].required = False
+        self.fields['recipient_user'].empty_label = 'Select a system user (optional)'
 
 
 class SupplierForm(forms.ModelForm):

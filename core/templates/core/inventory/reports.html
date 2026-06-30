@@ -94,6 +94,7 @@
                     <th>Qty Change</th>
                     <th>Before</th>
                     <th>After</th>
+                    <th>Recipient</th>
                     <th>Performed By</th>
                     <th>Notes</th>
                 </tr>
@@ -116,6 +117,7 @@
                     </td>
                     <td class="text-muted">{{ txn.quantity_before }}</td>
                     <td class="fw-600">{{ txn.quantity_after }}</td>
+                    <td><span class="recipient-tag"><i class="fa-solid fa-user me-1 text-muted"></i>{{ txn.recipient_display }}</span></td>
                     <td>{{ txn.performed_by.get_full_name|default:txn.performed_by.username }}</td>
                     <td><small class="text-muted">{{ txn.notes|default:"—"|truncatechars:40 }}</small></td>
                 </tr>
