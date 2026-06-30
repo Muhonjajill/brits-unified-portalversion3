@@ -104,7 +104,8 @@
                         <th>Recipient</th>
                         <th>Reference</th>
                         <th>Ticket No.</th>
-                        <th>By &amp; Date</th>
+                        <th>By</th>
+                        <th>Date</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -152,10 +153,8 @@
                             <span class="text-muted">—</span>
                             {% endif %}
                         </td>
-                        <td class="txn-by-date">
-                            <div class="fw-500" style="font-size:0.82rem;">{{ txn.performed_by.get_full_name|default:txn.performed_by.username|default:"—" }}</div>
-                            <small class="text-muted">{{ txn.performed_at|date:"d M Y, H:i" }}</small>
-                        </td>
+                        <td class="fw-500" style="font-size:0.82rem;">{{ txn.performed_by.get_full_name|default:txn.performed_by.username|default:"—" }}</td>
+                        <td><small class="text-muted">{{ txn.performed_at|date:"d M Y, H:i" }}</small></td>
                         <td class="text-end">
                             <button type="button" class="btn btn-sm btn-outline-secondary txn-edit-btn"
                                 title="Edit transaction"
