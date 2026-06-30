@@ -930,7 +930,7 @@
     <p class="claim-modal-body">
       You are approving the claim for <strong>{{ claim.employee.get_full_name }}</strong>
       — <strong>{{ claim.month|date:"F Y" }}</strong>
-      (KES {{ claim.subtotal|floatformat:2 }}).
+      (KES {{ claim.net_payable|floatformat:2 }}).
     </p>
     <div class="field-group" style="text-align:left; margin-bottom:0;">
       <label style="font-size:0.82rem; font-weight:600; color:#6c757d; text-transform:uppercase;">
