@@ -11,7 +11,7 @@ from django.core.paginator import Paginator
 from decimal import Decimal
 
 from .models import ClaimForm, ClaimEntry, PaymentRecord
-from .forms import ClaimFormForm, ClaimEntryFormSet, ApprovalActionForm, PaymentRecordForm
+from .forms import ClaimFormForm, ClaimEntryFormSet, ApprovalActionForm, PaymentRecordForm, SuggestedAmountForm
 
 
 # ─── Role helpers ──────────────────────────────────────────────────────────────
@@ -199,7 +199,7 @@ def claim_list(request):
 
     pending_approvals = ClaimForm.objects.filter(
         Q(manager=user, status=ClaimForm.STATUS_SUBMITTED) |
-        Q(finance_reviewer=user, status=ClaimForm.STATUS_MANAGER_APPROVED)
+        Q(finance_reviewer=user, status=ClaimForm.STATUS_PENDING_DISBURSEMENT)
     ).select_related('employee')
 
     paginator = Paginator(all_claims_qs, 10)
@@ -211,7 +211,11 @@ def claim_list(request):
         summary = {
             'total': all_claims_qs.count(),
             'pending': all_claims_qs.filter(
-                status__in=[ClaimForm.STATUS_SUBMITTED, ClaimForm.STATUS_MANAGER_APPROVED]
+                status__in=[
+                    ClaimForm.STATUS_SUBMITTED,
+                    ClaimForm.STATUS_MANAGER_APPROVED,
+                    ClaimForm.STATUS_PENDING_DISBURSEMENT,
+                ]
             ).count(),
             'approved': all_claims_qs.filter(status=ClaimForm.STATUS_FINANCE_APPROVED).count(),
             'rejected': all_claims_qs.filter(status=ClaimForm.STATUS_REJECTED).count(),
@@ -404,14 +408,41 @@ def claim_detail(request, pk):
     history_paginator = Paginator(claim_history_qs, 5)
     history_page_obj = history_paginator.get_page(request.GET.get('history_page'))
 
-    # ── Payment recording — finance / elevated only ─────────────────────────────
+    # ── Finance Actions — two stages ─────────────────────────────────────────────
+    # Stage 1 (manager, status = manager_approved): manager records the amount
+    #   they recommend Finance disburse ("Amount Suggested"). This forwards the
+    #   claim to Finance (status -> pending_disbursement). No money is marked
+    #   as paid and the claim is not closed.
+    # Stage 2 (finance, status = pending_disbursement): finance reviews /
+    #   edits the suggested amount and records the final payment. This creates
+    #   the official PaymentRecord, marks the claim Closed, and redirects back
+    #   to the claim list.
+    suggestion_form = None
     payment_form = None
     payment_records = claim.payment_records.all()
 
-    can_record_payment = (
-        claim.status == ClaimForm.STATUS_FINANCE_APPROVED
-        and (claim.finance_reviewer == user or is_finance_user or elevated)
+    can_suggest_amount = (
+        claim.status == ClaimForm.STATUS_MANAGER_APPROVED
+        and (claim.manager == user or elevated)
     )
+    can_record_payment = (
+        claim.status == ClaimForm.STATUS_PENDING_DISBURSEMENT
+        and (claim.finance_reviewer == user or _is_finance_strict(user))
+    )
+
+    if can_suggest_amount and request.method == 'POST' and 'record_suggestion' in request.POST:
+        suggestion_form = SuggestedAmountForm(request.POST, instance=claim)
+        if suggestion_form.is_valid():
+            amount = suggestion_form.cleaned_data['suggested_amount']
+            claim.record_suggestion(user, amount)
+            messages.success(
+                request,
+                f"Suggested amount of KES {amount:,.2f} recorded. "
+                f"Claim forwarded to Finance for payment."
+            )
+            return redirect('claim_detail', pk=pk)
+    elif can_suggest_amount:
+        suggestion_form = SuggestedAmountForm()
 
     if can_record_payment and request.method == 'POST' and 'record_payment' in request.POST:
         payment_form = PaymentRecordForm(request.POST)
@@ -423,12 +454,17 @@ def claim_detail(request, pk):
             record.save()  # triggers claim.refresh_amount_paid() automatically
 
             claim.refresh_from_db()
+            claim.status = ClaimForm.STATUS_FINANCE_APPROVED
+            claim.finance_actioned_at = timezone.now()
+            claim.save()
+
+            _notify_employee_outcome(claim, request)
 
             overpayment = claim.overpayment
             if overpayment > Decimal('0.00'):
                 messages.warning(
                     request,
-                    f"⚠️ Payment of KES {record.amount:,.2f} recorded. "
+                    f"⚠️ Payment of KES {record.amount:,.2f} recorded and the claim is now closed. "
                     f"This exceeds the net payable by KES {overpayment:,.2f}. "
                     f"The surplus will automatically be deducted from "
                     f"{claim.employee.get_full_name()}'s next claim as a carry-forward advance."
@@ -436,12 +472,15 @@ def claim_detail(request, pk):
             else:
                 messages.success(
                     request,
-                    f"Payment of KES {record.amount:,.2f} recorded successfully."
+                    f"Payment of KES {record.amount:,.2f} recorded. Claim closed."
                 )
 
-            return redirect('claim_detail', pk=pk)
+            return redirect('claim_list')
     elif can_record_payment:
-        payment_form = PaymentRecordForm()
+        initial = {}
+        if claim.suggested_amount:
+            initial['amount'] = claim.suggested_amount
+        payment_form = PaymentRecordForm(initial=initial)
 
     return render(request, 'core/claims/claim_detail.html', {
         'claim': claim,
@@ -457,11 +496,21 @@ def claim_detail(request, pk):
         #'claim_history': claim_history,
         'claim_history': history_page_obj,
         'history_page_obj': history_page_obj,
+        'suggestion_form': suggestion_form,
+        'can_suggest_amount': can_suggest_amount,
         'payment_form': payment_form,
         'payment_records': payment_records,
         'can_record_payment': can_record_payment,
+        'can_view_payment_log': elevated or is_finance_user or claim.finance_reviewer == user,
     })
 
+def _is_finance_strict(user):
+    if user.is_superuser:
+        return True
+    role = getattr(user, 'role', '').lower() if hasattr(user, 'role') else ''
+    if role in ('finance', 'director'):   # 'manager' removed
+        return True
+    return user.groups.filter(name__in=['Finance', 'Director', 'Superadmin']).exists()
 
 # ─── Approval ──────────────────────────────────────────────────────────────────
 

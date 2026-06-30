@@ -111,6 +111,7 @@
 .status-secondary { background: #f0f0f0;  color: #555; }
 .status-primary   { background: #e0eaff;  color: #123692; }
 .status-info      { background: #d1f0fb;  color: #0c5e6f; }
+.status-warning   { background: #fff3cd;  color: #664d03; }
 .status-success   { background: #d4edda;  color: #155724; }
 .status-danger    { background: #f8d7da;  color: #721c24; }
 .paid-badge   { color: #198754; font-weight: 600; }
@@ -343,12 +344,12 @@
     <div class="track-step {% if s != 'draft' %}done{% elif s == 'draft' %}active{% endif %}">
       <div class="step-dot"></div><span>Submitted</span>
     </div>
-    <div class="track-line {% if s == 'manager_approved' or s == 'finance_approved' %}done{% endif %}"></div>
-    <div class="track-step {% if s == 'manager_approved' %}active{% elif s == 'finance_approved' %}done{% elif s == 'rejected' %}rejected{% endif %}">
+    <div class="track-line {% if s == 'manager_approved' or s == 'pending_disbursement' or s == 'finance_approved' %}done{% endif %}"></div>
+    <div class="track-step {% if s == 'manager_approved' %}active{% elif s == 'pending_disbursement' or s == 'finance_approved' %}done{% elif s == 'rejected' %}rejected{% endif %}">
       <div class="step-dot"></div><span>Manager</span>
     </div>
     <div class="track-line {% if s == 'finance_approved' %}done{% endif %}"></div>
-    <div class="track-step {% if s == 'finance_approved' %}done{% endif %}">
+    <div class="track-step {% if s == 'pending_disbursement' %}active{% elif s == 'finance_approved' %}done{% endif %}">
       <div class="step-dot"></div><span>Finance</span>
     </div>
     {% endwith %}
@@ -392,7 +393,7 @@
   </div>
 
   {# ── Payment records log — visible to finance/elevated only ── #}
-  {% if payment_records and can_record_payment %}
+  {% if payment_records and can_view_payment_log %}
   <div class="claim-meta-card payment-log-card">
     <h3 class="card-section-title">
       <i class="fas fa-receipt"></i> Payment Disbursement Log
@@ -755,13 +756,15 @@
   </div>
   {% endif %}
 
-  {% if can_approve and claim.next_approver_role == "Finance" or payment_form and can_record_payment %}
+  {% if can_suggest_amount or can_record_payment %}
   <div class="claim-meta-card finance-payment-card" id="financeActionsCard">
 
     {# ── Card header ── #}
     <h3 class="card-section-title">
       <i class="fas fa-coins"></i> Finance Actions
-      <span style="font-size:0.75em; font-weight:400; color:var(--claims-muted); margin-left:8px;">(Finance only)</span>
+      <span style="font-size:0.75em; font-weight:400; color:var(--claims-muted); margin-left:8px;">
+        {% if can_suggest_amount %}(Manager){% else %}(Finance only){% endif %}
+      </span>
     </h3>
 
     {# ── Financial integrity summary (always shown) ── #}
@@ -784,18 +787,10 @@
         <label>Net Payable</label>
         <strong class="grand-total">KES {{ claim.net_payable|floatformat:2 }}</strong>
       </div>
-      {% if claim.amount_paid %}
-      <div class="integrity-item">
-        <label>Already Paid</label>
-        <strong class="paid-badge"><i class="fas fa-check-circle"></i> KES {{ claim.amount_paid|floatformat:2 }}</strong>
-      </div>
-      <div class="integrity-item {% if claim.overpayment > 0 %}overpay-item{% endif %}">
-        <label>{% if claim.overpayment > 0 %}Overpayment{% else %}Balance Remaining{% endif %}</label>
-        {% if claim.overpayment > 0 %}
-          <strong class="overpaid-badge"><i class="fas fa-exclamation-triangle"></i> KES {{ claim.overpayment|floatformat:2 }}</strong>
-        {% else %}
-          <strong style="color:#dc3545;">KES {{ claim.balance_due|floatformat:2 }}</strong>
-        {% endif %}
+      {% if claim.suggested_amount and can_record_payment %}
+      <div class="integrity-item suggested-item">
+        <label>Manager Suggested</label>
+        <strong style="color:#6f42c1;"><i class="fas fa-user-tie"></i> KES {{ claim.suggested_amount|floatformat:2 }}</strong>
       </div>
       {% endif %}
     </div>
@@ -803,97 +798,79 @@
     {# ── Divider between integrity grid and action sections ── #}
     <hr style="margin:0 24px 20px; border:none; border-top:1px solid #e9ecef;">
 
-   
-    {% if can_approve and claim.next_approver_role == "Finance" %}
-    <div style="padding:0 24px 20px;">
+    {# ── Stage 1: Manager records the amount they recommend for payment ── #}
+    {% if can_suggest_amount %}
+    <div style="padding:0 24px 4px;">
       <p style="font-size:0.88rem; font-weight:700; color:#123692; margin:0 0 6px; display:flex; align-items:center; gap:6px;">
-        <i class="fas fa-clipboard-check"></i> Approve or Reject
+        <i class="fas fa-pen-to-square"></i> Suggest Payment Amount
       </p>
       <p class="approver-hint" style="margin:0 0 16px;">
         <i class="fas fa-info-circle"></i>
-        You are reviewing this claim as <strong>Finance</strong>.
-        Approving will allow you to record disbursements below.
+        You approved this claim for <strong>{{ claim.employee.get_full_name }}</strong>.
+        Enter the amount you recommend Finance disburse, then forward it for payment.
+        This does not mark the claim as paid.
       </p>
 
-      <form method="post" action="{% url 'claim_approve' claim.pk %}" id="approveForm">
+      <form method="post" id="suggestionForm">
         {% csrf_token %}
-        <input type="hidden" name="comment" id="approveCommentInput">
+        <div style="display:flex; gap:12px; flex-wrap:wrap; padding:0 0 20px; align-items:flex-end;">
+          <div class="field-group" style="margin:0; flex:1; min-width:200px;">
+            <label>Amount Suggested (KES)</label>
+            {{ suggestion_form.suggested_amount }}
+            {% if suggestion_form.suggested_amount.errors %}
+              <div class="field-error">{{ suggestion_form.suggested_amount.errors }}</div>
+            {% endif %}
+          </div>
+          <button type="submit" class="btn-submit-claim" style="height:40px; flex-shrink:0;">
+            <i class="fas fa-paper-plane"></i> Record Disbursement
+          </button>
+        </div>
+        <input type="hidden" name="record_suggestion" value="1">
       </form>
-      <form method="post" action="{% url 'claim_reject' claim.pk %}" id="rejectForm">
-        {% csrf_token %}
-        <input type="hidden" name="comment" id="rejectCommentInput">
-      </form>
-
-      <div class="form-actions" style="padding:0;">
-        <button type="button" class="btn-submit-claim" onclick="openClaimModal('approveModal')">
-          <i class="fas fa-check-circle"></i> Approve Claim
-        </button>
-        <button type="button" class="btn-reject" onclick="openClaimModal('rejectModal')">
-          <i class="fas fa-times-circle"></i> Reject Claim
-        </button>
-      </div>
     </div>
-
-    {# Dashed divider only if disbursement section also appears #}
-    {% if payment_form and can_record_payment %}
-    <hr style="margin:0 24px 20px; border:none; border-top:2px dashed #c0d0f0;">
-    {% endif %}
     {% endif %}
 
-    
-    {% if payment_form and can_record_payment %}
+    {# ── Stage 2: Finance reviews / edits the suggested amount and records final payment ── #}
+    {% if can_record_payment %}
     <div style="padding:0 24px 4px;">
       <p style="font-size:0.88rem; font-weight:700; color:#198754; margin:0 0 6px; display:flex; align-items:center; gap:6px;">
         <i class="fas fa-money-bill-wave"></i> Record Disbursement
       </p>
       <p class="approver-hint" style="margin:0 0 16px; border-left-color:#198754;">
         <i class="fas fa-info-circle"></i>
-        Record each disbursement made to <strong>{{ claim.employee.get_full_name }}</strong>.
-        Multiple partial payments are supported — each is logged in the payment log above.
-        If you disburse <em>more</em> than the net payable, the surplus automatically becomes
-        a carry-forward deduction on the employee's next claim.
-      </p>
-    </div>
-
-    {% if claim.overpayment > 0 %}
-    <div class="overpayment-hint">
-      <i class="fas fa-exclamation-triangle"></i>
-      <strong>Note:</strong> Total paid (KES {{ claim.amount_paid|floatformat:2 }}) already
-      exceeds net payable by <strong>KES {{ claim.overpayment|floatformat:2 }}</strong>.
-      This surplus carries forward to <strong>{{ claim.employee.get_full_name }}</strong>'s next claim.
-      An additional payment will increase the carry-forward further.
-    </div>
-    {% endif %}
-
-    <form method="post" id="paymentForm">
-      {% csrf_token %}
-      <div style="display:flex; gap:12px; flex-wrap:wrap; padding:0 24px 20px; align-items:flex-end;">
-        <div class="field-group" style="margin:0; flex:1; min-width:200px;">
-          <label>{{ payment_form.amount.label }}</label>
-          {{ payment_form.amount }}
-          {% if payment_form.amount.errors %}
-            <div class="field-error">{{ payment_form.amount.errors }}</div>
-          {% endif %}
-        </div>
-        <div class="field-group" style="margin:0; flex:2; min-width:240px;">
-          <label>{{ payment_form.note.label }} <span style="font-weight:400;text-transform:none;">(optional)</span></label>
-          {{ payment_form.note }}
-          {% if payment_form.note.errors %}
-            <div class="field-error">{{ payment_form.note.errors }}</div>
-          {% endif %}
-        </div>
-        <button type="button" class="btn-submit-claim" style="height:40px; flex-shrink:0;"
-                onclick="openClaimModal('paymentModal')">
-          <i class="fas fa-money-bill-wave"></i> Record Payment
-        </button>
-        {% if claim.amount_paid %}
-        <a href="{% url 'claim_list' %}" class="btn-action" style="height:40px; align-self:flex-end; border-color:#198754; color:#198754; background:#e6f4ea;">
-          <i class="fas fa-check-double"></i> Close Claim
-        </a>
+        {% if claim.suggested_amount %}
+          The manager suggested <strong>KES {{ claim.suggested_amount|floatformat:2 }}</strong>.
+          Edit the amount below if necessary, then record the final payment to close this claim.
+        {% else %}
+          Enter the final amount and record the payment to close this claim.
         {% endif %}
-      </div>
-      <input type="hidden" name="record_payment" value="1">
-    </form>
+      </p>
+
+      <form method="post" id="paymentForm">
+        {% csrf_token %}
+        <div style="display:flex; gap:12px; flex-wrap:wrap; padding:0 0 20px; align-items:flex-end;">
+          <div class="field-group" style="margin:0; flex:1; min-width:200px;">
+            <label>Amount Suggested (KES)</label>
+            {{ payment_form.amount }}
+            {% if payment_form.amount.errors %}
+              <div class="field-error">{{ payment_form.amount.errors }}</div>
+            {% endif %}
+          </div>
+          <div class="field-group" style="margin:0; flex:2; min-width:240px;">
+            <label>{{ payment_form.note.label }} <span style="font-weight:400;text-transform:none;">(optional)</span></label>
+            {{ payment_form.note }}
+            {% if payment_form.note.errors %}
+              <div class="field-error">{{ payment_form.note.errors }}</div>
+            {% endif %}
+          </div>
+          <button type="button" class="btn-submit-claim" style="height:40px; flex-shrink:0;"
+                  onclick="openClaimModal('paymentModal')">
+            <i class="fas fa-money-bill-wave"></i> Record Disbursement
+          </button>
+        </div>
+        <input type="hidden" name="record_payment" value="1">
+      </form>
+    </div>
     {% endif %}
 
   </div>
@@ -1192,7 +1169,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // If we just came from an approve/reject/payment POST (flash message present)
     // or the payment form is present and awaiting action, scroll to the card.
     const hasFlash = !!(messagesContainer && messagesContainer.querySelectorAll('.django-message').length);
-    const awaitingDisbursement = document.getElementById('paymentForm') !== null;
+    const awaitingDisbursement = document.getElementById('paymentForm') !== null || document.getElementById('suggestionForm') !== null;
     if (hasFlash || awaitingDisbursement) {
       // Wait a tick so layout is settled, then scroll without jumping the overlay around.
       setTimeout(function () {

@@ -187,6 +187,34 @@ class ApprovalActionForm(forms.Form):
     )
 
 
+class SuggestedAmountForm(forms.ModelForm):
+    """
+    Manager stage: capture the amount the manager recommends Finance disburse.
+    Saved on the ClaimForm itself (claim.suggested_amount) — separate from the
+    final PaymentRecord that Finance creates.
+    """
+    class Meta:
+        model = ClaimForm
+        fields = ['suggested_amount']
+        widgets = {
+            'suggested_amount': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0.01',
+                'step': '0.01',
+                'placeholder': '0.00',
+            }),
+        }
+        labels = {
+            'suggested_amount': 'Amount Suggested (KES)',
+        }
+
+    def clean_suggested_amount(self):
+        amount = self.cleaned_data.get('suggested_amount')
+        if amount is not None and amount <= 0:
+            raise forms.ValidationError("Amount must be greater than zero.")
+        return amount
+
+
 class PaymentRecordForm(forms.ModelForm):
     """
     Finance records a single disbursement against a finance-approved claim.

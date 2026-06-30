@@ -8,6 +8,7 @@ class ClaimForm(models.Model):
     STATUS_DRAFT = 'draft'
     STATUS_SUBMITTED = 'submitted'
     STATUS_MANAGER_APPROVED = 'manager_approved'
+    STATUS_PENDING_DISBURSEMENT = 'pending_disbursement'
     STATUS_FINANCE_APPROVED = 'finance_approved'
     STATUS_REJECTED = 'rejected'
 
@@ -15,7 +16,11 @@ class ClaimForm(models.Model):
         (STATUS_DRAFT, 'Draft'),
         (STATUS_SUBMITTED, 'Submitted'),
         (STATUS_MANAGER_APPROVED, 'Manager Approved'),
-        (STATUS_FINANCE_APPROVED, 'Finance Approved'),
+        (STATUS_PENDING_DISBURSEMENT, 'Pending Disbursement'),
+        # Kept as 'finance_approved' under the hood for backward compatibility
+        # (carry-forward logic, exports, dashboards all key off this value),
+        # but it now represents the terminal "Closed" state of the workflow.
+        (STATUS_FINANCE_APPROVED, 'Closed'),
         (STATUS_REJECTED, 'Rejected'),
     ]
 
@@ -70,6 +75,22 @@ class ClaimForm(models.Model):
         null=True, blank=True,
         related_name='claims_paid_out'
     )
+
+    # ── Manager's recommended payment amount (Finance Actions, manager stage) ──
+    # Set when the manager records the amount they recommend the employee
+    # should receive. This is a recommendation only — it does NOT mark the
+    # claim as paid and does NOT affect amount_paid / PaymentRecord totals.
+    suggested_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True,
+        help_text="Amount the manager recommends Finance disburse"
+    )
+    suggested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='claims_suggested_amount'
+    )
+    suggested_at = models.DateTimeField(null=True, blank=True)
 
     manager_comment = models.TextField(blank=True)
     finance_comment = models.TextField(blank=True)
@@ -155,6 +176,7 @@ class ClaimForm(models.Model):
             self.STATUS_DRAFT: 'secondary',
             self.STATUS_SUBMITTED: 'primary',
             self.STATUS_MANAGER_APPROVED: 'info',
+            self.STATUS_PENDING_DISBURSEMENT: 'warning',
             self.STATUS_FINANCE_APPROVED: 'success',
             self.STATUS_REJECTED: 'danger',
         }.get(self.status, 'secondary')
@@ -163,14 +185,13 @@ class ClaimForm(models.Model):
     def next_approver_role(self):
         if self.status == self.STATUS_SUBMITTED:
             return 'Manager'
-        if self.status == self.STATUS_MANAGER_APPROVED:
-            return 'Finance'
         return None
 
     def can_approve(self, user):
+        # Finance no longer approves/rejects a second time — once the manager
+        # has approved, Finance's role is limited to confirming payment
+        # (see can_suggest_amount / can_record_final_payment in the view).
         if self.status == self.STATUS_SUBMITTED and self.manager == user:
-            return True
-        if self.status == self.STATUS_MANAGER_APPROVED and self.finance_reviewer == user:
             return True
         return False
 
@@ -180,10 +201,18 @@ class ClaimForm(models.Model):
             self.status = self.STATUS_MANAGER_APPROVED
             self.manager_comment = comment
             self.manager_actioned_at = now
-        elif self.status == self.STATUS_MANAGER_APPROVED and self.finance_reviewer == user:
-            self.status = self.STATUS_FINANCE_APPROVED
-            self.finance_comment = comment
-            self.finance_actioned_at = now
+        self.save()
+
+    def record_suggestion(self, user, amount):
+        """
+        Manager records the amount they recommend Finance should disburse.
+        Forwards the claim to the Finance stage (Pending Disbursement).
+        Does NOT mark the claim as paid or closed.
+        """
+        self.suggested_amount = amount
+        self.suggested_by = user
+        self.suggested_at = timezone.now()
+        self.status = self.STATUS_PENDING_DISBURSEMENT
         self.save()
 
     def reject(self, user, comment=''):

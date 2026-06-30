@@ -58,7 +58,7 @@
           <tr>
             <th>Employee</th>
             <th>Month</th>
-            <th>Sub-total</th>
+            <th class="col-amount">Sub-total</th>
             <th>Status</th>
             <th>Submitted</th>
             <th>Action</th>
@@ -130,9 +130,9 @@
             {% if elevated %}<th>Employee</th>{% endif %}
             <th>Title</th>
             <th>Month</th>
-            <th>Sub-total</th>
-            <th>Advance</th>
-            <th>Paid</th>
+            <th class="col-amount">Sub-total</th>
+            <th class="col-amount">Advance</th>
+            <th class="col-amount">Paid</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
@@ -141,9 +141,9 @@
           {% for claim in page_obj %}
           <tr>
             {% if elevated %}
-            <td data-label="Employee">{{ claim.employee.get_full_name }}</td>
+            <td data-label="Employee" class="truncate-cell" title="{{ claim.employee.get_full_name }}">{{ claim.employee.get_full_name }}</td>
             {% endif %}
-            <td data-label="Title">{{ claim.title|default:"—" }}</td>
+            <td data-label="Title" class="truncate-cell" title="{{ claim.title|default:'' }}">{{ claim.title|default:"—" }}</td>
             <td data-label="Month">{{ claim.month|date:"F Y" }}</td>
             <td data-label="Sub-total" class="amount">KES {{ claim.subtotal|floatformat:2 }}</td>
             <td data-label="Advance" class="amount">KES {{ claim.advance|floatformat:2 }}</td>
@@ -170,9 +170,9 @@
                 <a href="{% url 'claim_export_pdf' claim.pk %}" class="btn-action btn-pdf">
                   <i class="fas fa-file-pdf"></i> PDF
                 </a>
-                <a href="{% url 'claim_export_excel' claim.pk %}" class="btn-action btn-excel">
+                <!--<a href="{% url 'claim_export_excel' claim.pk %}" class="btn-action btn-excel">
                   <i class="fas fa-file-excel"></i> Excel
-                </a>
+                </a>-->
               {% endif %}
               {% if can_delete %}
                 <button type="button" class="btn-action btn-danger-sm"

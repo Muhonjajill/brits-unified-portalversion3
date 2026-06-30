@@ -412,9 +412,10 @@ textarea.form-control { resize: vertical; }
   font-size: 0.75rem; font-weight: 700;
 }
 
-.claims-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.claims-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
 .claims-table {
-  width: 100%; border-collapse: collapse;
+  width: 100%; border-collapse: separate;
+  border-spacing: 0;
   background: var(--claims-card);
   border-radius: 12px; overflow: hidden;
   box-shadow: 0 4px 15px rgba(0,0,0,.05);
@@ -422,12 +423,20 @@ textarea.form-control { resize: vertical; }
 }
 .claims-table th {
   background: var(--claims-primary); color: #fff;
-  padding: 12px 16px; text-align: left;
+  padding: 13px 16px; text-align: left;
   font-weight: 600; white-space: nowrap;
+  box-sizing: border-box;
 }
 
+/* Right-align numeric/amount header cells so they line up with the
+   right-aligned numeric cells beneath them (was previously left-aligned,
+   causing the visible header/row misalignment on KES columns). */
+.claims-table th.col-amount,
+.claims-table td.amount,
+.claims-table th[data-col="amount"] { text-align: right; }
+
 .claims-table .action-cell {
-  min-width: 180px;
+  min-width: 200px;
   vertical-align: middle;
 }
 
@@ -435,10 +444,22 @@ textarea.form-control { resize: vertical; }
   padding: 12px 16px;
   border-bottom: 1px solid #f0f0f0;
   vertical-align: middle;
+  box-sizing: border-box;
+  /* Long values wrap/truncate cleanly instead of stretching the row and
+     breaking column alignment with the header. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.claims-table td.allow-wrap { white-space: normal; word-break: break-word; }
+.claims-table td.truncate-cell {
+  max-width: 220px;
 }
 
-.claims-table th:last-child {
-  min-width: 180px;
+.claims-table th:last-child,
+.claims-table td:last-child {
+  min-width: 200px;
+  white-space: normal;
 }
 
 /* Make individual action buttons smaller in the list view */
@@ -449,8 +470,8 @@ textarea.form-control { resize: vertical; }
 }
 
 .claims-table tr:last-child td { border-bottom: none; }
-.claims-table tbody tr:hover td { background: #f0f4ff; }
-.action-cell { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.claims-table tbody tr:hover td { background: #f0f4ff; transition: background .15s; }
+.action-cell { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; white-space: normal; }
 
 /* ── Approval panel ── */
 .approval-panel { border: 2px solid var(--claims-warning); background: #fffdf0; }
@@ -584,7 +605,12 @@ textarea.form-control { resize: vertical; }
 }
 
 /* ── Finance payment card ── */
-.finance-payment-card { border-left: 4px solid #10b981; }
+.finance-payment-card {
+  border-left: 4px solid #10b981;
+  position: relative;
+  transition: box-shadow .2s;
+}
+.finance-payment-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.07); }
 .finance-integrity-grid {
   display: flex;
   flex-wrap: wrap;
@@ -596,7 +622,13 @@ textarea.form-control { resize: vertical; }
   flex-direction: column;
   gap: 2px;
   min-width: 140px;
+  background: #f8f9fc;
+  border-radius: 10px;
+  padding: 12px 16px;
+  border: 1px solid #eef1f8;
+  transition: transform .15s, box-shadow .15s;
 }
+.integrity-item:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,.05); }
 .integrity-item label {
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -607,6 +639,16 @@ textarea.form-control { resize: vertical; }
 .integrity-item strong {
   font-size: 1rem;
   color: var(--claims-text);
+}
+.integrity-item.overpay-item { background: #fff3cd; border-color: #ffe69c; }
+.integrity-item.suggested-item { background: #f5f0fd; border-color: #e3d6f8; }
+
+/* Finance Actions sub-sections (manager-suggestion / final-payment) */
+.finance-payment-card .field-group input.form-control {
+  height: 42px;
+}
+.finance-payment-card .approver-hint {
+  border-radius: 10px;
 }
 
 /* ── Entries hint text ── */
