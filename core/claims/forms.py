@@ -208,6 +208,10 @@ class SuggestedAmountForm(forms.ModelForm):
             'suggested_amount': 'Amount Suggested (KES)',
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['suggested_amount'].required = True
+
     def clean_suggested_amount(self):
         amount = self.cleaned_data.get('suggested_amount')
         if amount is not None and amount <= 0:

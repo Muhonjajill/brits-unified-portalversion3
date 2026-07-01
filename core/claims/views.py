@@ -175,8 +175,19 @@ def claim_list(request):
     user = request.user
     elevated = _is_elevated(user)
 
-    if elevated:
+    """if elevated:
         all_claims_qs = ClaimForm.objects.select_related('employee', 'manager', 'finance_reviewer')
+    else:
+        all_claims_qs = ClaimForm.objects.filter(
+            employee=user
+        ).select_related('employee', 'manager', 'finance_reviewer')"""
+
+    if elevated:
+        all_claims_qs = ClaimForm.objects.select_related(
+            'employee', 'manager', 'finance_reviewer'
+        ).filter(
+            ~Q(status=ClaimForm.STATUS_DRAFT) | Q(employee=user)
+        )
     else:
         all_claims_qs = ClaimForm.objects.filter(
             employee=user
@@ -384,7 +395,6 @@ def claim_edit(request, pk):
 
 
 # ─── Detail ────────────────────────────────────────────────────────────────────
-
 @login_required
 def claim_detail(request, pk):
     claim = get_object_or_404(
@@ -396,6 +406,11 @@ def claim_detail(request, pk):
     user = request.user
     elevated = _is_elevated(user)
     is_finance_user = _is_finance(user)
+
+    if claim.status == ClaimForm.STATUS_DRAFT and user != claim.employee:
+        messages.error(request, "You do not have access to this claim.")
+        return redirect('claim_list')
+
     allowed = [claim.employee, claim.manager, claim.finance_reviewer]
 
     if user not in allowed and not elevated:
@@ -578,6 +593,8 @@ def claim_export_pdf(request, pk):
         ClaimForm.objects.select_related('employee').prefetch_related('entries', 'payment_records'),
         pk=pk
     )
+    if claim.status == ClaimForm.STATUS_DRAFT and request.user != claim.employee:
+        return HttpResponse("Forbidden", status=403)
     allowed = [claim.employee, claim.manager, claim.finance_reviewer]
     if request.user not in allowed and not _is_elevated(request.user):
         return HttpResponse("Forbidden", status=403)
@@ -592,13 +609,14 @@ def claim_export_pdf(request, pk):
     except ImportError:
         return HttpResponse("WeasyPrint is not installed. Run: pip install weasyprint", status=500)
 
-
 @login_required
 def claim_export_excel(request, pk):
     claim = get_object_or_404(
         ClaimForm.objects.select_related('employee').prefetch_related('entries', 'payment_records'),
         pk=pk
     )
+    if claim.status == ClaimForm.STATUS_DRAFT and request.user != claim.employee:
+        return HttpResponse("Forbidden", status=403)
     allowed = [claim.employee, claim.manager, claim.finance_reviewer]
     if request.user not in allowed and not _is_elevated(request.user):
         return HttpResponse("Forbidden", status=403)
