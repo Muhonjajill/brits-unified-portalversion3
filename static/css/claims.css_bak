@@ -169,7 +169,7 @@ textarea.form-control { resize: vertical; }
   /* Fixed layout + explicit min-width stops the browser from
      squashing columns to fit — user scrolls instead           */
   table-layout: fixed;
-  min-width: 1140px;
+  min-width: 1032px;
 }
 
 /* ── Column widths ── */
@@ -184,9 +184,8 @@ textarea.form-control { resize: vertical; }
 .entries-table th:nth-child(9)  { width: 62px;  } /* Dinner     */
 .entries-table th:nth-child(10) { width: 58px;  } /* Bed        */
 .entries-table th:nth-child(11) { width: 80px;  } /* Other Exp  */
-.entries-table th:nth-child(12) { width: 130px; } /* Other Exp Note */
-.entries-table th:nth-child(13) { width: 72px;  } /* Total      */
-.entries-table th:nth-child(14) { width: 36px;  } /* × remove   */
+.entries-table th:nth-child(12) { width: 72px;  } /* Total      */
+.entries-table th:nth-child(13) { width: 36px;  } /* × remove   */
 
 .entries-table th {
   background: var(--claims-primary);
@@ -232,20 +231,6 @@ textarea.form-control { resize: vertical; }
 .entries-table td input[type="number"] {
   text-align: right;
   padding-right: 4px;
-}
-
-/* Other-expenditure note cell — wraps instead of truncating so the
-   explanation stays fully readable */
-.entries-table td.note-cell,
-.entries-table td.note-cell input {
-  white-space: normal;
-  word-break: break-word;
-}
-.entries-table.view-table td.note-cell {
-  white-space: normal;
-  word-break: break-word;
-  color: var(--claims-muted);
-  font-size: 0.85em;
 }
 
 .entries-table tbody tr:hover td { background: #f0f4ff; }

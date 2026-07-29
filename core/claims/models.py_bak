@@ -360,10 +360,6 @@ class ClaimEntry(models.Model):
     dinner = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     bed = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     other_expenditure = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
-    other_expenditure_note = models.CharField(
-        max_length=255, blank=True,
-        help_text="Brief explanation of what the 'Other Expenditure' amount was for"
-    )
     order = models.PositiveIntegerField(default=0)
 
     class Meta:

@@ -313,7 +313,6 @@
                 <th style="min-width:70px;">Dinner</th>
                 <th style="min-width:70px;">Bed</th>
                 <th style="min-width:100px;">Other Exp</th>
-                <th style="min-width:150px;">Other Exp Note</th>
                 <th style="min-width:80px;">Total</th>
                 <th style="width:36px;"></th>
               </tr>
@@ -332,7 +331,6 @@
                   <td>{{ entry_form.dinner }}</td>
                   <td>{{ entry_form.bed }}</td>
                   <td>{{ entry_form.other_expenditure }}</td>
-                  <td class="note-cell">{{ entry_form.other_expenditure_note }}</td>
                   <td class="row-total grand-total" style="text-align:right;">0.00</td>
                   <td>
                     <button type="button" class="btn-remove-row" onclick="removeRow(this)" title="Remove">
@@ -352,7 +350,6 @@
                 <td id="col-total-dinner"    class="amount">0.00</td>
                 <td id="col-total-bed"       class="amount">0.00</td>
                 <td id="col-total-other"       class="amount">0.00</td>
-                <td></td>
                 <td id="grand-subtotal"      class="grand-total">0.00</td>
                 <td></td>
               </tr>
@@ -360,7 +357,7 @@
               {# ── Carry-forward row (read-only) ── #}
               {% if carry_amount and carry_amount != 0 %}
               <tr class="totals-row carry-row">
-                <td colspan="12" class="totals-label">
+                <td colspan="11" class="totals-label">
                   <i class="fas fa-history"></i>
                   Carry-forward ({{ prev_claim_ref.month|date:"M Y" }})
                 </td>
@@ -388,13 +385,12 @@
                   </div>
                   {% if form.advance.errors %}<div class="field-error" style="font-size:.78rem;color:#dc3545;">{{ form.advance.errors }}</div>{% endif %}
                 </td>
-                <td></td>
                 <td id="display-advance" class="grand-total">0.00</td>
                 <td></td>
               </tr>
 
               <tr class="totals-row net-row">
-                <td colspan="12" class="totals-label">Balance Payable to Employee</td>
+                <td colspan="11" class="totals-label">Balance Payable to Employee</td>
                 <td id="net-total" class="grand-total">0.00</td>
                 <td></td>
               </tr>
