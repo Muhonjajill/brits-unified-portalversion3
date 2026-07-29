@@ -95,12 +95,12 @@ body {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0 1.25rem;
-    height: var(--topbar-h);
+    padding: 0.75rem 1.25rem;
+    min-height: var(--topbar-h);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
 }
-.sidebar-brand img { height: 36px; flex-shrink: 0; border-radius: 6px; }
+.sidebar-brand img { height: 62px; width: auto; flex-shrink: 0; border-radius: 6px; }
 .sidebar-brand span { color: var(--primary); font-size: 0.85rem; font-weight: 700; line-height: 1.35; }
 
 .sidebar-close {
@@ -490,8 +490,10 @@ body {
 
 <nav class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-        <img src="{% static 'icons/logo.png' %}" alt="Blue River">
-        <span>Blue River<br>Technology Solutions</span>
+        <a href="{% url 'pre_dashboards' %}" style="text-decoration: none;">
+            <img src="{% static 'icons/logo.png' %}" alt="Blue River">
+        </a>
+        <!--<span>Blue River<br>Technology Solutions</span>-->
         <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">
             <i class="fa-solid fa-xmark"></i>
         </button>
