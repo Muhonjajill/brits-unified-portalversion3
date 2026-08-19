@@ -1,4 +1,5 @@
 from .imports import *
+from .utility import safe_send_mail
 
 def in_group(user, group_name):
     return user.is_authenticated and (user.is_superuser or user.groups.filter(name=group_name).exists())
@@ -54,7 +55,9 @@ def register_view(request):
                     [superuser.email],
                 )
                 email.content_subtype = "html"  
-                email.send()
+                #email.send()
+                if not safe_send_mail(email.send):
+                    messages.warning(request, "User created, but the notification email to the admin could not be sent.")
 
             return redirect('login')
         else:
@@ -119,10 +122,13 @@ def login_view(request):
 
                 #email.send()
 
-                try:
+                """try:
                     email.send()
                 except Exception as e:
-                    print(f"OTP email failed (network issue): {e}")
+                    print(f"OTP email failed (network issue): {e}")"""
+
+                if not safe_send_mail(email.send):
+                    return JsonResponse({'status': 'error', 'message': 'Could not send the login code. Please try again shortly.'})
 
                 return JsonResponse({'status': 'otp_sent'})
             else:
@@ -188,7 +194,9 @@ def send_inhouse_user_email(request, user, password, role):
     
     subject = f"Welcome to BRITS Ticketing System - {role} Account Created"
     message = render_to_string('email/inhouse_user_created.html', context)
-    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
+    #send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
+    if not safe_send_mail(send_mail, subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message):
+        messages.warning(request, "User created, but the welcome email could not be sent.")
 
 
 def send_overseer_email(request, user, password, customer):
@@ -211,7 +219,9 @@ def send_overseer_email(request, user, password, customer):
     
     subject = f"Welcome to BRITS Ticketing System - Overseer Account for {customer.name}"
     message = render_to_string('email/overseer_created.html', context)
-    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
+    #send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
+    if not safe_send_mail(send_mail, subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message):
+        messages.warning(request, "User created, but the welcome email could not be sent.")
 
 
 def send_custodian_email(request, user, password, customer, terminal):
@@ -235,7 +245,9 @@ def send_custodian_email(request, user, password, customer, terminal):
     
     subject = f"Welcome to BRITS Ticketing System - Custodian Account for {customer.name} - {terminal.branch_name}"
     message = render_to_string('email/custodian_created.html', context)
-    send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
+    #send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message)
+    if not safe_send_mail(send_mail, subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message):
+        messages.warning(request, "User created, but the welcome email could not be sent.")
 
 
 def send_role_assigned_email(user, new_role, request, customer=None, terminal=None):
@@ -276,16 +288,16 @@ def send_role_assigned_email(user, new_role, request, customer=None, terminal=No
         'domain': domain,
     })
 
-    try:
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,  
-            [user.email],  
-            html_message=message 
-        )
-    except Exception as e:
-        messages.error(request, "There was an error sending the email.")
+    if not safe_send_mail(
+        send_mail,
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+        html_message=message
+    ):
+        messages.warning(request, "Role updated, but the notification email could not be sent.")
+
 
 
 def send_role_removed_email(user, role, request):
@@ -299,21 +311,16 @@ def send_role_removed_email(user, role, request):
     else:
         role_message = f"Your role as {role} has been removed."
 
-    try:
-        message = render_to_string('email/role_removed_notification.html', {
-            'user': user,
-            'role_message': role_message,
-        })
+    
+    message = render_to_string('email/role_removed_notification.html', {
+        'user': user,
+        'role_message': role_message,
+    })
 
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            html_message=message
-        )
-    except Exception as e:
-        messages.error(request, "There was an error sending the email.")
+    
+    if not safe_send_mail(send_mail, subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message):
+        messages.warning(request, "Role removed, but the notification email could not be sent.")
+
 
 
 def send_user_updated_email(request, user, changes, new_role, profile):
@@ -339,13 +346,7 @@ def send_user_updated_email(request, user, changes, new_role, profile):
     
     message = render_to_string('email/user_updated_notification.html', context)
     
-    try:
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            html_message=message
-        )
-    except Exception as e:
-        messages.error(request, "There was an error sending the update notification email.")
+    
+    if not safe_send_mail(send_mail, subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], html_message=message):
+        messages.warning(request, "User updated, but the notification email could not be sent.")
+    

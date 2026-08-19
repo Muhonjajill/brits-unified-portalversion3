@@ -1,5 +1,25 @@
 from .imports import *
 
+import logging
+from smtplib import SMTPException
+
+logger = logging.getLogger(__name__)
+
+def safe_send_mail(send_callable, *args, **kwargs):
+    """
+    Wraps any email-sending call so that SMTP failures (bad/changed Zoho IP,
+    auth errors, timeouts, connection refused, etc.) never bubble up into a
+    500 — they just get logged and reported as a non-fatal warning instead.
+    Returns True if the email sent, False otherwise.
+    """
+    try:
+        send_callable(*args, **kwargs)
+        return True
+    except (SMTPException, ConnectionError, OSError, TimeoutError) as e:
+        logger.error(f"Email send failed: {e}", exc_info=True)
+        return False
+
+
 @login_required
 def profile_view(request):
     context = {

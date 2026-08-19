@@ -1,5 +1,8 @@
 from .imports import *
-from .utility import export_tickets_to_excel
+from .utility import export_tickets_to_excel, safe_send_mail
+
+import logging
+logger = logging.getLogger(__name__)
 
 @login_required(login_url='login')
 def tickets(request):
@@ -309,7 +312,9 @@ def create_ticket(request):
                         logo.add_header('Content-Disposition', 'inline; filename="logo.png"')
                         msg.attach(logo)
 
-                msg.send()
+                #msg.send()
+                if not safe_send_mail(msg.send):
+                    messages.warning(request, "Ticket created, but the assignment notification email could not be sent.")
                 
                 ActivityLog.objects.create(
                     ticket=ticket,
@@ -424,7 +429,8 @@ def escalate_ticket(request, ticket_id):
                 f"{reverse('ticket_detail', args=[ticket.id])}"
             )
 
-            send_mail(
+            email_sent = safe_send_mail(
+                send_mail,
                 subject=f"Ticket #{ticket.id} Escalated to {ticket.current_escalation_level}",
                 message=f"""
                 Ticket ID: {ticket.id}
@@ -438,11 +444,13 @@ def escalate_ticket(request, ticket_id):
 
                 """,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=get_email_for_level(next_level),  
+                recipient_list=get_email_for_level(next_level),
                 fail_silently=False,
             )
-
-            messages.success(request, f"Ticket has been escalated to {next_level}.")
+            if not email_sent:
+                messages.warning(request, "Ticket escalated, but the notification email could not be sent.")
+            else:
+                messages.success(request, f"Ticket has been escalated to {next_level}.")
             return redirect('ticket_detail', ticket_id=ticket.id)
     else:
         print("There is a problem")
@@ -600,7 +608,9 @@ def ticket_detail(request, ticket_id):
                         logo.add_header('Content-Disposition', 'inline; filename="logo.png"')
                         msg.attach(logo)
 
-                msg.send()
+                #msg.send()
+                if not safe_send_mail(msg.send):
+                    messages.warning(request, "Ticket assigned, but the assignee notification email could not be sent.")
 
                 # New Email to the ticket creator
                 ticket_creator = ticket.created_by  # The user who created the ticket
@@ -639,7 +649,9 @@ def ticket_detail(request, ticket_id):
                         logo_creator.add_header('Content-Disposition', 'inline; filename="logo.png"')
                         msg_creator.attach(logo_creator)
 
-                msg_creator.send()
+                #msg_creator.send()
+                if not safe_send_mail(msg_creator.send):
+                    messages.warning(request, "Ticket assigned, but the creator notification email could not be sent.")
 
                 if old_assigned_to and old_assigned_to != staff_member:
                     ActivityLog.objects.create(
@@ -689,7 +701,9 @@ def ticket_detail(request, ticket_id):
                             logo.add_header('Content-Disposition', 'inline; filename="logo.png"')
                             msg.attach(logo)
 
-                    msg.send()
+                    #msg.send()
+                    if not safe_send_mail(msg.send):
+                        messages.warning(request, "Ticket reassigned, but the reassignment notification email could not be sent.")
 
                 #return redirect('ticket_detail', ticket_id=ticket.id)
                 messages.success(request, f"Ticket #{ticket.id} successfully assigned to {staff_member.get_full_name()}")
@@ -1132,10 +1146,12 @@ def get_email_for_level(level):
 def notify_group(level, ticket):
     email_recipient = get_email_for_level(level)  
     
-    send_mail(
+    if not safe_send_mail(
+        send_mail,
         f'Ticket #{ticket.id} has been escalated to {level}',
         f'The ticket with the issue "{ticket.title}" has been escalated to {level}.',
         settings.DEFAULT_FROM_EMAIL,
-        [email_recipient],
+        email_recipient,
         fail_silently=False
-    )
+    ):
+        logger.warning(f"notify_group email failed for ticket {ticket.id}, level {level}")
