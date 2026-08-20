@@ -188,6 +188,23 @@ textarea.form-control { resize: vertical; }
 .entries-table th:nth-child(13) { width: 72px;  } /* Total      */
 .entries-table th:nth-child(14) { width: 36px;  } /* × remove   */
 
+/* ── Detail/view table has 12 columns (no separate Ticket URL or
+   remove-button columns), so it needs its own width map ── */
+.entries-table.view-table { min-width: 1100px; }
+
+.entries-table.view-table th:nth-child(1)  { width: 110px; } /* Date            */
+.entries-table.view-table th:nth-child(2)  { width: 130px; } /* Site            */
+.entries-table.view-table th:nth-child(3)  { width: 90px;  } /* Ticket No.      */
+.entries-table.view-table th:nth-child(4)  { width: 72px;  } /* To (KES)        */
+.entries-table.view-table th:nth-child(5)  { width: 72px;  } /* From (KES)      */
+.entries-table.view-table th:nth-child(6)  { width: 68px;  } /* Breakfast       */
+.entries-table.view-table th:nth-child(7)  { width: 62px;  } /* Lunch           */
+.entries-table.view-table th:nth-child(8)  { width: 62px;  } /* Dinner          */
+.entries-table.view-table th:nth-child(9)  { width: 58px;  } /* Bed             */
+.entries-table.view-table th:nth-child(10) { width: 90px;  } /* Other Exp.      */
+.entries-table.view-table th:nth-child(11) { width: 160px; } /* Other Exp. Note */
+.entries-table.view-table th:nth-child(12) { width: 80px;  } /* Total (KES)     */
+
 .entries-table th {
   background: var(--claims-primary);
   color: #fff;
