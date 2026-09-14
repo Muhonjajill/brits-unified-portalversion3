@@ -161,13 +161,6 @@
 /* Required asterisk */
 .required { color: #dc3545; }
 
-/* Highlight entry-row fields flagged by the Date/Site validation modal */
-.entries-table td input.input-error,
-.entries-table td select.input-error {
-  border-color: #dc3545 !important;
-  box-shadow: 0 0 0 2px rgba(220,53,69,.15) !important;
-}
-
 /* form-select / form-control */
 .form-select, .form-control {
   display: block; width: 100%; border: 1.5px solid #dee2e6;
@@ -510,24 +503,6 @@
   </div>
 </div>
 
-{# ══ Missing Date/Site Validation Modal ══ #}
-<div class="claim-modal-overlay" id="entryValidationModal">
-  <div class="claim-modal">
-    <button class="claim-modal-close" onclick="closeClaimModal('entryValidationModal')">&times;</button>
-    <div class="claim-modal-icon claim-modal-icon--warning"><i class="fas fa-exclamation-triangle"></i></div>
-    <h3 class="claim-modal-title" style="color:#664d03;">Missing Required Fields</h3>
-    <div class="claim-modal-divider"></div>
-    <p class="claim-modal-body" id="entryValidationBody">
-      Please fill in both the <strong>Date</strong> and <strong>Site</strong> for every entry row before continuing.
-    </p>
-    <div class="claim-modal-actions">
-      <button class="claim-modal-btn claim-modal-btn--primary" onclick="closeClaimModal('entryValidationModal')">
-        <i class="fas fa-check"></i> OK, I'll fix it
-      </button>
-    </div>
-  </div>
-</div>
-
 <script>
 /*function submitClaim(action) {
   document.getElementById('action-input').value = action;
@@ -552,65 +527,7 @@
   document.getElementById('claim-form').submit();
 }*/
 
-// ── Date/Site validation, run before the existing submit logic ──────────────
-// A row that's completely empty is left alone — the untouched logic below
-// still silently drops it. Only rows where the user started filling in the
-// row (Date or Site present) but left the OTHER one blank are flagged.
-function findMissingEntryFields() {
-  const rows = document.querySelectorAll('#entries-body .entry-row:not(.deleted)');
-  const problems = [];
-  rows.forEach(function (row) {
-    const dateVal = row.querySelector('input[name$="-date"]');
-    const siteVal = row.querySelector('input[name$="-site"]');
-    const hasDate = dateVal && dateVal.value.trim() !== '';
-    const hasSite = siteVal && siteVal.value.trim() !== '';
-    if (!hasDate && !hasSite) return; // fully empty row — unaffected, handled as before
-    if (!hasDate || !hasSite) {
-      problems.push({ dateInput: dateVal, siteInput: siteVal, missingDate: !hasDate, missingSite: !hasSite });
-    }
-  });
-  return problems;
-}
-
-function showEntryValidationModal(problems) {
-  const body = document.getElementById('entryValidationBody');
-  if (body) {
-    const rowWord = problems.length === 1 ? 'row' : 'rows';
-    let msg = 'Please fill in both the <strong>Date</strong> and <strong>Site</strong> for '
-      + problems.length + ' entry ' + rowWord + ' before continuing:'
-      + '<ul style="text-align:left; margin:10px 0 0; padding-left:20px;">';
-    problems.forEach(function (p, i) {
-      const missing = [];
-      if (p.missingDate) missing.push('Date');
-      if (p.missingSite) missing.push('Site');
-      msg += '<li>Row ' + (i + 1) + ' &mdash; missing ' + missing.join(' and ') + '</li>';
-    });
-    msg += '</ul>';
-    body.innerHTML = msg;
-  }
-  problems.forEach(function (p) {
-    if (p.dateInput) p.dateInput.classList.add('input-error');
-    if (p.siteInput) p.siteInput.classList.add('input-error');
-  });
-  openClaimModal('entryValidationModal');
-}
-
-// Clear the red highlight as soon as the user fixes the field.
-document.addEventListener('input', function (e) {
-  if (e.target.classList.contains('input-error')) {
-    e.target.classList.remove('input-error');
-  }
-});
-
 function submitClaim(action) {
-  const missingFieldProblems = findMissingEntryFields();
-  if (missingFieldProblems.length > 0) {
-    closeClaimModal('saveDraftModal');
-    closeClaimModal('submitClaimModal');
-    showEntryValidationModal(missingFieldProblems);
-    return;
-  }
-
   document.getElementById('action-input').value = action;
   closeClaimModal('saveDraftModal');
   closeClaimModal('submitClaimModal');

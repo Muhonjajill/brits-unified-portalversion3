@@ -103,38 +103,10 @@
             {% endfor %}
           </select>
         </div>
-        {% if elevated and employees_for_filter %}
-        <div class="filter-group">
-          <select name="emp" class="form-select filter-select">
-            <option value="">All employees</option>
-            {% for emp in employees_for_filter %}
-              <option value="{{ emp.id }}" {% if employee_filter == emp.id|stringformat:"s" %}selected{% endif %}>
-                {{ emp.get_full_name|default:emp.username }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-        {% endif %}
-        <div class="filter-group filter-date-group">
-          <span class="filter-date-label"><i class="fas fa-paper-plane"></i> Submitted</span>
-          <input type="date" name="submitted_from" value="{{ submitted_from }}"
-                 class="form-control filter-input filter-date" title="Submitted from">
-          <span class="filter-date-sep">&ndash;</span>
-          <input type="date" name="submitted_to" value="{{ submitted_to }}"
-                 class="form-control filter-input filter-date" title="Submitted to">
-        </div>
-        <div class="filter-group filter-date-group">
-          <span class="filter-date-label"><i class="fas fa-lock"></i> Closed</span>
-          <input type="date" name="closed_from" value="{{ closed_from }}"
-                 class="form-control filter-input filter-date" title="Closed from">
-          <span class="filter-date-sep">&ndash;</span>
-          <input type="date" name="closed_to" value="{{ closed_to }}"
-                 class="form-control filter-input filter-date" title="Closed to">
-        </div>
         <button type="submit" class="btn-action">
           <i class="fas fa-search"></i> Filter
         </button>
-        {% if search or status_filter or employee_filter or submitted_from or submitted_to or closed_from or closed_to %}
+        {% if search or status_filter %}
           <a href="{% url 'claim_list' %}" class="btn-action btn-clear">
             <i class="fas fa-times"></i> Clear
           </a>
@@ -221,7 +193,7 @@
       <ul class="pagination">
         {% if page_obj.has_previous %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search }}&status={{ status_filter }}&emp={{ employee_filter }}&submitted_from={{ submitted_from }}&submitted_to={{ submitted_to }}&closed_from={{ closed_from }}&closed_to={{ closed_to }}">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search }}&status={{ status_filter }}">
               <i class="fas fa-chevron-left"></i>
             </a>
           </li>
@@ -234,14 +206,14 @@
             <li class="page-item active"><span class="page-link">{{ num }}</span></li>
           {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
             <li class="page-item">
-              <a class="page-link" href="?page={{ num }}&q={{ search }}&status={{ status_filter }}&emp={{ employee_filter }}&submitted_from={{ submitted_from }}&submitted_to={{ submitted_to }}&closed_from={{ closed_from }}&closed_to={{ closed_to }}">{{ num }}</a>
+              <a class="page-link" href="?page={{ num }}&q={{ search }}&status={{ status_filter }}">{{ num }}</a>
             </li>
           {% endif %}
         {% endfor %}
 
         {% if page_obj.has_next %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search }}&status={{ status_filter }}&emp={{ employee_filter }}&submitted_from={{ submitted_from }}&submitted_to={{ submitted_to }}&closed_from={{ closed_from }}&closed_to={{ closed_to }}">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search }}&status={{ status_filter }}">
               <i class="fas fa-chevron-right"></i>
             </a>
           </li>

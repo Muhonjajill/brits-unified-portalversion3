@@ -8,10 +8,13 @@ from django.core.mail import EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.paginator import Paginator
+from django.contrib.auth import get_user_model
 from decimal import Decimal
 
 from .models import ClaimForm, ClaimEntry, PaymentRecord
 from .forms import ClaimFormForm, ClaimEntryFormSet, ApprovalActionForm, PaymentRecordForm, SuggestedAmountForm
+
+User = get_user_model()
 
 
 # ─── Role helpers ──────────────────────────────────────────────────────────────
@@ -208,6 +211,45 @@ def claim_list(request):
     if employee_filter and elevated:
         all_claims_qs = all_claims_qs.filter(employee__id=employee_filter)
 
+    # ── Date filters: submission date & closed (finance-actioned) date ──────
+    # Additive only — none of the filtering logic above is touched.
+    submitted_from = request.GET.get('submitted_from', '').strip()
+    submitted_to = request.GET.get('submitted_to', '').strip()
+    closed_from = request.GET.get('closed_from', '').strip()
+    closed_to = request.GET.get('closed_to', '').strip()
+
+    def _parse_date(value):
+        from datetime import datetime as _dt
+        try:
+            return _dt.strptime(value, '%Y-%m-%d').date()
+        except (ValueError, TypeError):
+            return None
+
+    submitted_from_date = _parse_date(submitted_from)
+    submitted_to_date = _parse_date(submitted_to)
+    closed_from_date = _parse_date(closed_from)
+    closed_to_date = _parse_date(closed_to)
+
+    if submitted_from_date:
+        all_claims_qs = all_claims_qs.filter(submitted_at__date__gte=submitted_from_date)
+    if submitted_to_date:
+        all_claims_qs = all_claims_qs.filter(submitted_at__date__lte=submitted_to_date)
+    # "Closed" = the claim reached the terminal finance_actioned_at stamp
+    # (finance_approved status, tracked via finance_actioned_at).
+    if closed_from_date:
+        all_claims_qs = all_claims_qs.filter(finance_actioned_at__date__gte=closed_from_date)
+    if closed_to_date:
+        all_claims_qs = all_claims_qs.filter(finance_actioned_at__date__lte=closed_to_date)
+
+    # Employees list to populate the "Employee" filter dropdown (elevated only).
+    # The `emp` GET param and its filter above already existed and worked —
+    # this just adds the missing UI control for it.
+    employees_for_filter = []
+    if elevated:
+        employees_for_filter = User.objects.filter(
+            claim_forms__isnull=False
+        ).distinct().order_by('first_name', 'last_name')
+
     pending_approvals = ClaimForm.objects.filter(
         Q(manager=user, status=ClaimForm.STATUS_SUBMITTED) |
         Q(finance_reviewer=user, status=ClaimForm.STATUS_PENDING_DISBURSEMENT)
@@ -246,6 +288,13 @@ def claim_list(request):
         'status_filter': status_filter,
         'status_choices': ClaimForm.STATUS_CHOICES,
         'can_view_logs': user.has_perm('core.view_fileaccesslog'),
+        # ── New filter context (additive) ──
+        'employee_filter': employee_filter,
+        'employees_for_filter': employees_for_filter,
+        'submitted_from': submitted_from,
+        'submitted_to': submitted_to,
+        'closed_from': closed_from,
+        'closed_to': closed_to,
     }
     return render(request, 'core/claims/claim_list.html', context)
 

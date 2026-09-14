@@ -594,6 +594,38 @@ textarea.form-control { resize: vertical; }
 .filter-input  { min-width: 220px; }
 .filter-select { min-width: 160px; }
 
+/* ── Date range filter groups (Submitted / Closed) ── */
+.filter-date-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8f9fc;
+  border: 1px solid var(--claims-border);
+  border-radius: 8px;
+  padding: 0 10px;
+  height: 38px;
+}
+.filter-date-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--claims-muted);
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.filter-date-label i { color: var(--claims-primary); font-size: 0.85em; }
+.filter-date {
+  width: 132px;
+  min-width: 0;
+  height: 28px;
+  padding: 2px 6px;
+  font-size: 0.82rem;
+  border: 1px solid var(--claims-border);
+  border-radius: 5px;
+}
+.filter-date-sep { color: var(--claims-muted); font-size: 0.85rem; }
+
 /* ── Header actions ── */
 .header-actions {
   display: flex;
@@ -961,6 +993,8 @@ textarea.form-control { resize: vertical; }
   .summary-card { flex-basis: calc(50% - 4px); padding: 10px 12px; }
   .filter-form { flex-direction: column; align-items: stretch; }
   .filter-input, .filter-select { width: 100%; }
+  .filter-date-group { width: 100%; height: auto; padding: 8px 10px; flex-wrap: wrap; }
+  .filter-date { flex: 1; width: auto; }
   .finance-integrity-grid { gap: 10px; }
   .integrity-item { min-width: calc(50% - 5px); }
   .header-actions { flex-wrap: wrap; }
