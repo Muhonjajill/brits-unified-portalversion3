@@ -10,33 +10,6 @@
   {% load static %}
   <link rel="stylesheet" href="{% static 'css/login.css' %}">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-  <style>
-    /* Resend OTP button — additive, self-contained so login.css stays untouched */
-    .resend-otp-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-top: 10px;
-      flex-wrap: wrap;
-    }
-    .btn-resend-otp {
-      background: none;
-      border: none;
-      color: #123692;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 4px 6px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: color 0.2s, opacity 0.2s;
-    }
-    .btn-resend-otp:hover:not(:disabled) { text-decoration: underline; }
-    .btn-resend-otp:disabled { color: #adb5bd; cursor: default; opacity: .8; }
-    .resend-countdown { font-size: 0.78rem; color: #6c757d; }
-  </style>
 </head>
 <body>
 
@@ -51,12 +24,6 @@
         <button type="submit" class="btn-verify">Verify OTP</button>
         <p id="otpMessage" class="otp-message"></p>
       </form>
-      <div class="resend-otp-row">
-        <button type="button" id="resendOtpBtn" class="btn-resend-otp" onclick="resendOtp()" disabled>
-          <i class="fas fa-rotate-right"></i> Resend OTP
-        </button>
-        <span id="resendCountdown" class="resend-countdown"></span>
-      </div>
     </div>
   </div>
 
@@ -130,7 +97,6 @@
   <script>
     const loginUrl = "{% url 'login' %}";
     const verifyOtpUrl = "{% url 'verify_otp' %}";
-    const resendOtpUrl = "{% url 'resend_otp' %}";
 
     // Modal functions
     function showErrorModal(title, message) {
@@ -169,78 +135,6 @@
         closeSuccessModal();
       }
     };
-
-    // ── Resend OTP ──────────────────────────────────────────────────────────
-    const RESEND_COOLDOWN_SECONDS = 30;
-    let resendTimerInterval = null;
-
-    function getOtpCsrfToken() {
-      const input = document.querySelector('#otpForm [name=csrfmiddlewaretoken]');
-      return input ? input.value : '';
-    }
-
-    function startResendCooldown(seconds) {
-      const btn = document.getElementById('resendOtpBtn');
-      const countdownEl = document.getElementById('resendCountdown');
-      if (!btn) return;
-      let remaining = seconds || RESEND_COOLDOWN_SECONDS;
-      btn.disabled = true;
-      if (countdownEl) countdownEl.textContent = 'Resend available in ' + remaining + 's';
-      if (resendTimerInterval) clearInterval(resendTimerInterval);
-      resendTimerInterval = setInterval(function () {
-        remaining -= 1;
-        if (remaining <= 0) {
-          clearInterval(resendTimerInterval);
-          resendTimerInterval = null;
-          btn.disabled = false;
-          if (countdownEl) countdownEl.textContent = '';
-        } else if (countdownEl) {
-          countdownEl.textContent = 'Resend available in ' + remaining + 's';
-        }
-      }, 1000);
-    }
-
-    function resendOtp() {
-      const btn = document.getElementById('resendOtpBtn');
-      const otpMessageEl = document.getElementById('otpMessage');
-      const loaderEl = document.getElementById('loader');
-      if (btn) btn.disabled = true;
-      if (loaderEl) loaderEl.style.display = 'flex';
-
-      fetch(resendOtpUrl, {
-        method: 'POST',
-        headers: {
-          'X-CSRFToken': getOtpCsrfToken(),
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      })
-        .then(function (response) { return response.json(); })
-        .then(function (data) {
-          if (data.status === 'otp_resent' || data.status === 'otp_sent') {
-            if (otpMessageEl) {
-              otpMessageEl.textContent = 'A new code has been sent to your email.';
-              otpMessageEl.style.color = '';
-            }
-            startResendCooldown(RESEND_COOLDOWN_SECONDS);
-          } else {
-            if (otpMessageEl) {
-              otpMessageEl.textContent = data.message || 'Could not resend the code. Please try again.';
-              otpMessageEl.style.color = '#dc3545';
-            }
-            if (btn) btn.disabled = false;
-          }
-        })
-        .catch(function () {
-          if (otpMessageEl) {
-            otpMessageEl.textContent = 'Network error. Please try again.';
-            otpMessageEl.style.color = '#dc3545';
-          }
-          if (btn) btn.disabled = false;
-        })
-        .finally(function () {
-          if (loaderEl) loaderEl.style.display = 'none';
-        });
-    }
   </script>
   <script src="{% static 'js/login.js' %}"></script>
 

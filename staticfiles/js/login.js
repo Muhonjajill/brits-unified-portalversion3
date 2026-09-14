@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (data.status === 'otp_sent') {
       console.log("OTP modal triggered");
       otpModal.style.display = 'flex';
+      if (typeof startResendCooldown === 'function') startResendCooldown();
     } else {
       // Use modal instead of alert
       showErrorModal('Login Failed', data.message || 'Login failed. Please try again.');

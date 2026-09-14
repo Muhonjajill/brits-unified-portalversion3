@@ -172,6 +172,55 @@ def verify_otp_view(request):
     
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
+def resend_otp_view(request):
+    """
+    Re-issue a fresh OTP to the user currently mid-login (identified via the
+    same 'pre_otp_user' session key verify_otp_view relies on). Mirrors the
+    OTP-generation/email logic already used in login_view — does not touch
+    password verification, since the user already passed that step.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+    user_id = request.session.get('pre_otp_user')
+    if not user_id:
+        return JsonResponse({'status': 'error', 'message': 'Session expired. Please login again.'})
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'User not found'})
+
+    otp = str(random.randint(100000, 999999))
+    EmailOTP.objects.update_or_create(user=user, defaults={'otp': otp, 'created_at': timezone.now()})
+
+    subject = 'Your OTP Code'
+    html_content = render_to_string('email/otp_email.html', {
+        'username': user.username,
+        'otp': otp,
+    })
+    text_content = strip_tags(html_content)
+
+    email = EmailMultiAlternatives(
+        subject,
+        text_content,
+        settings.DEFAULT_FROM_EMAIL,
+        [user.email],
+    )
+    email.attach_alternative(html_content, "text/html")
+
+    with open(str(settings.BASE_DIR / "static/icons/logo.png"), "rb") as logo_file:
+        logo_data = logo_file.read()
+        logo = MIMEImage(logo_data, name='logo.png')
+        logo.add_header('Content-ID', '<logo>')
+        email.attach(logo)
+
+    print("Resent otp:", otp)
+
+    if not safe_send_mail(email.send):
+        return JsonResponse({'status': 'error', 'message': 'Could not resend the login code. Please try again shortly.'})
+
+    return JsonResponse({'status': 'otp_resent'})
 
 
 # Email notification functions
