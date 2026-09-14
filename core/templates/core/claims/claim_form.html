@@ -536,7 +536,7 @@ function submitClaim(action) {
   let removedCount = 0;
   document.querySelectorAll('#entries-body .entry-row').forEach(function(row) {
     if (row.classList.contains('deleted')) {
-      removedCount++;
+      //removedCount++;
       return;
     }
     const dateVal = row.querySelector('input[name$="-date"]');
