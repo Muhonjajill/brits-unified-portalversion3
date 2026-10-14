@@ -1606,5 +1606,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('active'); this.classList.remove('active');"></div>
+
+{% include "includes/inactivity_timeout.html" %}
 </body>
 </html>
