@@ -37,6 +37,7 @@
   <!-- Base Scripts -->
   <script src="{% static 'js/files_navbar.js' %}"></script>
 
+  {% include "includes/inactivity_timeout.html" %}
   
   <!-- Additional Page-Level JS -->
   {% block extra_js %}{% endblock %}

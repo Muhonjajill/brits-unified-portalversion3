@@ -61,6 +61,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'axes.middleware.AxesMiddleware',
+    'core.middleware.InactivityTimeoutMiddleware',
 ]
 
 ROOT_URLCONF = "unified_portal.urls"
@@ -266,3 +267,10 @@ AXES_COOLOFF_TIME = 1
 AXES_RESET_ON_SUCCESS = True  
 AXES_LOCKOUT_PARAMETERS = ['username']
 SILENCED_SYSTEM_CHECKS = ['axes.W006']
+
+
+SESSION_COOKIE_AGE = 30 * 60
+
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+INACTIVITY_TIMEOUT = 30 * 60  

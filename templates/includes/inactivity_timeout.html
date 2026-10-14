@@ -1,0 +1,25 @@
+{% if user.is_authenticated %}
+<form id="timeout-logout-form" method="post" action="{% url 'logout' %}" style="display:none">
+  {% csrf_token %}
+</form>
+
+<script>
+  (function () {
+    const TIMEOUT_MS = 30 * 60 * 1000; 
+    let timer;
+
+    function resetTimer() {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        document.getElementById('timeout-logout-form').submit();
+      }, TIMEOUT_MS);
+    }
+
+    ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'].forEach(function (evt) {
+      document.addEventListener(evt, resetTimer, { passive: true });
+    });
+
+    resetTimer();
+  })();
+</script>
+{% endif %}
