@@ -73,7 +73,7 @@
             <td data-label="Status">
               <span class="status-badge status-{{ claim.status_color }}">{{ claim.get_status_display }}</span>
             </td>
-            <td data-label="Submitted">{{ claim.submitted_at|date:"d M Y" }}</td>
+            <td data-label="Submitted">{{ claim.submitted_at|date:"d M Y, H:i" }}</td>
             <td data-label="Action" class="action-cell">
               <a href="{% url 'claim_detail' claim.pk %}" class="btn-action">
                 <i class="fas fa-eye"></i> Review
@@ -117,19 +117,29 @@
         {% endif %}
         <div class="filter-group filter-date-group">
           <span class="filter-date-label"><i class="fas fa-paper-plane"></i> Submitted</span>
-          <input type="date" name="submitted_from" value="{{ submitted_from }}"
+          <input type="date" name="submitted_from" id="f_submitted_from" value="{{ submitted_from }}"
                  class="form-control filter-input filter-date" title="Submitted from">
           <span class="filter-date-sep">&ndash;</span>
-          <input type="date" name="submitted_to" value="{{ submitted_to }}"
+          <input type="date" name="submitted_to" id="f_submitted_to" value="{{ submitted_to }}"
                  class="form-control filter-input filter-date" title="Submitted to">
         </div>
         <div class="filter-group filter-date-group">
           <span class="filter-date-label"><i class="fas fa-lock"></i> Closed</span>
-          <input type="date" name="closed_from" value="{{ closed_from }}"
+          <input type="date" name="closed_from" id="f_closed_from" value="{{ closed_from }}"
                  class="form-control filter-input filter-date" title="Closed from">
           <span class="filter-date-sep">&ndash;</span>
-          <input type="date" name="closed_to" value="{{ closed_to }}"
+          <input type="date" name="closed_to" id="f_closed_to" value="{{ closed_to }}"
                  class="form-control filter-input filter-date" title="Closed to">
+        </div>
+        <div class="filter-group filter-date-group quick-month-group">
+          <span class="filter-date-label"><i class="fas fa-calendar-alt"></i> Whole month</span>
+          <input type="month" id="quickMonth" class="form-control filter-input filter-date"
+                 title="Pick a month to fill one of the date ranges">
+          <select id="quickMonthBasis" class="filter-date quick-month-basis" title="Which date to group by">
+            <option value="submitted">submitted</option>
+            <option value="closed">closed</option>
+          </select>
+          <button type="button" class="btn-quick-month" id="quickMonthApply">Apply</button>
         </div>
         <button type="submit" class="btn-action">
           <i class="fas fa-search"></i> Filter
@@ -151,13 +161,56 @@
     </h3>
 
     {% if page_obj.object_list %}
+    {# ── Group actions: download the whole filtered group, or ticked claims ── #}
+    <form id="bulkForm" method="post" action="{% url 'claim_bulk_export' %}">
+      {% csrf_token %}
+      <input type="hidden" name="back_qs" value="{{ filter_querystring }}">
+    </form>
+    <div class="bulk-bar">
+      <div class="bulk-bar-group">
+        <span class="bulk-bar-text">
+          <strong>{{ page_obj.paginator.count }}</strong> claim{{ page_obj.paginator.count|pluralize }} match
+          {% if submitted_from or submitted_to or closed_from or closed_to or status_filter or search or employee_filter %}these filters{% else %}(no filters){% endif %}
+        </span>
+        {% if page_obj.paginator.count <= bulk_export_limit %}
+          <a href="{% url 'claim_bulk_export' %}?{% if filter_querystring %}{{ filter_querystring }}&amp;{% endif %}format=zip"
+             class="btn-action btn-pdf" title="ZIP of every matching claim's PDF, plus an Excel register">
+            <i class="fas fa-file-archive"></i> Download all (PDFs)
+          </a>
+          <a href="{% url 'claim_bulk_export' %}?{% if filter_querystring %}{{ filter_querystring }}&amp;{% endif %}format=register"
+             class="btn-action btn-excel" title="One Excel sheet listing every matching claim">
+            <i class="fas fa-file-excel"></i> Register (Excel)
+          </a>
+        {% else %}
+          <span class="bulk-bar-hint">Narrow the filters to {{ bulk_export_limit }} or fewer to download as a group.</span>
+        {% endif %}
+      </div>
+      <div class="bulk-bar-group bulk-bar-selected">
+        <label class="bulk-select-all">
+          <input type="checkbox" class="js-select-all"> Select page
+        </label>
+        <span class="bulk-bar-text"><strong id="selectedCount">0</strong> ticked</span>
+        <button type="submit" form="bulkForm" name="format" value="zip"
+                class="btn-action btn-pdf js-needs-selection" disabled>
+          <i class="fas fa-file-archive"></i> Download ticked
+        </button>
+        <button type="submit" form="bulkForm" name="format" value="register"
+                class="btn-action btn-excel js-needs-selection" disabled>
+          <i class="fas fa-file-excel"></i> Register
+        </button>
+      </div>
+    </div>
+
     <div class="claims-table-wrap">
       <table class="claims-table">
         <thead>
           <tr>
+            <th class="col-select"><input type="checkbox" class="js-select-all" title="Select all on this page"></th>
             {% if elevated %}<th>Employee</th>{% endif %}
             <th>Title</th>
             <th>Month</th>
+            <th>Submitted</th>
+            <th>Closed</th>
             <th class="col-amount">Sub-total</th>
             <th class="col-amount">Advance</th>
             <th class="col-amount">Paid</th>
@@ -168,11 +221,31 @@
         <tbody>
           {% for claim in page_obj %}
           <tr>
+            <td data-label="Select" class="col-select">
+              <input type="checkbox" name="ids" value="{{ claim.pk }}" form="bulkForm" class="claim-select"
+                     aria-label="Select claim {{ claim.pk }}">
+            </td>
             {% if elevated %}
             <td data-label="Employee" class="truncate-cell" title="{{ claim.employee.get_full_name }}">{{ claim.employee.get_full_name }}</td>
             {% endif %}
             <td data-label="Title" class="truncate-cell" title="{{ claim.title|default:'' }}">{{ claim.title|default:"—" }}</td>
             <td data-label="Month">{{ claim.month|date:"F Y" }}</td>
+            <td data-label="Submitted" class="date-cell">
+              {% if claim.submitted_at %}
+                <span>{{ claim.submitted_at|date:"d M Y" }}</span>
+                <small>{{ claim.submitted_at|date:"H:i" }}</small>
+              {% else %}
+                <span class="unpaid-badge">Not submitted</span>
+              {% endif %}
+            </td>
+            <td data-label="Closed" class="date-cell">
+              {% if claim.status == "finance_approved" and claim.finance_actioned_at %}
+                <span>{{ claim.finance_actioned_at|date:"d M Y" }}</span>
+                <small>{{ claim.finance_actioned_at|date:"H:i" }}</small>
+              {% else %}
+                <span class="unpaid-badge">—</span>
+              {% endif %}
+            </td>
             <td data-label="Sub-total" class="amount">KES {{ claim.subtotal|floatformat:2 }}</td>
             <td data-label="Advance" class="amount">KES {{ claim.advance|floatformat:2 }}</td>
             <td data-label="Paid" class="amount">
@@ -269,6 +342,50 @@
   </section>
 
 </div>
+
+<script>
+(function () {
+  // ── Whole-month quick pick: fills the Submitted or Closed range and filters ──
+  var apply = document.getElementById('quickMonthApply');
+  if (apply) {
+    apply.addEventListener('click', function () {
+      var val = document.getElementById('quickMonth').value;          // "2026-10"
+      if (!val) { document.getElementById('quickMonth').focus(); return; }
+      var parts = val.split('-'), y = +parts[0], m = +parts[1];
+      var lastDay = new Date(y, m, 0).getDate();
+      var basis = document.getElementById('quickMonthBasis').value;    // submitted | closed
+      var other = basis === 'submitted' ? 'closed' : 'submitted';
+      document.getElementById('f_' + basis + '_from').value = val + '-01';
+      document.getElementById('f_' + basis + '_to').value = val + '-' + String(lastDay).padStart(2, '0');
+      document.getElementById('f_' + other + '_from').value = '';
+      document.getElementById('f_' + other + '_to').value = '';
+      apply.closest('form').submit();
+    });
+  }
+
+  // ── Ticked-claims selection ──
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('.claim-select'));
+  var allToggles = document.querySelectorAll('.js-select-all');
+  var counter = document.getElementById('selectedCount');
+  function sync() {
+    var n = boxes.filter(function (b) { return b.checked; }).length;
+    if (counter) counter.textContent = n;
+    document.querySelectorAll('.js-needs-selection').forEach(function (btn) { btn.disabled = n === 0; });
+    allToggles.forEach(function (t) {
+      t.checked = n > 0 && n === boxes.length;
+      t.indeterminate = n > 0 && n < boxes.length;
+    });
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', sync); });
+  allToggles.forEach(function (t) {
+    t.addEventListener('change', function () {
+      boxes.forEach(function (b) { b.checked = t.checked; });
+      sync();
+    });
+  });
+  sync();
+})();
+</script>
 
 {# ── Delete Confirmation Modal ── #}
 {% if can_delete %}

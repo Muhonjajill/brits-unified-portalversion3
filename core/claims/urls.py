@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     path('claims/',                          views.claim_list,          name='claim_list'),
     path('claims/new/',                      views.claim_create,        name='claim_create'),
+    path('claims/export/bulk/',              views.claim_bulk_export,   name='claim_bulk_export'),
     path('claims/<int:pk>/',                 views.claim_detail,        name='claim_detail'),
     path('claims/<int:pk>/edit/',            views.claim_edit,          name='claim_edit'),
     path('claims/<int:pk>/delete/',          views.claim_delete,        name='claim_delete'),

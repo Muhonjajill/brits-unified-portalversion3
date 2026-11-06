@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>{{ claim.employee.get_full_name }} — Claim Form {{ claim.month|date:"F Y" }}</title>
+<title>{{ claim.employee.get_full_name }} — Claim Form {{ claim.month|date:"F Y" }}{% if claim.submitted_at %} — submitted {{ claim.submitted_at|date:"d M Y" }}{% endif %}</title>
 <style>
   @page { size: A4 landscape; margin: 1.5cm; }
   body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10pt; color: #343a40; }
@@ -28,7 +28,7 @@
 <body>
 
 <h1>{{ claim.employee.get_full_name }} — Claim Form</h1>
-<p class="sub-title">{{ claim.month|date:"F Y" }} &nbsp;|&nbsp; Status: {{ claim.get_status_display }}</p>
+<p class="sub-title">{{ claim.month|date:"F Y" }} &nbsp;|&nbsp; Submitted: {{ claim.submitted_at|date:"d M Y"|default:"not submitted" }} &nbsp;|&nbsp; Status: {{ claim.get_status_display }}</p>
 
 <table class="meta-table" style="width:auto; margin-bottom:12px;">
   <tr>
@@ -37,7 +37,7 @@
   </tr>
   <tr>
     <td><strong>Finance:</strong></td><td>{{ claim.finance_reviewer.get_full_name|default:"—" }}</td>
-    <td style="padding-left:24px"><strong>Submitted:</strong></td><td>{{ claim.submitted_at|date:"d M Y"|default:"—" }}</td>
+    <td style="padding-left:24px"><strong>Submitted:</strong></td><td>{{ claim.submitted_at|date:"d M Y, H:i"|default:"—" }}</td>
   </tr>
   <tr>
     <td><strong>Advance (this claim):</strong></td><td>KES {{ claim.advance|floatformat:2 }}</td>
@@ -46,6 +46,12 @@
     <td style="color:#198754; font-weight:bold;">KES {{ claim.amount_paid|floatformat:2 }}</td>
     {% endif %}
   </tr>
+  {% if claim.status == "finance_approved" and claim.finance_actioned_at %}
+  <tr>
+    <td><strong>Closed:</strong></td><td>{{ claim.finance_actioned_at|date:"d M Y, H:i" }}</td>
+    <td></td><td></td>
+  </tr>
+  {% endif %}
   {% if claim.carry_forward %}
   <tr>
     <td><strong>Carry-forward:</strong></td>
