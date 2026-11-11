@@ -8,10 +8,30 @@
 
   <div class="claims-header">
     <h2><i class="fas fa-file-invoice-dollar"></i> {{ page_title }}</h2>
-    <a href="{% url 'claim_create' %}" class="btn-new-claim">
-      <i class="fas fa-plus"></i> New Claim
-    </a>
+    {% if open_claim %}
+      <span class="btn-new-claim is-disabled" role="button" aria-disabled="true"
+            title="Your {{ open_claim.month|date:'F Y' }} claim must be closed before you can start a new one">
+        <i class="fas fa-lock"></i> New Claim
+      </span>
+    {% else %}
+      <a href="{% url 'claim_create' %}" class="btn-new-claim">
+        <i class="fas fa-plus"></i> New Claim
+      </a>
+    {% endif %}
   </div>
+
+  {% if open_claim %}
+  <div class="open-claim-notice">
+    <i class="fas fa-info-circle"></i>
+    <span>
+      Your <strong>{{ open_claim.month|date:"F Y" }}</strong> claim is
+      <strong>{{ open_claim.get_status_display|lower }}</strong>
+      (submitted {{ open_claim.submitted_at|date:"d M Y" }}).
+      You can start a new claim once it has been closed.
+      <a href="{% url 'claim_detail' open_claim.pk %}">View it</a>
+    </span>
+  </div>
+  {% endif %}
 
   {% if messages %}
     {% for msg in messages %}

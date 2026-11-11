@@ -450,10 +450,26 @@
           <button type="button" class="btn-save" onclick="openClaimModal('saveDraftModal')">
             <i class="fas fa-save"></i> Save Draft
           </button>
-          <button type="button" class="btn-submit-claim" onclick="openClaimModal('submitClaimModal')">
-            <i class="fas fa-paper-plane"></i> Submit for Approval
-          </button>
+          {% if blocking_claim %}
+            <button type="button" class="btn-submit-claim" disabled
+                    style="opacity:.5; cursor:not-allowed;"
+                    title="Your {{ blocking_claim.month|date:'F Y' }} claim must be closed first">
+              <i class="fas fa-lock"></i> Submit for Approval
+            </button>
+          {% else %}
+            <button type="button" class="btn-submit-claim" onclick="openClaimModal('submitClaimModal')">
+              <i class="fas fa-paper-plane"></i> Submit for Approval
+            </button>
+          {% endif %}
         </div>
+        {% if blocking_claim %}
+          <p style="margin:10px 0 0; font-size:0.85rem; color:#664d03;">
+            <i class="fas fa-info-circle"></i>
+            You can save changes as a draft, but you can't submit this claim until your
+            <a href="{% url 'claim_detail' blocking_claim.pk %}">{{ blocking_claim.month|date:"F Y" }} claim</a>
+            ({{ blocking_claim.get_status_display|lower }}) has been closed.
+          </p>
+        {% endif %}
       </div>
     </div>
 

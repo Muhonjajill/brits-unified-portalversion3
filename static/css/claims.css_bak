@@ -1010,3 +1010,68 @@ textarea.form-control { resize: vertical; }
   .claim-modal-actions { flex-direction: column; }
   .claim-modal-btn { width: 100%; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   SUBMISSION DATES + GROUP DOWNLOADS (claim list)
+   ══════════════════════════════════════════════════════════════ */
+
+/* Date columns: day on top, time underneath in muted text */
+.claims-table td.date-cell span  { display: block; line-height: 1.2; }
+.claims-table td.date-cell small { display: block; color: var(--claims-muted); font-size: 0.75rem; }
+
+/* Checkbox column */
+.claims-table th.col-select,
+.claims-table td.col-select { width: 36px; min-width: 36px; padding-right: 0; text-align: center; }
+.claims-table .col-select input,
+.bulk-select-all input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--claims-primary); }
+
+/* Whole-month quick pick (sits beside the Submitted / Closed ranges) */
+.quick-month-group .filter-date[type="month"] { width: 140px; }
+.quick-month-basis { width: auto; background: #fff; cursor: pointer; }
+.btn-quick-month {
+  height: 28px; padding: 0 10px;
+  border: none; border-radius: 5px; font-weight: 600;
+  background: var(--claims-primary); color: #fff;
+  cursor: pointer; font-size: 0.8rem;
+}
+.btn-quick-month:hover { background: var(--claims-primary-dark); }
+.btn-quick-month:focus-visible,
+.claims-table .col-select input:focus-visible,
+.bulk-select-all input:focus-visible { outline: 2px solid var(--claims-primary); outline-offset: 2px; }
+
+/* Bulk action bar above the table */
+.bulk-bar {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+  gap: 10px 20px;
+  background: #f8f9fc;
+  border: 1px solid var(--claims-border);
+  border-left: 4px solid var(--claims-primary);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+.bulk-bar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.bulk-bar-text  { color: var(--claims-text); }
+.bulk-bar-hint  { color: var(--claims-muted); font-style: italic; }
+.bulk-bar .btn-action { padding: 6px 12px; font-size: 0.8rem; }
+.bulk-bar .btn-action:disabled { opacity: .45; cursor: not-allowed; }
+.bulk-select-all {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-weight: 600; color: var(--claims-muted); cursor: pointer; margin: 0;
+}
+
+@media (max-width: 768px) {
+  /* Stacked rows were 100% wide + padding, pushing values off the right edge */
+  .claims-table tr { box-sizing: border-box; }
+  .claims-table td.col-select { width: 100%; text-align: left; padding-right: 0; }
+  .claims-table td.date-cell { justify-content: flex-end; gap: 6px; }
+  .claims-table td.date-cell::before { margin-right: auto; }
+  .claims-table td.date-cell span,
+  .claims-table td.date-cell small { display: inline; }
+  .bulk-bar { flex-direction: column; align-items: stretch; }
+  .bulk-bar-group .btn-action { flex: 1; justify-content: center; }
+}
+@media (max-width: 640px) {
+  .quick-month-group .filter-date[type="month"] { flex: 1; width: auto; }
+}

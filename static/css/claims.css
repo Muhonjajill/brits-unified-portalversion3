@@ -1075,3 +1075,22 @@ textarea.form-control { resize: vertical; }
 @media (max-width: 640px) {
   .quick-month-group .filter-date[type="month"] { flex: 1; width: auto; }
 }
+
+/* ── One open claim at a time: locked New Claim button + notice ── */
+.btn-new-claim.is-disabled,
+.btn-new-claim.is-disabled:hover {
+  background: var(--claims-secondary);
+  opacity: .6;
+  cursor: not-allowed;
+  transform: none;
+}
+.open-claim-notice {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: #fff3cd; color: #664d03;
+  border: 1px solid #ffe69c; border-left: 4px solid var(--claims-warning);
+  border-radius: 8px;
+  padding: 10px 14px; margin-bottom: 20px;
+  font-size: 0.88rem;
+}
+.open-claim-notice i { margin-top: 3px; }
+.open-claim-notice a { color: var(--claims-primary); font-weight: 600; margin-left: 4px; }

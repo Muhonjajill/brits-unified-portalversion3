@@ -2,14 +2,19 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
-from django.http import HttpResponse
+from django.http import HttpResponse, QueryDict
 from django.db.models import Q, Sum
 from django.core.mail import EmailMessage
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.paginator import Paginator
 from django.contrib.auth import get_user_model
+from django.utils.text import get_valid_filename
+from django.urls import reverse
 from decimal import Decimal
+from datetime import date, datetime
+import io
+import zipfile
 
 from .models import ClaimForm, ClaimEntry, PaymentRecord
 from .forms import ClaimFormForm, ClaimEntryFormSet, ApprovalActionForm, PaymentRecordForm, SuggestedAmountForm
@@ -173,8 +178,14 @@ def _notify_employee_outcome(claim, request=None):
 
 # ─── Claim list ────────────────────────────────────────────────────────────────
 
-@login_required
-def claim_list(request):
+def _filtered_claims(request, params):
+    """
+    The claim list's visibility rules + search/status/employee/date filters.
+    Moved verbatim out of claim_list() so the list page and the bulk export
+    always select exactly the same claims. `params` is a QueryDict
+    (request.GET for the list page).
+    Returns (queryset, filter_values).
+    """
     user = request.user
     elevated = _is_elevated(user)
 
@@ -196,9 +207,9 @@ def claim_list(request):
             employee=user
         ).select_related('employee', 'manager', 'finance_reviewer')
 
-    search = request.GET.get('q', '').strip()
-    status_filter = request.GET.get('status', '').strip()
-    employee_filter = request.GET.get('emp', '').strip()
+    search = params.get('q', '').strip()
+    status_filter = params.get('status', '').strip()
+    employee_filter = params.get('emp', '').strip()
 
     if search:
         all_claims_qs = all_claims_qs.filter(
@@ -213,10 +224,10 @@ def claim_list(request):
 
     # ── Date filters: submission date & closed (finance-actioned) date ──────
     # Additive only — none of the filtering logic above is touched.
-    submitted_from = request.GET.get('submitted_from', '').strip()
-    submitted_to = request.GET.get('submitted_to', '').strip()
-    closed_from = request.GET.get('closed_from', '').strip()
-    closed_to = request.GET.get('closed_to', '').strip()
+    submitted_from = params.get('submitted_from', '').strip()
+    submitted_to = params.get('submitted_to', '').strip()
+    closed_from = params.get('closed_from', '').strip()
+    closed_to = params.get('closed_to', '').strip()
 
     def _parse_date(value):
         from datetime import datetime as _dt
@@ -240,6 +251,32 @@ def claim_list(request):
         all_claims_qs = all_claims_qs.filter(finance_actioned_at__date__gte=closed_from_date)
     if closed_to_date:
         all_claims_qs = all_claims_qs.filter(finance_actioned_at__date__lte=closed_to_date)
+
+    filter_values = {
+        'search': search,
+        'status_filter': status_filter,
+        'employee_filter': employee_filter,
+        'submitted_from': submitted_from,
+        'submitted_to': submitted_to,
+        'closed_from': closed_from,
+        'closed_to': closed_to,
+    }
+    return all_claims_qs, filter_values
+
+
+@login_required
+def claim_list(request):
+    user = request.user
+    elevated = _is_elevated(user)
+
+    all_claims_qs, _f = _filtered_claims(request, request.GET)
+    search = _f['search']
+    status_filter = _f['status_filter']
+    employee_filter = _f['employee_filter']
+    submitted_from = _f['submitted_from']
+    submitted_to = _f['submitted_to']
+    closed_from = _f['closed_from']
+    closed_to = _f['closed_to']
 
     # Employees list to populate the "Employee" filter dropdown (elevated only).
     # The `emp` GET param and its filter above already existed and worked —
@@ -295,6 +332,9 @@ def claim_list(request):
         'submitted_to': submitted_to,
         'closed_from': closed_from,
         'closed_to': closed_to,
+        # ── Bulk export context (additive) ──
+        'filter_querystring': _filter_querystring(request.GET),
+        'bulk_export_limit': BULK_EXPORT_LIMIT,
     }
     return render(request, 'core/claims/claim_list.html', context)
 
@@ -636,6 +676,283 @@ def claim_delete(request, pk):
 
 # ─── Export ────────────────────────────────────────────────────────────────────
 
+BULK_EXPORT_LIMIT = 200   # max claims per bulk download (PDF rendering is slow)
+
+
+def _local_dt(dt):
+    """Convert to local time when timezone-aware; pass naive values through."""
+    if dt is None:
+        return None
+    return timezone.localtime(dt) if timezone.is_aware(dt) else dt
+
+
+def _naive_local(dt):
+    """Local, tz-stripped datetime (openpyxl cannot store aware datetimes)."""
+    dt = _local_dt(dt)
+    return dt.replace(tzinfo=None) if dt else None
+
+
+def _safe_name(value, fallback='claim'):
+    try:
+        return get_valid_filename(value) or fallback
+    except Exception:
+        return fallback
+
+
+def _claim_export_filename(claim, ext):
+    """
+    e.g. claim_Jane_Wanjiru_2026_10_submitted_2026-10-14.pdf
+    The covered month stays in the name (as before); the exact submission
+    date is appended so downloads sort and track easily.
+    """
+    name = _safe_name(claim.employee.get_full_name() or claim.employee.username)
+    submitted = _local_dt(claim.submitted_at)
+    stamp = f"submitted_{submitted:%Y-%m-%d}" if submitted else "not-submitted"
+    return f"claim_{name}_{claim.month.strftime('%Y_%m')}_{stamp}.{ext}"
+
+
+def _filter_querystring(params):
+    """Current list filters as a querystring, minus paging/format keys."""
+    qd = params.copy()
+    for key in ('page', 'format'):
+        qd.pop(key, None)
+    return qd.urlencode()
+
+
+def _can_export_claim(user, claim, elevated):
+    """Same access rule the single-claim PDF/Excel exports enforce."""
+    if claim.status == ClaimForm.STATUS_DRAFT and user != claim.employee:
+        return False
+    allowed = [claim.employee, claim.manager, claim.finance_reviewer]
+    return user in allowed or elevated
+
+
+def _render_claim_pdf_bytes(claim, request):
+    """Render one claim with the same template/engine as claim_export_pdf."""
+    from weasyprint import HTML
+    html_string = render_to_string('core/claims/claim_pdf.html', {'claim': claim})
+    return HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
+
+
+def _bulk_label(filters, selected_count=None):
+    """Describes the group in the ZIP / register filename."""
+    if selected_count is not None:
+        return f"selected_{selected_count}_{date.today():%Y-%m-%d}"
+    parts = []
+    for key, prefix in (('submitted', 'submitted'), ('closed', 'closed')):
+        start, end = filters.get(f'{key}_from'), filters.get(f'{key}_to')
+        if start or end:
+            parts.append(f"{prefix}_{start or 'start'}_to_{end or 'now'}")
+    if filters.get('status_filter'):
+        parts.append(filters['status_filter'])
+    return '_'.join(parts) or f"all_{date.today():%Y-%m-%d}"
+
+
+def _build_claims_register(claims, heading):
+    """
+    One-workbook summary of a group of claims: a 'Claims' sheet with one row
+    per claim (all key dates + amounts) and a 'By Month' sheet grouping them
+    by submission month. Returns xlsx bytes.
+    """
+    import openpyxl
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    thin = Side(style='thin')
+    border = Border(left=thin, right=thin, top=thin, bottom=thin)
+    navy_fill = PatternFill("solid", fgColor="1F3864")
+    navy_font = Font(bold=True, color="FFFFFF")
+    bold = Font(bold=True)
+    money = '#,##0.00'
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Claims"
+
+    headers = [
+        ('Claim ID', 9), ('Employee', 24), ('Title', 26), ('Month Covered', 14),
+        ('Status', 20), ('Submitted', 18), ('Manager Actioned', 18), ('Closed', 18),
+        ('Manager', 20), ('Finance Reviewer', 20),
+        ('Sub-total', 13), ('Advance', 12), ('Carry-forward', 13),
+        ('Total Minus Advance', 16), ('Suggested', 13), ('Amount Paid', 13),
+        ('Balance Due', 13),
+    ]
+    ncols = len(headers)
+    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=ncols)
+    ws['A1'] = heading
+    ws['A1'].font = Font(bold=True, size=13)
+    ws.row_dimensions[1].height = 24
+
+    for col, (label, width) in enumerate(headers, start=1):
+        c = ws.cell(row=2, column=col, value=label)
+        c.font, c.fill, c.border = navy_font, navy_fill, border
+        c.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+        ws.column_dimensions[get_column_letter(col)].width = width
+    ws.freeze_panes = 'C3'
+
+    money_cols = range(11, 18)
+    date_cols = (6, 7, 8)
+    totals = {k: Decimal('0.00') for k in ('subtotal', 'advance', 'paid')}
+    by_month = {}
+
+    row = 3
+    for claim in claims:
+        is_closed = claim.status == ClaimForm.STATUS_FINANCE_APPROVED
+        closed_at = claim.finance_actioned_at if is_closed else None
+        subtotal = claim.subtotal
+        values = [
+            claim.pk,
+            claim.employee.get_full_name() or claim.employee.username,
+            claim.display_title,
+            claim.month.strftime('%B %Y'),
+            claim.get_status_display(),
+            _naive_local(claim.submitted_at),
+            _naive_local(claim.manager_actioned_at),
+            _naive_local(closed_at),
+            claim.manager.get_full_name() if claim.manager else '',
+            claim.finance_reviewer.get_full_name() if claim.finance_reviewer else '',
+            float(subtotal), float(claim.advance), float(claim.carry_forward),
+            float(claim.total_minus_advance),
+            float(claim.suggested_amount) if claim.suggested_amount is not None else None,
+            float(claim.amount_paid), float(claim.balance_due),
+        ]
+        for col, val in enumerate(values, start=1):
+            c = ws.cell(row=row, column=col, value=val)
+            c.border = border
+            if col in date_cols and val:
+                c.number_format = 'DD/MM/YYYY HH:MM'
+            elif col in money_cols:
+                c.number_format = money
+        totals['subtotal'] += subtotal
+        totals['advance'] += claim.advance
+        totals['paid'] += claim.amount_paid
+
+        sub = _local_dt(claim.submitted_at)
+        key = sub.strftime('%Y-%m') if sub else 'Not submitted'
+        g = by_month.setdefault(key, {'count': 0, 'closed': 0, 'subtotal': Decimal('0.00'), 'paid': Decimal('0.00')})
+        g['count'] += 1
+        g['closed'] += 1 if is_closed else 0
+        g['subtotal'] += subtotal
+        g['paid'] += claim.amount_paid
+        row += 1
+
+    ws.cell(row=row, column=1, value=f"Totals ({len(claims)} claim{'' if len(claims) == 1 else 's'})").font = bold
+    for col, key in ((11, 'subtotal'), (12, 'advance'), (16, 'paid')):
+        c = ws.cell(row=row, column=col, value=float(totals[key]))
+        c.font, c.number_format = bold, money
+
+    ws2 = wb.create_sheet("By Month")
+    for col, (label, width) in enumerate(
+        [('Submitted Month', 18), ('Claims', 10), ('Closed', 10), ('Sub-total', 15), ('Amount Paid', 15)], start=1
+    ):
+        c = ws2.cell(row=1, column=col, value=label)
+        c.font, c.fill, c.border = navy_font, navy_fill, border
+        ws2.column_dimensions[get_column_letter(col)].width = width
+    for r, key in enumerate(sorted(by_month, reverse=True), start=2):
+        g = by_month[key]
+        label = datetime.strptime(key, '%Y-%m').strftime('%B %Y') if key[:1].isdigit() else key
+        for col, val in enumerate([label, g['count'], g['closed'], float(g['subtotal']), float(g['paid'])], start=1):
+            c = ws2.cell(row=r, column=col, value=val)
+            c.border = border
+            if col >= 4:
+                c.number_format = money
+
+    out = io.BytesIO()
+    wb.save(out)
+    return out.getvalue()
+
+
+@login_required
+def claim_bulk_export(request):
+    """
+    Download a group of claims at once.
+
+    GET  → every claim matching the list filters in the querystring
+           (e.g. Submitted 01 Oct – 31 Oct), exactly as the list shows them.
+    POST → only the claims ticked on the list page (`ids`).
+
+    format=zip      → ZIP of each claim's PDF (dated filenames) + a register
+    format=register → the Excel register only
+    """
+    user = request.user
+    fmt = (request.POST.get('format') or request.GET.get('format') or 'zip').strip()
+    list_url = reverse('claim_list')
+
+    if request.method == 'POST':
+        ids = [i for i in request.POST.getlist('ids') if i.isdigit()]
+        back_qs = request.POST.get('back_qs', '')
+        back = f"{list_url}?{back_qs}" if back_qs else list_url
+        if not ids:
+            messages.warning(request, "Tick at least one claim to download.")
+            return redirect(back)
+        # Start from the same visibility rules as the list, without filters
+        qs, filters = _filtered_claims(request, QueryDict(''))
+        qs = qs.filter(pk__in=ids)
+        label = None   # set below, once we know how many claims are exportable
+    else:
+        qs, filters = _filtered_claims(request, request.GET)
+        back_qs = _filter_querystring(request.GET)
+        back = f"{list_url}?{back_qs}" if back_qs else list_url
+        label = _bulk_label(filters)
+
+    qs = qs.select_related('employee', 'manager', 'finance_reviewer') \
+           .prefetch_related('entries', 'payment_records')
+
+    total = qs.count()
+    if total == 0:
+        messages.warning(request, "No claims to download for that selection.")
+        return redirect(back)
+    if total > BULK_EXPORT_LIMIT:
+        messages.error(
+            request,
+            f"That group has {total} claims; the bulk download limit is {BULK_EXPORT_LIMIT}. "
+            f"Narrow the date range or filters and try again."
+        )
+        return redirect(back)
+
+    elevated = _is_elevated(user)
+    claims = [c for c in qs if _can_export_claim(user, c, elevated)]
+    claims.sort(key=lambda c: (c.submitted_at is None, c.submitted_at or c.created_at))
+    if label is None:
+        label = _bulk_label(filters, selected_count=len(claims))
+    heading = f"Claims register — {label.replace('_', ' ')}"
+
+    if fmt == 'register':
+        try:
+            data = _build_claims_register(claims, heading)
+        except ImportError:
+            return HttpResponse("openpyxl is not installed. Run: pip install openpyxl", status=500)
+        response = HttpResponse(
+            data, content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="claims_register_{_safe_name(label)}.xlsx"'
+        return response
+
+    # Default: ZIP of PDFs (+ register when openpyxl is available)
+    try:
+        import weasyprint  # noqa: F401
+    except ImportError:
+        return HttpResponse("WeasyPrint is not installed. Run: pip install weasyprint", status=500)
+
+    buf = io.BytesIO()
+    used_names = set()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for claim in claims:
+            fname = _claim_export_filename(claim, 'pdf')
+            if fname in used_names:                      # same person, month & day
+                fname = fname[:-4] + f"_{claim.pk}.pdf"
+            used_names.add(fname)
+            zf.writestr(fname, _render_claim_pdf_bytes(claim, request))
+        try:
+            zf.writestr(f"_register_{_safe_name(label)}.xlsx", _build_claims_register(claims, heading))
+        except ImportError:
+            pass
+
+    response = HttpResponse(buf.getvalue(), content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="claims_{_safe_name(label)}.zip"'
+    return response
+
+
 @login_required
 def claim_export_pdf(request, pk):
     claim = get_object_or_404(
@@ -652,7 +969,7 @@ def claim_export_pdf(request, pk):
         html_string = render_to_string('core/claims/claim_pdf.html', {'claim': claim})
         pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
         response = HttpResponse(pdf_file, content_type='application/pdf')
-        filename = f"claim_{claim.employee.get_full_name().replace(' ', '_')}_{claim.month.strftime('%Y_%m')}.pdf"
+        filename = _claim_export_filename(claim, 'pdf')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
     except ImportError:
@@ -807,7 +1124,7 @@ def claim_export_excel(request, pk):
         response = HttpResponse(
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        filename = f"claim_{claim.employee.get_full_name().replace(' ', '_')}_{claim.month.strftime('%Y_%m')}.xlsx"
+        filename = _claim_export_filename(claim, 'xlsx')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         wb.save(response)
         return response

@@ -49,6 +49,33 @@ def _can_delete(user):
     return _is_elevated(user)
 
 
+# ─── One open claim at a time ─────────────────────────────────────────────────
+
+# A claim is "open" from submission until Finance closes it. Drafts and
+# rejected claims are not open, so they don't block anything.
+OPEN_CLAIM_STATUSES = (
+    ClaimForm.STATUS_SUBMITTED,
+    ClaimForm.STATUS_MANAGER_APPROVED,
+    ClaimForm.STATUS_PENDING_DISBURSEMENT,
+)
+
+
+def _open_claim_for(user, exclude_pk=None):
+    """The user's own claim that is submitted but not yet closed, if any."""
+    qs = ClaimForm.objects.filter(employee=user, status__in=OPEN_CLAIM_STATUSES)
+    if exclude_pk:
+        qs = qs.exclude(pk=exclude_pk)
+    return qs.order_by('submitted_at').first()
+
+
+def _open_claim_message(claim):
+    return (
+        f"You already have a claim in progress ({claim.month.strftime('%B %Y')}, "
+        f"{claim.get_status_display()}). You can start or submit another claim "
+        f"once it has been closed."
+    )
+
+
 # ─── Email helpers ─────────────────────────────────────────────────────────────
 
 def _send_claim_email(subject, template, context, recipient_email):
@@ -335,6 +362,8 @@ def claim_list(request):
         # ── Bulk export context (additive) ──
         'filter_querystring': _filter_querystring(request.GET),
         'bulk_export_limit': BULK_EXPORT_LIMIT,
+        # ── One-open-claim rule (additive) ──
+        'open_claim': _open_claim_for(user),
     }
     return render(request, 'core/claims/claim_list.html', context)
 
@@ -343,6 +372,12 @@ def claim_list(request):
 @login_required
 def claim_create(request):
     user = request.user
+
+    # One open claim at a time: no new claim until the current one is closed.
+    open_claim = _open_claim_for(user)
+    if open_claim:
+        messages.warning(request, _open_claim_message(open_claim))
+        return redirect('claim_detail', pk=open_claim.pk)
 
     # Default carry-forward values
     prev_claim_ref = None
@@ -454,7 +489,14 @@ def claim_edit(request, pk):
             claim.save()
             formset.save()
             action = request.POST.get('action', 'save')
-            if action == 'submit':
+            blocking_claim = _open_claim_for(request.user, exclude_pk=claim.pk) if action == 'submit' else None
+            if blocking_claim:
+                messages.warning(
+                    request,
+                    "Your changes were saved, but the claim was not submitted. "
+                    + _open_claim_message(blocking_claim)
+                )
+            elif action == 'submit':
                 claim.status = ClaimForm.STATUS_SUBMITTED
                 claim.submitted_at = timezone.now()
                 claim.save()
@@ -477,6 +519,7 @@ def claim_edit(request, pk):
         'claim': claim,
         'page_title': 'Edit Claim',
         'is_new': False,
+        'blocking_claim': _open_claim_for(request.user, exclude_pk=claim.pk),
         'prev_claim_ref': prev_claim_ref,
         'carry_amount': carry_amount,
         'can_view_logs': request.user.has_perm('core.view_fileaccesslog'),
