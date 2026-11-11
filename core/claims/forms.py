@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import inlineformset_factory
 from django.contrib.auth import get_user_model
-from .models import ClaimForm, ClaimEntry, PaymentRecord
+from .models import ClaimForm, ClaimEntry, PaymentRecord, ClaimPenalty
 from datetime import date
 from decimal import Decimal 
 
@@ -259,6 +259,30 @@ class PaymentRecordForm(forms.ModelForm):
         if amount is not None and amount <= 0:
             raise forms.ValidationError("Amount must be greater than zero.")
         return amount
+
+
+class PenaltyForm(forms.ModelForm):
+    """Manager stage: penalize a claim. The amount is deducted from the
+    employee's next claim as a carry-forward."""
+    class Meta:
+        model = ClaimPenalty
+        fields = ['amount', 'reason']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['reason'].required = True
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get('amount')
+        if amount is not None and amount <= 0:
+            raise forms.ValidationError("Penalty amount must be greater than zero.")
+        return amount
+
+    def clean_reason(self):
+        reason = (self.cleaned_data.get('reason') or '').strip()
+        if not reason:
+            raise forms.ValidationError("A reason is required for a penalty.")
+        return reason
 
 
 # Keep old name around so existing imports don't break immediately

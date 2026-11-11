@@ -379,3 +379,58 @@ class ClaimEntry(models.Model):
             self.breakfast + self.lunch +
             self.dinner + self.bed + self.other_expenditure
         )
+
+class ClaimPenalty(models.Model):
+    """
+    A penalty a manager places on a claim during review.
+
+    The penalized claim itself is paid as normal. The penalty amount is
+    deducted from the employee's NEXT claim by adding it to that claim's
+    carry_forward — exactly how an overpayment carries forward — so the
+    existing advance / balance maths needs no changes.
+
+    applied_to_claim is empty while the penalty is still waiting to be
+    deducted, and points at the claim it was deducted from once applied.
+    """
+    claim = models.ForeignKey(
+        ClaimForm,
+        on_delete=models.CASCADE,
+        related_name='penalties',
+        help_text="The claim that was penalized"
+    )
+    employee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='claim_penalties'
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reason = models.TextField()
+    penalized_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='claim_penalties_issued'
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+
+    applied_to_claim = models.ForeignKey(
+        ClaimForm,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='applied_penalties',
+        help_text="The later claim this penalty was deducted from (empty = still pending)"
+    )
+    applied_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return (
+            f"Penalty KES {self.amount} → {self.employee.get_full_name()} "
+            f"({self.claim.month.strftime('%b %Y')})"
+        )
+
+    @property
+    def is_pending(self):
+        return self.applied_to_claim_id is None

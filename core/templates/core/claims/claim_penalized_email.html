@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<body style="margin:0; padding:0; background:#f4f6fa; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color:#343a40;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fa; padding:24px 0;">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #dee2e6;">
+        <tr>
+          <td style="background:#123692; color:#ffffff; padding:18px 24px; font-size:18px; font-weight:600;">
+            Penalty on your claim
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px; font-size:14px; line-height:1.6;">
+            <p style="margin:0 0 12px;">Hi {{ recipient_name }},</p>
+            <p style="margin:0 0 16px;">
+              {{ penalized_by_name }} has placed a penalty on your
+              <strong>{{ claim.month|date:"F Y" }}</strong> claim
+              {% if claim.submitted_at %}(submitted {{ claim.submitted_at|date:"d M Y" }}){% endif %}.
+            </p>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                   style="background:#fff8ec; border-left:4px solid #fd7e14; border-radius:6px; margin:0 0 16px;">
+              <tr>
+                <td style="padding:14px 16px;">
+                  <div style="font-size:12px; color:#8a4b08; font-weight:600;">Penalty amount</div>
+                  <div style="font-size:22px; font-weight:700; color:#b02a37; margin-bottom:10px;">KES {{ penalty.amount|floatformat:2 }}</div>
+                  <div style="font-size:12px; color:#8a4b08; font-weight:600;">Reason</div>
+                  <div style="white-space:pre-line;">{{ penalty.reason }}</div>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 16px;">
+              This amount will be deducted from your <strong>next claim</strong>. It will appear there as
+              a carry-forward advance, reducing the amount payable to you. Your {{ claim.month|date:"F Y" }}
+              claim continues through review as normal.
+            </p>
+
+            {% if claim_url %}
+            <p style="margin:0 0 8px;">
+              <a href="{{ claim_url }}" style="display:inline-block; background:#123692; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:6px; font-weight:600;">View claim</a>
+            </p>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:14px 24px; background:#f8f9fa; color:#6c757d; font-size:12px;">
+            If you have questions about this penalty, please contact your manager.
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

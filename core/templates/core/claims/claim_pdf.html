@@ -110,6 +110,14 @@
       <td colspan="11" style="text-align:right; color:#856404;">Carry-forward (previous claim)</td>
       <td class="amount" style="color:#856404;">KES {{ claim.carry_forward|floatformat:2 }}</td>
     </tr>
+    {% for p in claim.applied_penalties.all %}
+    <tr>
+      <td colspan="11" style="text-align:right; color:#8a4b08; font-style:italic;">
+        of which penalty deduction ({{ p.claim.month|date:"M Y" }} claim — {{ p.reason|truncatechars:80 }})
+      </td>
+      <td class="amount" style="color:#8a4b08; font-style:italic;">KES {{ p.amount|floatformat:2 }}</td>
+    </tr>
+    {% endfor %}
     {% endif %}
     <tr class="totals-row">
       <td colspan="11" style="text-align:right">Advance (this claim)</td>
@@ -158,6 +166,20 @@
     <td>{{ claim.finance_actioned_at|date:"d M Y" }}</td>
   </tr>
   {% endif %}
+</table>
+{% endif %}
+
+{% if claim.penalties.all %}
+<h3 style="font-size:10pt; margin-bottom:6px; color:#8a4b08;">Penalties</h3>
+<table style="font-size:9pt;">
+  {% for p in claim.penalties.all %}
+  <tr>
+    <td class="amount" style="white-space:nowrap;"><strong>KES {{ p.amount|floatformat:2 }}</strong></td>
+    <td>{{ p.reason }}</td>
+    <td style="white-space:nowrap;">{{ p.penalized_by.get_full_name|default:"Manager" }}, {{ p.created_at|date:"d M Y" }}</td>
+    <td style="white-space:nowrap;">{% if p.applied_to_claim %}Deducted from {{ p.applied_to_claim.month|date:"M Y" }} claim{% else %}Deducted from next claim{% endif %}</td>
+  </tr>
+  {% endfor %}
 </table>
 {% endif %}
 

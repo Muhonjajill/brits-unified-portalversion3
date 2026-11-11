@@ -222,6 +222,31 @@
   background: #fde8ea; color: #dc3545; border: 1.5px solid #f5c2c7; cursor: pointer;
 }
 .btn-reject:hover { background: #f8d7da; }
+.btn-penalize {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
+  background: #fff3cd; color: #664d03; border: 1.5px solid #ffe69c; cursor: pointer;
+}
+.btn-penalize:hover { background: #ffe69c; }
+.claim-modal-btn--warning       { background: #fd7e14; color: #fff; }
+.claim-modal-btn--warning:hover { background: #dc6a0c; }
+
+/* Penalties card */
+.penalty-card { border-left: 4px solid #fd7e14; }
+.penalty-card .card-section-title { color: #8a4b08; }
+.penalty-card .card-section-title i { color: #fd7e14; }
+.penalty-item {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
+  padding: 12px 0; border-bottom: 1px solid #f0f2f5;
+}
+.penalty-item:last-child { border-bottom: none; padding-bottom: 0; }
+.penalty-item p { margin: 4px 0; }
+.penalty-item small { color: #6c757d; }
+.penalty-amount { font-weight: 700; color: #b02a37; white-space: nowrap; font-size: 1rem; }
+.penalty-state { display: inline-block; margin-top: 4px; font-size: 0.78rem; font-weight: 600; }
+.penalty-state--pending { color: #8a4b08; }
+.penalty-state--applied { color: #146c43; }
+@media (max-width: 576px) { .penalty-item { flex-direction: column; gap: 4px; } }
 
 /* History table */
 .claim-history-card { }
@@ -672,6 +697,15 @@
             </td>
             <td class="amount" style="color:var(--claims-warning,#fd7e14);">KES {{ claim.carry_forward|floatformat:2 }}</td>
           </tr>
+          {% if applied_penalty_total %}
+          <tr class="totals-row" style="background:#fff8ec;">
+            <td colspan="11" class="totals-label" style="color:#8a4b08; font-weight:400; font-style:italic;">
+              of which penalty deduction
+              ({% for p in applied_penalties %}{{ p.claim.month|date:"M Y" }} claim{% if not forloop.last %}, {% endif %}{% endfor %})
+            </td>
+            <td class="amount" style="color:#8a4b08; font-weight:400; font-style:italic;">KES {{ applied_penalty_total|floatformat:2 }}</td>
+          </tr>
+          {% endif %}
           {% endif %}
           <tr class="totals-row">
             <td colspan="11" class="totals-label">Advance (this claim)</td>
@@ -730,6 +764,33 @@
   </div>
   {% endif %}
 
+  {# ── Penalties placed on this claim ── #}
+  {% if penalties %}
+  <div class="claim-meta-card penalty-card">
+    <h3 class="card-section-title"><i class="fas fa-gavel"></i> Penalties</h3>
+    {% for p in penalties %}
+    <div class="penalty-item">
+      <div>
+        <strong><i class="fas fa-user-tie"></i> {{ p.penalized_by.get_full_name|default:"Manager" }}</strong>
+        <p>{{ p.reason|linebreaksbr }}</p>
+        <small><i class="fas fa-clock"></i> {{ p.created_at|date:"d M Y H:i" }}</small><br>
+        {% if p.applied_to_claim %}
+          <span class="penalty-state penalty-state--applied">
+            <i class="fas fa-check-circle"></i> Deducted from the
+            <a href="{% url 'claim_detail' p.applied_to_claim.pk %}">{{ p.applied_to_claim.month|date:"F Y" }} claim</a>
+          </span>
+        {% else %}
+          <span class="penalty-state penalty-state--pending">
+            <i class="fas fa-hourglass-half"></i> Will be deducted from the employee's next claim
+          </span>
+        {% endif %}
+      </div>
+      <span class="penalty-amount">KES {{ p.amount|floatformat:2 }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   {% if can_approve and claim.next_approver_role != "Finance" %}
   <div class="claim-meta-card approval-panel">
     <h3 class="card-section-title">Action Required</h3>
@@ -746,6 +807,11 @@
       {% csrf_token %}
       <input type="hidden" name="comment" id="rejectCommentInput">
     </form>
+    <form method="post" action="{% url 'claim_penalize' claim.pk %}" id="penaltyForm">
+      {% csrf_token %}
+      <input type="hidden" name="amount" id="penaltyAmountInput">
+      <input type="hidden" name="reason" id="penaltyReasonInput">
+    </form>
 
     <div class="form-actions">
       <button type="button" class="btn-submit-claim" onclick="openClaimModal('approveModal')">
@@ -753,6 +819,9 @@
       </button>
       <button type="button" class="btn-reject" onclick="openClaimModal('rejectModal')">
         <i class="fas fa-times-circle"></i> Reject Claim
+      </button>
+      <button type="button" class="btn-penalize" onclick="openClaimModal('penaltyModal')">
+        <i class="fas fa-gavel"></i> Penalize
       </button>
     </div>
   </div>
@@ -965,6 +1034,49 @@
   </div>
 </div>
 
+{# ══ Penalty Modal ══ #}
+{% if can_approve %}
+<div class="claim-modal-overlay" id="penaltyModal">
+  <div class="claim-modal">
+    <button class="claim-modal-close" onclick="closeClaimModal('penaltyModal')">&times;</button>
+    <div class="claim-modal-icon claim-modal-icon--warning">
+      <i class="fas fa-gavel"></i>
+    </div>
+    <h3 class="claim-modal-title" style="color:#8a4b08;">Penalize This Claim</h3>
+    <div class="claim-modal-divider" style="border-color:#fd7e14;"></div>
+    <p class="claim-modal-body">
+      The amount will be deducted from <strong>{{ claim.employee.get_full_name }}</strong>'s next claim.
+      They will be notified by email.
+      This claim stays under review, so you can still approve or reject it.
+    </p>
+    <div class="field-group" style="text-align:left;">
+      <label for="penaltyAmountBox" style="font-size:0.82rem; font-weight:600; color:#6c757d;">
+        Penalty amount (KES) <span style="color:var(--claims-danger);">*</span>
+      </label>
+      <input type="number" id="penaltyAmountBox" class="form-control" min="0.01" step="0.01" placeholder="0.00">
+      <div class="field-error" id="penaltyAmountError" style="display:none;">Enter an amount greater than zero.</div>
+    </div>
+    <div class="field-group" style="text-align:left; margin-bottom:0;">
+      <label for="penaltyReasonBox" style="font-size:0.82rem; font-weight:600; color:#6c757d;">
+        Reason <span style="color:var(--claims-danger);">*</span>
+      </label>
+      <textarea id="penaltyReasonBox" class="form-control" rows="3"
+                placeholder="Required — explain why this claim is being penalized"></textarea>
+      <div class="field-error" id="penaltyReasonError" style="display:none;">A reason is required for a penalty.</div>
+    </div>
+    <br>
+    <div class="claim-modal-actions">
+      <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeClaimModal('penaltyModal')">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+      <button class="claim-modal-btn claim-modal-btn--warning" onclick="submitPenalty()">
+        <i class="fas fa-gavel"></i> Apply Penalty
+      </button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {# ══ Payment Confirmation Modal ══ #}
 {% if payment_form %}
 <div class="claim-modal-overlay" id="paymentModal">
@@ -1104,6 +1216,20 @@ function submitReject() {
   setTimeout(function() { document.getElementById('rejectForm').submit(); }, 300);
 }
 
+function submitPenalty() {
+  const amount = parseFloat(document.getElementById('penaltyAmountBox').value);
+  const reason = document.getElementById('penaltyReasonBox').value.trim();
+  const amountOk = !isNaN(amount) && amount > 0;
+  document.getElementById('penaltyAmountError').style.display = amountOk ? 'none' : 'block';
+  document.getElementById('penaltyReasonError').style.display = reason ? 'none' : 'block';
+  if (!amountOk || !reason) return;
+  document.getElementById('penaltyAmountInput').value = amount.toFixed(2);
+  document.getElementById('penaltyReasonInput').value = reason;
+  closeClaimModal('penaltyModal');
+  showOverlay('Recording penalty...');
+  setTimeout(function() { document.getElementById('penaltyForm').submit(); }, 300);
+}
+
 // Payment form — hook into the modal confirm button
 document.addEventListener('DOMContentLoaded', function() {
   const paymentConfirmBtn = document.getElementById('paymentConfirmBtn');
@@ -1139,6 +1265,11 @@ document.addEventListener('DOMContentLoaded', function() {
       let shortMsg;
       if (isError) {
         shortMsg = 'Something went wrong';
+      } else if (combined.indexOf('penalty') !== -1 && combined.indexOf('could not be sent') !== -1) {
+        shortMsg = 'Penalty recorded — email NOT sent';
+        console.warn(combined);
+      } else if (combined.indexOf('penalty') !== -1) {
+        shortMsg = 'Penalty recorded';
       } else if (combined.indexOf('payment') !== -1 || combined.indexOf('disburs') !== -1) {
         shortMsg = 'Payment recorded';
       } else if (combined.indexOf('reject') !== -1) {
@@ -1158,7 +1289,7 @@ document.addEventListener('DOMContentLoaded', function() {
         shortMsg = 'Done';
       }
 
-      showSuccessOverlay(shortMsg, isError ? 3500 : 1800);
+      showSuccessOverlay(shortMsg, (isError || shortMsg.indexOf('NOT') !== -1) ? 3500 : 1800);
     }
   }
 

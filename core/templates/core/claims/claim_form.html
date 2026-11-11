@@ -284,6 +284,27 @@
   </div>
   {% endif %}
 
+  {# ── Penalty deduction notice ── #}
+  {% if penalty_total %}
+  <div class="carry-banner carry-debit">
+    <i class="fas fa-gavel fa-lg"></i>
+    <div>
+      <strong>Penalty deduction: KES {{ penalty_total|floatformat:2 }}</strong>
+      {% if applied_penalties %}— already applied to this claim{% endif %}
+      {% if pending_penalties %}{% if applied_penalties %}, plus more{% endif %} — will be applied when this claim is {% if is_new %}saved{% else %}submitted{% endif %}{% endif %}.
+      <ul style="margin:6px 0 0; padding-left:18px;">
+        {% for p in applied_penalties %}
+          <li>KES {{ p.amount|floatformat:2 }} on your {{ p.claim.month|date:"F Y" }} claim — {{ p.reason }}</li>
+        {% endfor %}
+        {% for p in pending_penalties %}
+          <li>KES {{ p.amount|floatformat:2 }} on your {{ p.claim.month|date:"F Y" }} claim — {{ p.reason }}</li>
+        {% endfor %}
+      </ul>
+      It counts as an advance already received, so it reduces the amount payable to you.
+    </div>
+  </div>
+  {% endif %}
+
   <form method="post" id="claim-form" novalidate>
     {% csrf_token %}
 
@@ -372,6 +393,17 @@
                   Carry-forward ({{ prev_claim_ref.month|date:"M Y" }})
                 </td>
                 <td class="amount">{{ carry_amount|floatformat:2 }}</td>
+                <td></td>
+              </tr>
+              {% endif %}
+
+              {# ── Penalty deduction row (read-only) ── #}
+              {% if penalty_total %}
+              <tr class="totals-row carry-row">
+                <td colspan="12" class="totals-label">
+                  <i class="fas fa-gavel"></i> Penalty deduction
+                </td>
+                <td class="amount">{{ penalty_total|floatformat:2 }}</td>
                 <td></td>
               </tr>
               {% endif %}
@@ -711,7 +743,7 @@ document.addEventListener('keydown', function(e) {
 
   //document.body.dataset.carryForward = '{{ carry_amount|default:"0"|floatformat:2 }}'.replace(/,/g,'');
 
-  document.body.dataset.carryForward = '{{ carry_amount|default:"0"|floatformat:2 }}'.replace(/,/g,'');
+  document.body.dataset.carryForward = '{% if carry_forward_total is not None %}{{ carry_forward_total|floatformat:2 }}{% else %}{{ carry_amount|default:"0"|floatformat:2 }}{% endif %}'.replace(/,/g,'');
 
   /*(function() {
     const cf = parseFloat(document.body.dataset.carryForward) || 0;

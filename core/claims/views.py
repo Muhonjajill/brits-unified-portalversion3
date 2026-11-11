@@ -16,8 +16,9 @@ from datetime import date, datetime
 import io
 import zipfile
 
-from .models import ClaimForm, ClaimEntry, PaymentRecord
-from .forms import ClaimFormForm, ClaimEntryFormSet, ApprovalActionForm, PaymentRecordForm, SuggestedAmountForm
+from .models import ClaimForm, ClaimEntry, PaymentRecord, ClaimPenalty
+from .forms import ClaimFormForm, ClaimEntryFormSet, ApprovalActionForm, PaymentRecordForm, SuggestedAmountForm, PenaltyForm
+from django.db import transaction
 
 User = get_user_model()
 
@@ -170,6 +171,160 @@ def _notify_finance_outcome(claim, request=None):
             },
             recipient_email=claim.employee.email,
         )
+
+
+# Built-in copy of email/claim_penalized_email.html, used if that template
+# file can't be found, so the penalty email is never silently skipped.
+_PENALTY_EMAIL_FALLBACK = """<!DOCTYPE html>
+<html lang="en">
+<body style="margin:0; padding:0; background:#f4f6fa; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color:#343a40;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fa; padding:24px 0;">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #dee2e6;">
+        <tr>
+          <td style="background:#123692; color:#ffffff; padding:18px 24px; font-size:18px; font-weight:600;">
+            Penalty on your claim
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px; font-size:14px; line-height:1.6;">
+            <p style="margin:0 0 12px;">Hi {{ recipient_name }},</p>
+            <p style="margin:0 0 16px;">
+              {{ penalized_by_name }} has placed a penalty on your
+              <strong>{{ claim.month|date:"F Y" }}</strong> claim
+              {% if claim.submitted_at %}(submitted {{ claim.submitted_at|date:"d M Y" }}){% endif %}.
+            </p>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                   style="background:#fff8ec; border-left:4px solid #fd7e14; border-radius:6px; margin:0 0 16px;">
+              <tr>
+                <td style="padding:14px 16px;">
+                  <div style="font-size:12px; color:#8a4b08; font-weight:600;">Penalty amount</div>
+                  <div style="font-size:22px; font-weight:700; color:#b02a37; margin-bottom:10px;">KES {{ penalty.amount|floatformat:2 }}</div>
+                  <div style="font-size:12px; color:#8a4b08; font-weight:600;">Reason</div>
+                  <div style="white-space:pre-line;">{{ penalty.reason }}</div>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 16px;">
+              This amount will be deducted from your <strong>next claim</strong>. It will appear there as
+              a carry-forward advance, reducing the amount payable to you. Your {{ claim.month|date:"F Y" }}
+              claim continues through review as normal.
+            </p>
+
+            {% if claim_url %}
+            <p style="margin:0 0 8px;">
+              <a href="{{ claim_url }}" style="display:inline-block; background:#123692; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:6px; font-weight:600;">View claim</a>
+            </p>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:14px 24px; background:#f8f9fa; color:#6c757d; font-size:12px;">
+            If you have questions about this penalty, please contact your manager.
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+"""
+
+
+def _notify_penalized(penalty, request=None):
+    """
+    Email the employee that their claim was penalized, by how much and why.
+
+    Unlike _send_claim_email this does NOT swallow errors: it returns
+    (sent: bool, problem: str) so the manager is told if the email failed.
+    """
+    import logging
+    from django.core.mail import EmailMultiAlternatives
+    from django.template import Template, Context
+    from django.template.loader import get_template
+    from django.template.exceptions import TemplateDoesNotExist
+    from django.utils.html import strip_tags
+
+    log = logging.getLogger(__name__)
+    claim = penalty.claim
+    employee = penalty.employee
+
+    if not employee or not (employee.email or '').strip():
+        return False, "the employee has no email address on their account"
+
+    context = {
+        'claim': claim,
+        'penalty': penalty,
+        'recipient_name': employee.get_full_name() or employee.username,
+        'penalized_by_name': (
+            penalty.penalized_by.get_full_name() or penalty.penalized_by.username
+        ) if penalty.penalized_by else 'Your manager',
+        'claim_url': _build_claim_url(request, claim) if request else '',
+    }
+    try:
+        html_body = get_template('email/claim_penalized_email.html').render(context)
+    except TemplateDoesNotExist:
+        log.warning("email/claim_penalized_email.html not found; using built-in penalty email")
+        html_body = Template(_PENALTY_EMAIL_FALLBACK).render(Context(context))
+
+    text_body = (
+        f"Hi {context['recipient_name']},\n\n"
+        f"{context['penalized_by_name']} has placed a penalty of KES {penalty.amount:,.2f} on your "
+        f"{claim.month.strftime('%B %Y')} claim.\n\n"
+        f"Reason: {penalty.reason}\n\n"
+        f"This amount will be deducted from your next claim.\n"
+        + (f"\nView the claim: {context['claim_url']}\n" if context['claim_url'] else '')
+    )
+    try:
+        msg = EmailMultiAlternatives(
+            subject=f"[BRITS] Penalty on your claim — {claim.month.strftime('%B %Y')}",
+            body=text_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[employee.email.strip()],
+        )
+        msg.attach_alternative(html_body, 'text/html')
+        msg.send(fail_silently=False)
+        return True, ''
+    except Exception as exc:
+        log.exception("Penalty email to %s failed", employee.email)
+        return False, f"the mail server returned an error ({exc.__class__.__name__}: {exc})"
+
+
+# ─── Penalties: carried into the employee's next claim ────────────────────────
+
+def _pending_penalties(employee, exclude_claim_pk=None):
+    """Penalties not yet deducted from any claim. A claim never absorbs its own penalty."""
+    qs = ClaimPenalty.objects.filter(employee=employee, applied_to_claim__isnull=True)
+    if exclude_claim_pk:
+        qs = qs.exclude(claim_id=exclude_claim_pk)
+    return qs
+
+
+def _apply_pending_penalties(claim):
+    """
+    Add the employee's outstanding penalties to this claim's carry_forward —
+    the same field an overpayment carries forward through — and mark them as
+    applied to this claim. Returns the total applied.
+    """
+    with transaction.atomic():
+        pending = list(
+            _pending_penalties(claim.employee, exclude_claim_pk=claim.pk).select_for_update()
+        )
+        total = sum((p.amount for p in pending), Decimal('0.00'))
+        if not pending:
+            return total
+        claim.carry_forward = (claim.carry_forward or Decimal('0.00')) + total
+        claim.save(update_fields=['carry_forward'])
+        ClaimPenalty.objects.filter(pk__in=[p.pk for p in pending]).update(
+            applied_to_claim=claim, applied_at=timezone.now()
+        )
+    return total
+
+
+def _sum_amounts(qs):
+    return qs.aggregate(s=Sum('amount'))['s'] or Decimal('0.00')
 
 
 # ── Shims — keep existing call sites working ──────────────────────────────────
@@ -368,6 +523,23 @@ def claim_list(request):
     return render(request, 'core/claims/claim_list.html', context)
 
 
+def _penalty_form_context(employee, carry_amount, claim=None, applied_total=Decimal('0.00')):
+    """
+    Template values for showing penalty deductions on the claim form.
+      penalty_total        — penalties this claim carries (applied + about to apply)
+      carry_forward_total  — carry-forward + penalties, used for the live net total
+    """
+    pending = _pending_penalties(employee, exclude_claim_pk=claim.pk if claim else None)
+    pending_total = _sum_amounts(pending)
+    penalty_total = applied_total + pending_total
+    return {
+        'penalty_total': penalty_total,
+        'pending_penalties': pending.select_related('claim'),
+        'applied_penalties': claim.applied_penalties.select_related('claim') if claim else [],
+        'carry_forward_total': (carry_amount or Decimal('0.00')) + penalty_total,
+    }
+
+
 # ─── Create / Edit ─────────────────────────────────────────────────────────────
 @login_required
 def claim_create(request):
@@ -407,6 +579,9 @@ def claim_create(request):
 
             formset.instance = claim
             formset.save()
+
+            # Outstanding penalties are deducted from this (the next) claim
+            _apply_pending_penalties(claim)
 
             action = request.POST.get('action', 'save')
 
@@ -465,6 +640,7 @@ def claim_create(request):
         'is_new': True,
         'prev_claim_ref': prev_claim_ref,
         'carry_amount': carry_amount,
+        **_penalty_form_context(user, carry_amount),
         'can_view_logs': user.has_perm('core.view_fileaccesslog'),
     })
 
@@ -497,6 +673,7 @@ def claim_edit(request, pk):
                     + _open_claim_message(blocking_claim)
                 )
             elif action == 'submit':
+                _apply_pending_penalties(claim)
                 claim.status = ClaimForm.STATUS_SUBMITTED
                 claim.submitted_at = timezone.now()
                 claim.save()
@@ -511,7 +688,10 @@ def claim_edit(request, pk):
         formset = ClaimEntryFormSet(instance=claim)
 
     prev_claim_ref = claim.previous_claim
-    carry_amount = claim.carry_forward
+    # Display only: show penalties already folded into carry_forward on their
+    # own line, so the carry-forward line shows just the previous balance.
+    applied_penalty_total = _sum_amounts(claim.applied_penalties.all())
+    carry_amount = claim.carry_forward - applied_penalty_total
 
     return render(request, 'core/claims/claim_form.html', {
         'form': form,
@@ -522,6 +702,8 @@ def claim_edit(request, pk):
         'blocking_claim': _open_claim_for(request.user, exclude_pk=claim.pk),
         'prev_claim_ref': prev_claim_ref,
         'carry_amount': carry_amount,
+        **_penalty_form_context(claim.employee, carry_amount, claim=claim,
+                                applied_total=applied_penalty_total),
         'can_view_logs': request.user.has_perm('core.view_fileaccesslog'),
     })
 
@@ -647,6 +829,10 @@ def claim_detail(request, pk):
         'can_suggest_amount': can_suggest_amount,
         'payment_form': payment_form,
         'payment_records': payment_records,
+        # ── Penalties (additive) ──
+        'penalties': claim.penalties.select_related('penalized_by', 'applied_to_claim'),
+        'applied_penalties': claim.applied_penalties.select_related('claim'),
+        'applied_penalty_total': _sum_amounts(claim.applied_penalties.all()),
         'can_record_payment': can_record_payment,
         'can_view_payment_log': elevated or is_finance_user or claim.finance_reviewer == user,
     })
@@ -697,6 +883,48 @@ def claim_reject(request, pk):
         claim.reject(request.user, comment=comment)
         _notify_employee_outcome(claim, request)
         messages.warning(request, "Claim rejected. Employee has been notified.")
+    return redirect('claim_detail', pk=pk)
+
+
+@login_required
+def claim_penalize(request, pk):
+    """
+    Manager penalizes a claim under review. Same permission as approve/reject.
+    The claim's status does NOT change — the manager can still approve or
+    reject it. The amount is deducted from the employee's next claim.
+    """
+    if request.method != 'POST':
+        return redirect('claim_detail', pk=pk)
+    claim = get_object_or_404(ClaimForm, pk=pk)
+    if not claim.can_approve(request.user):
+        messages.error(request, "You are not authorised to penalize this claim.")
+        return redirect('claim_detail', pk=pk)
+
+    form = PenaltyForm(request.POST)
+    if not form.is_valid():
+        errors = '; '.join(e for errs in form.errors.values() for e in errs)
+        messages.error(request, f"Penalty not recorded: {errors}")
+        return redirect('claim_detail', pk=pk)
+
+    penalty = form.save(commit=False)
+    penalty.claim = claim
+    penalty.employee = claim.employee
+    penalty.penalized_by = request.user
+    penalty.save()
+
+    sent, problem = _notify_penalized(penalty, request)
+    if sent:
+        messages.success(
+            request,
+            f"Penalty of KES {penalty.amount:,.2f} recorded. It will be deducted from "
+            f"{claim.employee.get_full_name()}'s next claim, and they have been notified by email."
+        )
+    else:
+        messages.warning(
+            request,
+            f"Penalty of KES {penalty.amount:,.2f} recorded and will be deducted from "
+            f"{claim.employee.get_full_name()}'s next claim, but the email could NOT be sent: {problem}."
+        )
     return redirect('claim_detail', pk=pk)
 
 
