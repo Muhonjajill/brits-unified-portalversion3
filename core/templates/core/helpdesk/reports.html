@@ -104,9 +104,9 @@
       <table class="report-table table table-striped">
         <thead>
           <tr>
-            <th>NO</th>
+            <th>ID</th>
             <th>Problem Category</th>
-            <th>Issue</th>
+            <th>Issue Type</th>
             <th>Description</th>
             <th>Status</th>
             <th>Assigned to</th>
@@ -121,7 +121,7 @@
         <tbody>
            {% for ticket in tickets %}
           <tr>
-            <td>{{ forloop.counter }}</td>
+            <td><a href="{% url 'ticket_detail' ticket.id %}">{{ ticket.id }}</a></td>
             <td>{{ ticket.problem_category.name }}</td>
             <td>{{ ticket.title }}</td>
             <td>{{ ticket.description|truncatewords:10 }}</td>
@@ -156,7 +156,7 @@
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="10">No tickets found.</td></tr>
+          <tr><td colspan="12">No tickets found.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -167,11 +167,11 @@
       <table class="report-table table table-striped">
         <thead>
           <tr>
-            <th>NO</th>
+            <th>ID</th>
             <th>Customer</th>
             <th>Terminal</th>
             <th>Problem Category</th>
-            <th>Issue</th>
+            <th>Issue Type</th>
             <th>Description</th>
             <th>Status</th>
             <th>Assigned to</th>
@@ -186,7 +186,7 @@
         <tbody>
           {% for ticket in tickets %}
           <tr>
-            <td>{{ forloop.counter }}</td>
+            <td><a href="{% url 'ticket_detail' ticket.id %}">{{ ticket.id }}</a></td>
             <td>
               {% if ticket.customer %}
                 {{ ticket.customer.name }}
@@ -229,7 +229,7 @@
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="10">No tickets found.</td></tr>
+          <tr><td colspan="14">No tickets found.</td></tr>
           {% endfor %}
         </tbody>
       </table>

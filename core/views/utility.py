@@ -141,7 +141,7 @@ def export_report_tickets_to_excel(tickets, customer_name=None, terminal_name=No
 
     # Define headers
     headers = [
-        'Customer', 'Terminal', 'Problem Category', 'Issue Type', 'Description', 'Status',
+        'ID', 'Customer', 'Terminal', 'Problem Category', 'Issue Type', 'Description', 'Status',
         'Assigned To', 'Resolved By', 'Resolution', 'Created At', 'Updated At',
         'Resolved At', 'Comments'
     ]
@@ -163,12 +163,13 @@ def export_report_tickets_to_excel(tickets, customer_name=None, terminal_name=No
         ])
 
         row_data = [
+            ticket.id or  "",
             ticket.customer.name if ticket.customer else "",
             ticket.terminal.branch_name if ticket.terminal else "",
             str(ticket.problem_category) if ticket.problem_category else "",
             ticket.title or "",
             ticket.description or "",
-            ticket.status or "",
+            ticket.get_status_display(),
             str(ticket.assigned_to) if ticket.assigned_to else "",
             str(ticket.resolved_by) if hasattr(ticket, 'resolved_by') and ticket.resolved_by else "",
             ticket.resolution or "",
