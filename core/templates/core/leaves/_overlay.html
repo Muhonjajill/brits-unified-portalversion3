@@ -1,0 +1,75 @@
+{# Loading / result overlay shared by the leave pages (same look as claims). #}
+{% if messages %}
+  <div id="leaveMessages" hidden>
+    {% for msg in messages %}<div class="leave-message" data-tags="{{ msg.tags }}">{{ msg }}</div>{% endfor %}
+  </div>
+{% endif %}
+
+<div id="loadingOverlay" class="loading-overlay hidden" role="status" aria-live="polite">
+  <div class="loader-box">
+    <div class="spinner-inner" id="overlaySpinner">
+      <div class="spinner-circle"></div><div class="spinner-circle"></div><div class="spinner-circle"></div>
+    </div>
+    <p class="loading-text" id="loadingMsg">Processing…</p>
+    <div class="success-state hidden" id="overlayResult">
+      <div class="checkmark" id="overlayIcon">✓</div>
+      <p id="overlayTitle">Done</p>
+      <small id="overlayDetail"></small>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var overlay = document.getElementById('loadingOverlay');
+  var spinner = document.getElementById('overlaySpinner');
+  var loadingMsg = document.getElementById('loadingMsg');
+  var result = document.getElementById('overlayResult');
+
+  window.showOverlay = function (text) {
+    loadingMsg.textContent = text || 'Processing…';
+    spinner.style.display = 'block';
+    loadingMsg.style.display = 'block';
+    result.classList.add('hidden');
+    overlay.classList.remove('hidden');
+  };
+
+  function showResult(kind, title, detail, ms) {
+    var icon = document.getElementById('overlayIcon');
+    icon.textContent = kind === 'success' ? '✓' : (kind === 'error' ? '✕' : '!');
+    icon.className = 'checkmark' + (kind === 'warning' ? ' is-warning' : kind === 'error' ? ' is-error' : '');
+    document.getElementById('overlayTitle').textContent = title;
+    document.getElementById('overlayDetail').textContent = detail || '';
+    spinner.style.display = 'none';
+    loadingMsg.style.display = 'none';
+    result.classList.remove('hidden');
+    overlay.classList.remove('hidden');
+    var close = function () { overlay.classList.add('hidden'); };
+    setTimeout(close, ms);
+    overlay.addEventListener('click', close, { once: true });
+  }
+
+  // Flash messages: success shows briefly; warnings/errors stay longer and show the full text
+  var msgs = document.querySelectorAll('#leaveMessages .leave-message');
+  if (msgs.length) {
+    var kind = 'success', lines = [];
+    msgs.forEach(function (m) {
+      var tags = (m.dataset.tags || '').toLowerCase();
+      if (tags.indexOf('error') !== -1 || tags.indexOf('danger') !== -1) kind = 'error';
+      else if (tags.indexOf('warning') !== -1 && kind !== 'error') kind = 'warning';
+      lines.push(m.textContent.trim());
+    });
+    var title = kind === 'success' ? 'Done' : kind === 'warning' ? 'Please note' : 'Something went wrong';
+    showResult(kind, title, lines.join(' '), kind === 'success' ? 2200 : 6000);
+  }
+})();
+
+function openLeaveModal(id) { document.getElementById(id).classList.add('show'); document.body.style.overflow = 'hidden'; }
+function closeLeaveModal(id) { document.getElementById(id).classList.remove('show'); document.body.style.overflow = ''; }
+document.addEventListener('click', function (e) {
+  if (e.target.classList && e.target.classList.contains('claim-modal-overlay')) closeLeaveModal(e.target.id);
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') document.querySelectorAll('.claim-modal-overlay.show').forEach(function (m) { closeLeaveModal(m.id); });
+});
+</script>

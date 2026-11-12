@@ -23,6 +23,7 @@ urlpatterns = [
     path("brits-admin-helpdesk-2026G/", admin.site.urls),
     path('', include('core.urls')),
     path('', include('core.claims.urls')),
+    path('', include('core.leaves.urls')),
     path('inventory/', include('core.inventory.urls')),
 ]
 

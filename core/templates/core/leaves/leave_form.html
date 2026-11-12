@@ -1,0 +1,214 @@
+{% extends "files_base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/claims.css' %}">
+<link rel="stylesheet" href="{% static 'css/leaves.css' %}">
+
+<div class="leave-page">
+
+  <div class="leave-topbar">
+    <div>
+      <h2><span class="hdr-icon"><i class="fas fa-umbrella-beach"></i></span> {{ page_title }}</h2>
+      <div class="leave-subtitle">
+        {% if is_new %}Applying as <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+        {% else %}{{ leave.get_status_display }} application for <strong>{{ leave.employee.get_full_name|default:leave.employee.username }}</strong>{% endif %}
+      </div>
+    </div>
+    <a href="{% if leave %}{% url 'leave_detail' leave.pk %}{% else %}{% url 'leave_list' %}{% endif %}" class="btn-action">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+  </div>
+
+  {% if leave and leave.status == "rejected" and leave.manager_comment %}
+  <div class="notice-note is-warning" style="margin-bottom:18px;">
+    <i class="fas fa-comment-dots"></i>
+    <div><strong>Rejected by {{ leave.manager.get_full_name|default:"your manager" }}:</strong> {{ leave.manager_comment }}<br>
+      Make your changes below and submit again.</div>
+  </div>
+  {% endif %}
+
+  {% if form.non_field_errors %}
+    <div class="leave-form-errors">{% for e in form.non_field_errors %}<div><i class="fas fa-exclamation-circle"></i> {{ e }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <form method="post" id="leaveForm" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="action" id="actionInput" value="save">
+
+    {# ── Employee ── #}
+    <div class="leave-card">
+      <div class="leave-card-header"><span class="card-icon"><i class="fas fa-id-badge"></i></span><h3>Employee</h3></div>
+      <div class="leave-card-body leave-grid">
+        <div class="leave-field">
+          <label for="employeeName">Employee Name</label>
+          <input type="text" id="employeeName" class="form-control" readonly
+                 value="{% if leave %}{{ leave.employee.get_full_name|default:leave.employee.username }}{% else %}{{ request.user.get_full_name|default:request.user.username }}{% endif %}">
+        </div>
+        <div class="leave-field">
+          <label for="{{ form.employee_number.id_for_label }}">Employee Number <span class="required">*</span></label>
+          {{ form.employee_number }}
+          {% for e in form.employee_number.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {# ── Leave information ── #}
+    <div class="leave-card">
+      <div class="leave-card-header"><span class="card-icon"><i class="fas fa-calendar-check"></i></span><h3>Leave Information</h3></div>
+      <div class="leave-card-body leave-grid">
+
+        <div class="leave-field span-2">
+          <span class="field-label" id="typeLabel">Type of Absence Requested <span class="required">*</span></span>
+          <div class="leave-type-grid" role="radiogroup" aria-labelledby="typeLabel">
+            {% for radio in form.leave_type %}
+              <label for="{{ radio.id_for_label }}">{{ radio.tag }} {{ radio.choice_label }}</label>
+            {% endfor %}
+          </div>
+          {% for e in form.leave_type.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="leave-field span-2" id="otherWrap" hidden>
+          <label for="{{ form.other_type_detail.id_for_label }}">Other — please specify <span class="required">*</span></label>
+          {{ form.other_type_detail }}
+          {% for e in form.other_type_detail.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="leave-field">
+          <label for="{{ form.start_date.id_for_label }}">Dates of Absence — From <span class="required">*</span></label>
+          {{ form.start_date }}
+          {% for e in form.start_date.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="leave-field">
+          <label for="{{ form.end_date.id_for_label }}">To <span class="required">*</span></label>
+          {{ form.end_date }}
+          {% for e in form.end_date.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="leave-field span-2" style="margin-top:-6px;">
+          <span class="days-pill is-empty" id="daysPill"><i class="fas fa-business-time"></i> <span id="daysText">Choose your dates</span></span>
+        </div>
+
+        <div class="leave-field span-2">
+          <label for="{{ form.reason.id_for_label }}">Reason for Absence <span class="required">*</span></label>
+          {{ form.reason }}
+          {% for e in form.reason.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="span-2">
+          <div class="notice-note" id="noticeNote">
+            <i class="fas fa-info-circle"></i>
+            <div id="noticeText">You must submit requests for absences, other than sick leave, {{ notice_days }} days prior to the first day you will be absent.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Approval ── #}
+    <div class="leave-card">
+      <div class="leave-card-header"><span class="card-icon green"><i class="fas fa-user-check"></i></span><h3>Manager Approval</h3></div>
+      <div class="leave-card-body leave-grid">
+        <div class="leave-field">
+          <label for="{{ form.manager.id_for_label }}">Approving Manager <span class="required">*</span></label>
+          {{ form.manager }}
+          {% for e in form.manager.errors %}<div class="field-error">{{ e }}</div>{% endfor %}
+          <div class="help">They'll get an email as soon as you submit.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="leave-form-actions">
+      <button type="submit" class="btn-leave-secondary" onclick="document.getElementById('actionInput').value='save'">
+        <i class="fas fa-save"></i> Save as Draft
+      </button>
+      <button type="button" class="btn-leave-primary" onclick="openLeaveModal('submitModal')">
+        <i class="fas fa-paper-plane"></i> Submit for Approval
+      </button>
+    </div>
+  </form>
+</div>
+
+{# ══ Submit confirmation ══ #}
+<div class="claim-modal-overlay" id="submitModal">
+  <div class="claim-modal">
+    <button class="claim-modal-close" onclick="closeLeaveModal('submitModal')">&times;</button>
+    <div class="claim-modal-icon claim-modal-icon--info"><i class="fas fa-paper-plane"></i></div>
+    <h3 class="claim-modal-title">Submit Leave Application?</h3>
+    <div class="claim-modal-divider"></div>
+    <p class="claim-modal-body" id="submitSummary">Your manager will be notified by email and asked to approve or reject it.</p>
+    <div class="claim-modal-actions">
+      <button type="button" class="claim-modal-btn claim-modal-btn--cancel" onclick="closeLeaveModal('submitModal')"><i class="fas fa-times"></i> Cancel</button>
+      <button type="button" class="claim-modal-btn claim-modal-btn--primary" onclick="confirmSubmit()"><i class="fas fa-paper-plane"></i> Submit</button>
+    </div>
+  </div>
+</div>
+
+{% include "core/leaves/_overlay.html" %}
+
+<script>
+(function () {
+  var NOTICE_DAYS = {{ notice_days }};
+  var EXEMPT = {{ notice_exempt_types|safe }};
+  var TODAY = new Date('{{ today|date:"Y-m-d" }}T00:00:00');
+  var startEl = document.getElementById('{{ form.start_date.id_for_label }}');
+  var endEl = document.getElementById('{{ form.end_date.id_for_label }}');
+  var radios = document.querySelectorAll('.leave-type-grid input[type="radio"]');
+  var otherWrap = document.getElementById('otherWrap');
+
+  function selectedType() {
+    var r = document.querySelector('.leave-type-grid input[type="radio"]:checked');
+    return r ? r.value : '';
+  }
+  function parse(v) { return v ? new Date(v + 'T00:00:00') : null; }
+  function workingDays(a, b) {
+    if (!a || !b || b < a) return 0;
+    var n = 0, d = new Date(a);
+    while (d <= b) { var w = d.getDay(); if (w !== 0 && w !== 6) n++; d.setDate(d.getDate() + 1); }
+    return n;
+  }
+
+  function refresh() {
+    var type = selectedType();
+    radios.forEach(function (r) { r.closest('label').classList.toggle('is-checked', r.checked); });
+    otherWrap.hidden = type !== 'other';
+
+    var s = parse(startEl.value), e = parse(endEl.value);
+    var pill = document.getElementById('daysPill'), txt = document.getElementById('daysText');
+    if (s && e && e >= s) {
+      var n = workingDays(s, e);
+      txt.textContent = n + ' working day' + (n === 1 ? '' : 's') + ' (Mon–Fri)';
+      pill.classList.remove('is-empty');
+    } else {
+      txt.textContent = (s && e) ? 'The end date is before the start date' : 'Choose your dates';
+      pill.classList.add('is-empty');
+    }
+    if (s && !endEl.value) endEl.min = startEl.value;
+
+    var note = document.getElementById('noticeNote'), ntext = document.getElementById('noticeText');
+    var daysAhead = s ? Math.round((s - TODAY) / 86400000) : null;
+    if (type && EXEMPT.indexOf(type) === -1 && daysAhead !== null && daysAhead < NOTICE_DAYS) {
+      note.classList.add('is-warning');
+      ntext.textContent = 'This start date is less than ' + NOTICE_DAYS + ' days away. Only sick leave can be submitted at short notice, so you can save a draft but submission will be refused.';
+    } else {
+      note.classList.remove('is-warning');
+      ntext.textContent = 'You must submit requests for absences, other than sick leave, ' + NOTICE_DAYS + ' days prior to the first day you will be absent.';
+    }
+  }
+
+  radios.forEach(function (r) { r.addEventListener('change', refresh); });
+  startEl.addEventListener('change', refresh);
+  endEl.addEventListener('change', refresh);
+  refresh();
+
+  window.confirmSubmit = function () {
+    document.getElementById('actionInput').value = 'submit';
+    closeLeaveModal('submitModal');
+    showOverlay('Submitting your leave application…');
+    setTimeout(function () { document.getElementById('leaveForm').submit(); }, 250);
+  };
+  document.getElementById('leaveForm').addEventListener('submit', function () {
+    if (document.getElementById('actionInput').value === 'save') showOverlay('Saving draft…');
+  });
+})();
+</script>
+{% endblock %}

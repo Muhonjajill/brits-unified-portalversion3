@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Leave application — {{ leave.employee.get_full_name }} — {{ leave.start_date|date:"d M Y" }} to {{ leave.end_date|date:"d M Y" }}</title>
+<style>
+  @page { size: A4 portrait; margin: 1.6cm 1.8cm; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10pt; color: #343a40; }
+  .company { font-size: 17pt; font-weight: bold; color: #123692; letter-spacing: .02em; margin: 0; line-height: 1.2; }
+  .form-title { font-size: 11pt; font-weight: bold; margin: 6px 0 14px; }
+  .band { background: #123692; color: #fff; font-weight: bold; text-align: center; padding: 5px; font-size: 10.5pt; margin: 14px 0 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 5px 4px; vertical-align: bottom; }
+  .label { width: 30%; color: #495057; }
+  .line { border-bottom: 1px solid #6c757d; font-weight: bold; }
+  .types td { padding: 6px 4px; width: 25%; vertical-align: middle; }
+  .box { display: inline-block; width: 11px; height: 11px; border: 1.2px solid #343a40; margin-right: 6px; vertical-align: -1px;
+         text-align: center; font-size: 8pt; line-height: 11px; font-weight: bold; }
+  .box.on { background: #123692; border-color: #123692; color: #fff; }
+  .reason { border: 1px solid #ced4da; min-height: 60px; padding: 8px 10px; white-space: pre-line; margin-top: 4px; }
+  .note { font-style: italic; font-size: 9pt; color: #495057; margin: 12px 0 18px; }
+  .sig td { padding-top: 22px; }
+  .sig .sigline { border-bottom: 1px solid #343a40; font-weight: bold; padding-bottom: 2px; }
+  .sig .caption { font-size: 8pt; font-style: italic; color: #6c757d; padding-top: 2px; }
+  .decision td { padding: 4px; }
+  .comments { border: 1px solid #ced4da; min-height: 60px; padding: 8px 10px; white-space: pre-line; margin-top: 4px; }
+  .meta { font-size: 8pt; color: #6c757d; margin-top: 18px; }
+</style>
+</head>
+<body>
+
+<p class="company">BLUE RIVER TECHNOLOGY<br>SOLUTIONS LTD</p>
+<p class="form-title">Leave application form</p>
+
+<div class="band">Leave Information</div>
+
+<table>
+  <tr><td class="label">Employee Name:</td><td class="line">{{ leave.employee.get_full_name|default:leave.employee.username }}</td></tr>
+  <tr><td class="label">Employee Number:</td><td class="line">{{ leave.employee_number|default:"&nbsp;" }}</td></tr>
+</table>
+
+<p style="margin:14px 0 4px; color:#495057;">Type of Absence Requested:</p>
+<table class="types">
+  <tr>
+    {% for val, label in type_choices %}
+      {% if forloop.counter0 == 4 %}</tr><tr><td></td>{% endif %}
+      <td><span class="box {% if leave.leave_type == val %}on{% endif %}">{% if leave.leave_type == val %}X{% endif %}</span>{{ label }}</td>
+    {% endfor %}
+  </tr>
+</table>
+{% if leave.leave_type == "other" and leave.other_type_detail %}
+<table><tr><td class="label">Other (specify):</td><td class="line">{{ leave.other_type_detail }}</td></tr></table>
+{% endif %}
+
+<table style="margin-top:10px;">
+  <tr>
+    <td style="width:22%; color:#495057;">Dates of Absence: From:</td>
+    <td class="line" style="width:30%;">{{ leave.start_date|date:"l, d F Y" }}</td>
+    <td style="width:6%; text-align:right; color:#495057;">To:</td>
+    <td class="line">{{ leave.end_date|date:"l, d F Y" }}</td>
+  </tr>
+  <tr>
+    <td style="color:#495057;">Working days:</td>
+    <td class="line">{{ leave.working_days }} (Mon–Fri)</td><td></td><td></td>
+  </tr>
+</table>
+
+<p style="margin:14px 0 0; color:#495057;">Reason for Absence:</p>
+<div class="reason">{{ leave.reason }}</div>
+
+<p class="note">You must submit requests for absences, other than sick leave, {{ notice_days }} days prior to the first day you will be absent.</p>
+
+<table class="sig">
+  <tr>
+    <td class="sigline" style="width:62%;">{% if leave.submitted_at %}{{ leave.employee.get_full_name }} (submitted electronically){% endif %}</td>
+    <td style="width:6%;"></td>
+    <td class="sigline">{{ leave.submitted_at|date:"d M Y" }}</td>
+  </tr>
+  <tr><td class="caption">Employee Signature</td><td></td><td class="caption">Date</td></tr>
+</table>
+
+<div class="band" style="margin-top:22px;">Manager Approval</div>
+
+<table class="decision" style="width:auto;">
+  <tr><td><span class="box {% if leave.status == 'approved' or leave.status == 'withdrawn' and leave.manager_actioned_at %}on{% endif %}">{% if leave.status == 'approved' or leave.status == 'withdrawn' and leave.manager_actioned_at %}X{% endif %}</span>Approved</td></tr>
+  <tr><td><span class="box {% if leave.status == 'rejected' %}on{% endif %}">{% if leave.status == 'rejected' %}X{% endif %}</span>Rejected</td></tr>
+</table>
+{% if leave.status == 'withdrawn' %}<p style="font-size:9pt; color:#b35c00; margin:6px 0 0;">Withdrawn by the employee on {{ leave.withdrawn_at|date:"d M Y" }}.</p>{% endif %}
+
+<p style="margin:12px 0 0; color:#495057;">Comments:</p>
+<div class="comments">{{ leave.manager_comment }}</div>
+
+<table class="sig">
+  <tr>
+    <td class="sigline" style="width:62%;">{% if leave.manager_actioned_at %}{{ leave.manager.get_full_name }} (actioned electronically){% endif %}</td>
+    <td style="width:6%;"></td>
+    <td class="sigline">{{ leave.manager_actioned_at|date:"d M Y" }}</td>
+  </tr>
+  <tr><td class="caption">Manager Signature</td><td></td><td class="caption">Date</td></tr>
+</table>
+
+<p class="meta">Application #{{ leave.pk }} · Status: {{ leave.get_status_display }} · Generated from the BRITS portal.</p>
+
+</body>
+</html>

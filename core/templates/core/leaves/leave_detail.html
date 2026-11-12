@@ -1,0 +1,243 @@
+{% extends "files_base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/claims.css' %}">
+<link rel="stylesheet" href="{% static 'css/leaves.css' %}">
+
+<div class="leave-page">
+
+  <div class="leave-topbar">
+    <div>
+      <h2><span class="hdr-icon"><i class="fas fa-umbrella-beach"></i></span>
+        {{ leave.employee.get_full_name|default:leave.employee.username }} — {{ leave.type_label }}</h2>
+      <div class="leave-subtitle">Leave application #{{ leave.pk }}</div>
+    </div>
+    <div class="leave-actions">
+      <a href="{% url 'leave_list' %}" class="btn-action"><i class="fas fa-arrow-left"></i> Back</a>
+      {% if can_edit %}
+        <a href="{% url 'leave_edit' leave.pk %}" class="btn-action btn-edit"><i class="fas fa-edit"></i> Edit</a>
+      {% endif %}
+      {% if leave.status != "draft" %}
+        <a href="{% url 'leave_export_pdf' leave.pk %}" class="btn-action btn-pdf"><i class="fas fa-file-pdf"></i> PDF</a>
+      {% endif %}
+      {% if can_delete %}
+        <button type="button" class="btn-action btn-danger-sm" onclick="openLeaveModal('deleteModal')"><i class="fas fa-trash"></i> Delete</button>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Progress ── #}
+  <div class="status-track">
+    {% with s=leave.status %}
+    <div class="track-step {% if s == 'draft' %}active{% else %}done{% endif %}">
+      <div class="step-dot"></div><span>{% if s == 'draft' %}Draft{% else %}Submitted{% endif %}</span>
+    </div>
+    <div class="track-line {% if s != 'draft' and s != 'submitted' %}done{% endif %}"></div>
+    <div class="track-step {% if s == 'submitted' %}active{% elif s == 'approved' %}done{% elif s == 'rejected' %}rejected{% elif s == 'withdrawn' %}withdrawn{% endif %}">
+      <div class="step-dot"></div>
+      <span>{% if s == 'approved' %}Approved{% elif s == 'rejected' %}Rejected{% elif s == 'withdrawn' %}Withdrawn{% else %}Manager decision{% endif %}</span>
+    </div>
+    {% endwith %}
+    <span class="status-badge status-{{ leave.status_color }} track-badge">{{ leave.get_status_display }}</span>
+  </div>
+
+  {# ── Leave information ── #}
+  <div class="leave-card">
+    <div class="leave-period">
+      <div class="period-date">
+        <span class="day">{{ leave.start_date|date:"d M" }}</span>
+        <span class="rest">{{ leave.start_date|date:"l, Y" }}</span>
+      </div>
+      <span class="period-arrow"><i class="fas fa-arrow-right"></i></span>
+      <div class="period-date">
+        <span class="day">{{ leave.end_date|date:"d M" }}</span>
+        <span class="rest">{{ leave.end_date|date:"l, Y" }}</span>
+      </div>
+      <div class="period-count">
+        <strong>{{ leave.working_days }} working day{{ leave.working_days|pluralize }}</strong>
+        <span>{{ leave.calendar_days }} calendar day{{ leave.calendar_days|pluralize }}</span>
+      </div>
+    </div>
+    <div class="meta-grid">
+      <div><label>Employee</label><strong>{{ leave.employee.get_full_name|default:leave.employee.username }}</strong></div>
+      <div><label>Employee number</label><strong>{{ leave.employee_number|default:"—" }}</strong></div>
+      <div><label>Type of absence</label><strong>{{ leave.type_label }}</strong></div>
+      <div><label>Approving manager</label><strong>{{ leave.manager.get_full_name|default:"—" }}</strong></div>
+      <div><label>Submitted</label><strong>{{ leave.submitted_at|date:"d M Y, H:i"|default:"Not yet submitted" }}</strong></div>
+      {% if leave.withdrawn_at %}<div><label>Withdrawn</label><strong>{{ leave.withdrawn_at|date:"d M Y, H:i" }}</strong></div>{% endif %}
+    </div>
+    <h3 class="leave-subhead">Reason for absence</h3>
+    <div class="leave-reason">{{ leave.reason }}</div>
+  </div>
+
+  {# ── Manager decision ── #}
+  {% if leave.manager_actioned_at %}
+  <div class="leave-card">
+    <div class="leave-card-header"><span class="card-icon green"><i class="fas fa-user-check"></i></span><h3>Manager Decision</h3></div>
+    <div style="padding-top:16px;">
+      <div class="comment-block {% if leave.status == 'approved' %}is-approved{% elif leave.status == 'rejected' %}is-rejected{% endif %}">
+        <strong><i class="fas fa-user-tie"></i> {{ leave.manager.get_full_name|default:"Manager" }} —
+          {% if leave.status == 'rejected' %}Rejected{% elif leave.status == 'withdrawn' %}Approved, later withdrawn by the employee{% else %}Approved{% endif %}</strong>
+        <p>{{ leave.manager_comment|default:"No comment." }}</p>
+        <small><i class="fas fa-clock"></i> {{ leave.manager_actioned_at|date:"d M Y H:i" }}</small>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Manager action panel ── #}
+  {% if can_approve %}
+  <div class="leave-card approval-panel">
+    <div class="leave-card-header"><span class="card-icon"><i class="fas fa-gavel"></i></span><h3>Action Required</h3></div>
+    <div class="leave-card-body">
+      <p class="approver-hint"><i class="fas fa-info-circle"></i> You are the approving manager for this application.</p>
+      <form method="post" action="{% url 'leave_approve' leave.pk %}" id="approveForm">{% csrf_token %}<input type="hidden" name="comment" id="approveCommentInput"></form>
+      <form method="post" action="{% url 'leave_reject' leave.pk %}" id="rejectForm">{% csrf_token %}<input type="hidden" name="comment" id="rejectCommentInput"></form>
+      <div class="leave-form-actions" style="justify-content:flex-start;">
+        <button type="button" class="btn-leave-primary" onclick="openLeaveModal('approveModal')"><i class="fas fa-check-circle"></i> Approve Leave</button>
+        <button type="button" class="btn-leave-danger" onclick="openLeaveModal('rejectModal')"><i class="fas fa-times-circle"></i> Reject Leave</button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Employee: withdraw ── #}
+  {% if can_withdraw %}
+  <div class="leave-card">
+    <div class="leave-card-body" style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
+      <div style="font-size:0.9rem; color:#495057;">
+        {% if leave.status == 'approved' %}Plans changed? You can withdraw this approved leave before it starts.
+        {% else %}Changed your mind? You can withdraw this application while it awaits a decision.{% endif %}
+      </div>
+      <form method="post" action="{% url 'leave_withdraw' leave.pk %}" id="withdrawForm">{% csrf_token %}</form>
+      <button type="button" class="btn-leave-warning" onclick="openLeaveModal('withdrawModal')"><i class="fas fa-undo"></i> Withdraw</button>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Recent leave for context ── #}
+  {% if history %}
+  <div class="leave-card">
+    <div class="leave-card-header"><span class="card-icon amber"><i class="fas fa-history"></i></span><h3>Recent leave — {{ leave.employee.get_full_name|default:leave.employee.username }}</h3></div>
+    <ul class="history-list">
+      {% for h in history %}
+      <li>
+        <a href="{% url 'leave_detail' h.pk %}">{{ h.type_label }}</a>
+        <span>{{ h.start_date|date:"d M Y" }} – {{ h.end_date|date:"d M Y" }} · {{ h.working_days }} day{{ h.working_days|pluralize }}</span>
+        <span class="status-badge status-{{ h.status_color }}">{{ h.get_status_display }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+
+{# ══ Approve ══ #}
+{% if can_approve %}
+<div class="claim-modal-overlay" id="approveModal">
+  <div class="claim-modal">
+    <button class="claim-modal-close" onclick="closeLeaveModal('approveModal')">&times;</button>
+    <div class="claim-modal-icon claim-modal-icon--success"><i class="fas fa-check-circle"></i></div>
+    <h3 class="claim-modal-title">Approve This Leave?</h3>
+    <div class="claim-modal-divider"></div>
+    <p class="claim-modal-body">
+      <strong>{{ leave.employee.get_full_name }}</strong> — {{ leave.type_label }},
+      {{ leave.start_date|date:"d M" }} – {{ leave.end_date|date:"d M Y" }} ({{ leave.working_days }} working day{{ leave.working_days|pluralize }}).
+      They will be notified by email.
+    </p>
+    <div class="modal-field">
+      <label for="approveCommentBox">Comment (optional)</label>
+      <textarea id="approveCommentBox" rows="3" placeholder="Anything the employee should know"></textarea>
+    </div>
+    <br>
+    <div class="claim-modal-actions">
+      <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeLeaveModal('approveModal')"><i class="fas fa-times"></i> Cancel</button>
+      <button class="claim-modal-btn claim-modal-btn--success" onclick="submitDecision('approve')"><i class="fas fa-check-circle"></i> Approve</button>
+    </div>
+  </div>
+</div>
+
+<div class="claim-modal-overlay" id="rejectModal">
+  <div class="claim-modal">
+    <button class="claim-modal-close" onclick="closeLeaveModal('rejectModal')">&times;</button>
+    <div class="claim-modal-icon claim-modal-icon--danger"><i class="fas fa-times-circle"></i></div>
+    <h3 class="claim-modal-title" style="color:var(--claims-danger);">Reject This Leave?</h3>
+    <div class="claim-modal-divider" style="border-color:var(--claims-danger);"></div>
+    <p class="claim-modal-body">The employee will be notified by email and can change and resubmit the application.</p>
+    <div class="modal-field">
+      <label for="rejectCommentBox">Reason <span style="color:var(--claims-danger);">*</span></label>
+      <textarea id="rejectCommentBox" rows="3" placeholder="Required — explain why you are rejecting this leave"></textarea>
+      <div class="field-error" id="rejectCommentError" hidden>A reason is required when rejecting.</div>
+    </div>
+    <br>
+    <div class="claim-modal-actions">
+      <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeLeaveModal('rejectModal')"><i class="fas fa-times"></i> Cancel</button>
+      <button class="claim-modal-btn claim-modal-btn--danger" onclick="submitDecision('reject')"><i class="fas fa-times-circle"></i> Reject</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ══ Withdraw ══ #}
+{% if can_withdraw %}
+<div class="claim-modal-overlay" id="withdrawModal">
+  <div class="claim-modal">
+    <button class="claim-modal-close" onclick="closeLeaveModal('withdrawModal')">&times;</button>
+    <div class="claim-modal-icon claim-modal-icon--warning"><i class="fas fa-undo"></i></div>
+    <h3 class="claim-modal-title" style="color:#8a4b08;">Withdraw This Application?</h3>
+    <div class="claim-modal-divider" style="border-color:#fd7e14;"></div>
+    <p class="claim-modal-body">{{ leave.manager.get_full_name|default:"Your manager" }} will be notified. To take this leave later you'll need to apply again.</p>
+    <div class="claim-modal-actions">
+      <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeLeaveModal('withdrawModal')"><i class="fas fa-times"></i> Keep it</button>
+      <button class="claim-modal-btn claim-modal-btn--warning" onclick="closeLeaveModal('withdrawModal'); showOverlay('Withdrawing…'); document.getElementById('withdrawForm').submit();"><i class="fas fa-undo"></i> Withdraw</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ══ Delete ══ #}
+{% if can_delete %}
+<div class="claim-modal-overlay" id="deleteModal">
+  <div class="claim-modal">
+    <button class="claim-modal-close" onclick="closeLeaveModal('deleteModal')">&times;</button>
+    <div class="claim-modal-icon claim-modal-icon--danger"><i class="fas fa-trash-alt"></i></div>
+    <h3 class="claim-modal-title" style="color:var(--claims-danger);">Delete This Application?</h3>
+    <div class="claim-modal-divider" style="border-color:var(--claims-danger);"></div>
+    <p class="claim-modal-body">
+      You are about to permanently delete the leave application for <strong>{{ leave.employee.get_full_name }}</strong>
+      ({{ leave.start_date|date:"d M" }} – {{ leave.end_date|date:"d M Y" }}). This <strong>cannot be undone</strong>.
+    </p>
+    <form method="post" action="{% url 'leave_delete' leave.pk %}" onsubmit="showOverlay('Deleting…')">
+      {% csrf_token %}
+      <div class="claim-modal-actions">
+        <button type="button" class="claim-modal-btn claim-modal-btn--cancel" onclick="closeLeaveModal('deleteModal')"><i class="fas fa-times"></i> Cancel</button>
+        <button type="submit" class="claim-modal-btn claim-modal-btn--danger"><i class="fas fa-trash-alt"></i> Delete Permanently</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% include "core/leaves/_overlay.html" %}
+
+<script>
+function submitDecision(kind) {
+  if (kind === 'reject') {
+    var c = document.getElementById('rejectCommentBox').value.trim();
+    var err = document.getElementById('rejectCommentError');
+    if (!c) { err.hidden = false; return; }
+    err.hidden = true;
+    document.getElementById('rejectCommentInput').value = c;
+    closeLeaveModal('rejectModal');
+    showOverlay('Rejecting leave…');
+    setTimeout(function () { document.getElementById('rejectForm').submit(); }, 250);
+  } else {
+    document.getElementById('approveCommentInput').value = document.getElementById('approveCommentBox').value.trim();
+    closeLeaveModal('approveModal');
+    showOverlay('Approving leave…');
+    setTimeout(function () { document.getElementById('approveForm').submit(); }, 250);
+  }
+}
+</script>
+{% endblock %}

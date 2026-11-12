@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<body style="margin:0; padding:0; background:#f4f6fa; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color:#343a40;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fa; padding:24px 0;">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #dee2e6;">
+        <tr>
+          <td style="background:{% if outcome == 'approved' %}#198754{% else %}#b02a37{% endif %}; color:#ffffff; padding:18px 24px; font-size:18px; font-weight:600;">
+            Your leave has been {{ outcome }}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px; font-size:14px; line-height:1.6;">
+            <p style="margin:0 0 12px;">Hi {{ recipient_name }},</p>
+            <p style="margin:0 0 16px;">
+              {{ manager_name }} has <strong>{{ outcome }}</strong> your leave application.
+              {% if outcome == 'rejected' %}You can edit it and submit it again from the portal.{% endif %}
+            </p>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fc; border-left:4px solid {% if outcome == 'approved' %}#198754{% else %}#b02a37{% endif %}; border-radius:6px; margin:0 0 16px; font-size:14px;">
+              <tr><td style="padding:14px 16px;">
+                <div style="font-size:12px; color:#6c757d; font-weight:600;">Type of absence</div>
+                <div style="margin-bottom:10px; font-weight:600;">{{ leave.type_label }}</div>
+                <div style="font-size:12px; color:#6c757d; font-weight:600;">Dates</div>
+                <div style="margin-bottom:10px;">{{ leave.start_date|date:"l, d M Y" }} – {{ leave.end_date|date:"l, d M Y" }}
+                  <span style="color:#6c757d;">({{ leave.working_days }} working day{{ leave.working_days|pluralize }})</span></div>
+                {% if leave.manager_comment %}
+                <div style="font-size:12px; color:#6c757d; font-weight:600;">Manager's comments</div>
+                <div style="white-space:pre-line;">{{ leave.manager_comment }}</div>
+                {% endif %}
+              </td></tr>
+            </table>
+
+            {% if leave_url %}
+            <p style="margin:0 0 8px;">
+              <a href="{{ leave_url }}" style="display:inline-block; background:#123692; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:6px; font-weight:600;">View application</a>
+            </p>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:14px 24px; background:#f8f9fa; color:#6c757d; font-size:12px;">
+            This is an automated message from the BRITS portal.
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
