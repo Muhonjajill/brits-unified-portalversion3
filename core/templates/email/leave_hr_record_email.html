@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<body style="margin:0; padding:0; background:#f4f6fa; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color:#343a40;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fa; padding:24px 0;">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #dee2e6;">
+        <tr>
+          <td style="background:{% if event == 'withdrawn' %}#b35c00{% else %}#198754{% endif %}; color:#ffffff; padding:18px 24px; font-size:18px; font-weight:600;">
+            {% if event == 'withdrawn' %}Approved leave withdrawn{% else %}Leave approved{% endif %} — for HR records
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px; font-size:14px; line-height:1.6;">
+            <p style="margin:0 0 16px;">
+              {% if event == 'withdrawn' %}
+                <strong>{{ employee_name }}</strong> has withdrawn leave that {{ manager_name }} had approved. Please update your records.
+              {% else %}
+                {{ manager_name }} has approved leave for <strong>{{ employee_name }}</strong>. No action is needed; this copy is for your records.
+              {% endif %}
+            </p>
+
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px; border-collapse:collapse; margin:0 0 16px;">
+              <tr><td style="padding:6px 0; color:#6c757d; width:38%;">Employee</td><td style="padding:6px 0; font-weight:600;">{{ employee_name }}</td></tr>
+              <tr><td style="padding:6px 0; color:#6c757d;">Employee number</td><td style="padding:6px 0;">{{ leave.employee_number|default:"—" }}</td></tr>
+              <tr><td style="padding:6px 0; color:#6c757d;">Type of absence</td><td style="padding:6px 0;">{{ leave.type_label }}</td></tr>
+              <tr><td style="padding:6px 0; color:#6c757d;">Dates</td><td style="padding:6px 0;">{{ leave.start_date|date:"D, d M Y" }} – {{ leave.end_date|date:"D, d M Y" }}</td></tr>
+              <tr><td style="padding:6px 0; color:#6c757d;">Working days</td><td style="padding:6px 0;">{{ leave.working_days }}</td></tr>
+              <tr><td style="padding:6px 0; color:#6c757d; vertical-align:top;">Reason</td><td style="padding:6px 0; white-space:pre-line;">{{ leave.reason }}</td></tr>
+              <tr><td style="padding:6px 0; color:#6c757d;">Approved by</td><td style="padding:6px 0;">{{ manager_name }}{% if leave.manager_actioned_at %}, {{ leave.manager_actioned_at|date:"d M Y H:i" }}{% endif %}</td></tr>
+              {% if leave.manager_comment %}<tr><td style="padding:6px 0; color:#6c757d; vertical-align:top;">Manager's comment</td><td style="padding:6px 0; white-space:pre-line;">{{ leave.manager_comment }}</td></tr>{% endif %}
+              {% if event == 'withdrawn' %}
+              <tr><td style="padding:6px 0; color:#b35c00; vertical-align:top;">Withdrawn</td><td style="padding:6px 0; white-space:pre-line;">{{ leave.withdrawn_at|date:"d M Y H:i" }} — {{ leave.withdraw_reason }}</td></tr>
+              {% endif %}
+            </table>
+
+            {% if leave_url %}
+            <p style="margin:0;">
+              <a href="{{ leave_url }}" style="display:inline-block; background:#123692; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:6px; font-weight:600;">View application</a>
+            </p>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:14px 24px; background:#f8f9fa; color:#6c757d; font-size:12px;">
+            Sent automatically to HR by the BRITS portal for record keeping.
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

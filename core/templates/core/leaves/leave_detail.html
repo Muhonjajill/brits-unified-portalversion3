@@ -71,6 +71,19 @@
     <div class="leave-reason">{{ leave.reason }}</div>
   </div>
 
+  {% if leave.status == "withdrawn" and leave.withdraw_reason %}
+  <div class="leave-card">
+    <div class="leave-card-header"><span class="card-icon amber"><i class="fas fa-undo"></i></span><h3>Withdrawn by the Employee</h3></div>
+    <div style="padding-top:16px;">
+      <div class="comment-block is-withdrawn">
+        <strong><i class="fas fa-user"></i> {{ leave.employee.get_full_name|default:leave.employee.username }}</strong>
+        <p>{{ leave.withdraw_reason }}</p>
+        <small><i class="fas fa-clock"></i> {{ leave.withdrawn_at|date:"d M Y H:i" }}</small>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   {# ── Manager decision ── #}
   {% if leave.manager_actioned_at %}
   <div class="leave-card">
@@ -110,7 +123,7 @@
         {% if leave.status == 'approved' %}Plans changed? You can withdraw this approved leave before it starts.
         {% else %}Changed your mind? You can withdraw this application while it awaits a decision.{% endif %}
       </div>
-      <form method="post" action="{% url 'leave_withdraw' leave.pk %}" id="withdrawForm">{% csrf_token %}</form>
+      <form method="post" action="{% url 'leave_withdraw' leave.pk %}" id="withdrawForm">{% csrf_token %}<input type="hidden" name="reason" id="withdrawReasonInput"></form>
       <button type="button" class="btn-leave-warning" onclick="openLeaveModal('withdrawModal')"><i class="fas fa-undo"></i> Withdraw</button>
     </div>
   </div>
@@ -187,10 +200,16 @@
     <div class="claim-modal-icon claim-modal-icon--warning"><i class="fas fa-undo"></i></div>
     <h3 class="claim-modal-title" style="color:#8a4b08;">Withdraw This Application?</h3>
     <div class="claim-modal-divider" style="border-color:#fd7e14;"></div>
-    <p class="claim-modal-body">{{ leave.manager.get_full_name|default:"Your manager" }} will be notified. To take this leave later you'll need to apply again.</p>
+    <p class="claim-modal-body">{{ leave.manager.get_full_name|default:"Your manager" }} will be notified{% if leave.status == 'approved' %}, and HR will be told for their records{% endif %}. To take this leave later you'll need to apply again.</p>
+    <div class="modal-field">
+      <label for="withdrawReasonBox">Why are you withdrawing? <span style="color:var(--claims-danger);">*</span></label>
+      <textarea id="withdrawReasonBox" rows="3" placeholder="Required — e.g. the trip has been postponed"></textarea>
+      <div class="field-error" id="withdrawReasonError" hidden>Please state why you are withdrawing.</div>
+    </div>
+    <br>
     <div class="claim-modal-actions">
       <button class="claim-modal-btn claim-modal-btn--cancel" onclick="closeLeaveModal('withdrawModal')"><i class="fas fa-times"></i> Keep it</button>
-      <button class="claim-modal-btn claim-modal-btn--warning" onclick="closeLeaveModal('withdrawModal'); showOverlay('Withdrawing…'); document.getElementById('withdrawForm').submit();"><i class="fas fa-undo"></i> Withdraw</button>
+      <button class="claim-modal-btn claim-modal-btn--warning" onclick="submitWithdraw()"><i class="fas fa-undo"></i> Withdraw</button>
     </div>
   </div>
 </div>
@@ -222,6 +241,17 @@
 {% include "core/leaves/_overlay.html" %}
 
 <script>
+function submitWithdraw() {
+  var r = document.getElementById('withdrawReasonBox').value.trim();
+  var err = document.getElementById('withdrawReasonError');
+  if (!r) { err.hidden = false; return; }
+  err.hidden = true;
+  document.getElementById('withdrawReasonInput').value = r;
+  closeLeaveModal('withdrawModal');
+  showOverlay('Withdrawing…');
+  setTimeout(function () { document.getElementById('withdrawForm').submit(); }, 250);
+}
+
 function submitDecision(kind) {
   if (kind === 'reject') {
     var c = document.getElementById('rejectCommentBox').value.trim();

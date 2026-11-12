@@ -79,6 +79,7 @@ class LeaveApplication(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
     withdrawn_at = models.DateTimeField(null=True, blank=True)
+    withdraw_reason = models.TextField(blank=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -151,9 +152,11 @@ class LeaveApplication(models.Model):
             self.manager_actioned_at = timezone.now()
             self.save()
 
-    def withdraw(self):
+    def withdraw(self, reason):
+        self.was_approved_before_withdrawal = self.status == self.STATUS_APPROVED
         self.status = self.STATUS_WITHDRAWN
         self.withdrawn_at = timezone.now()
+        self.withdraw_reason = reason
         self.save()
 
 

@@ -29,6 +29,10 @@
                   <span style="color:#6c757d;">({{ leave.working_days }} working day{{ leave.working_days|pluralize }})</span></div>
                 <div style="font-size:12px; color:#6c757d; font-weight:600;">Reason</div>
                 <div style="white-space:pre-line;">{{ leave.reason }}</div>
+                {% if event == 'withdrawn' and leave.withdraw_reason %}
+                <div style="font-size:12px; color:#b35c00; font-weight:600; margin-top:10px;">Why it was withdrawn</div>
+                <div style="white-space:pre-line;">{{ leave.withdraw_reason }}</div>
+                {% endif %}
               </td></tr>
             </table>
 

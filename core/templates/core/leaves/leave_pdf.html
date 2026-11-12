@@ -85,7 +85,7 @@
   <tr><td><span class="box {% if leave.status == 'approved' or leave.status == 'withdrawn' and leave.manager_actioned_at %}on{% endif %}">{% if leave.status == 'approved' or leave.status == 'withdrawn' and leave.manager_actioned_at %}X{% endif %}</span>Approved</td></tr>
   <tr><td><span class="box {% if leave.status == 'rejected' %}on{% endif %}">{% if leave.status == 'rejected' %}X{% endif %}</span>Rejected</td></tr>
 </table>
-{% if leave.status == 'withdrawn' %}<p style="font-size:9pt; color:#b35c00; margin:6px 0 0;">Withdrawn by the employee on {{ leave.withdrawn_at|date:"d M Y" }}.</p>{% endif %}
+{% if leave.status == 'withdrawn' %}<p style="font-size:9pt; color:#b35c00; margin:6px 0 0;">Withdrawn by the employee on {{ leave.withdrawn_at|date:"d M Y" }}{% if leave.withdraw_reason %}. Reason: {{ leave.withdraw_reason }}{% endif %}</p>{% endif %}
 
 <p style="margin:12px 0 0; color:#495057;">Comments:</p>
 <div class="comments">{{ leave.manager_comment }}</div>

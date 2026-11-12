@@ -171,3 +171,4 @@
 @media (prefers-reduced-motion: reduce) { .spinner-circle { animation: none; } }
 
 .leave-subhead { font-size: 0.92rem; font-weight: 700; color: var(--claims-text, #343a40); padding: 0 24px; margin: 0 0 8px; border: none; }
+.comment-block.is-withdrawn { border-left-color: #fd7e14; background: #fff8ec; }

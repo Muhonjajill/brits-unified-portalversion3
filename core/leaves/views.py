@@ -107,6 +107,7 @@ def _notify_manager(leave, request, event='submitted'):
         f"{_person(leave.employee)} has {verb} a {leave.type_label.lower()} leave application.\n\n"
         f"Dates: {_period(leave)} ({leave.working_days} working day{'s' if leave.working_days != 1 else ''})\n"
         f"Reason: {leave.reason}\n"
+        + (f"\nWithdrawal reason: {leave.withdraw_reason}\n" if event == 'withdrawn' else '')
         + (f"\nReview it here: {url}\n" if url else '')
     )
     return _send_leave_email(subject, 'email/leave_submitted_email.html', {
@@ -131,6 +132,59 @@ def _notify_employee(leave, request):
         'leave': leave, 'outcome': outcome, 'recipient_name': _person(leave.employee),
         'manager_name': _person(leave.manager), 'leave_url': url,
     }, leave.employee.email, text)
+
+
+def _hr_emails():
+    """
+    HR address(es) that get a copy of every approved leave, from settings.py:
+        LEAVE_HR_EMAIL = 'hr@example.com'          # or a list of addresses
+    Returns [] when it isn't set, in which case no HR email is sent.
+    """
+    value = getattr(settings, 'LEAVE_HR_EMAIL', None)
+    if not value:
+        return []
+    if isinstance(value, str):
+        value = [value]
+    return [v.strip() for v in value if v and v.strip()]
+
+
+def _notify_hr(leave, request, event='approved'):
+    """Record-keeping copy to HR: when leave is approved, or an approved leave is withdrawn."""
+    recipients = _hr_emails()
+    if not recipients:
+        log.info("LEAVE_HR_EMAIL not set; skipping HR copy for leave %s", leave.pk)
+        return True, ''
+    url = _leave_url(request, leave)
+    if event == 'approved':
+        subject = (f"[BRITS] Leave approved (for HR records) — {_person(leave.employee)}, "
+                   f"{leave.get_leave_type_display()}, {_period(leave)}")
+        head = f"{_person(leave.manager)} has approved the following leave."
+    else:
+        subject = (f"[BRITS] Approved leave withdrawn (for HR records) — {_person(leave.employee)}, "
+                   f"{leave.get_leave_type_display()}, {_period(leave)}")
+        head = f"{_person(leave.employee)} has withdrawn the following previously approved leave."
+    text = (
+        f"{head}\n\n"
+        f"Employee: {_person(leave.employee)} ({leave.employee_number or 'no employee number'})\n"
+        f"Type: {leave.type_label}\n"
+        f"Dates: {_period(leave)} ({leave.working_days} working day{'s' if leave.working_days != 1 else ''})\n"
+        f"Reason: {leave.reason}\n"
+        f"Approved by: {_person(leave.manager)}"
+        + (f" on {timezone.localtime(leave.manager_actioned_at):%d %b %Y %H:%M}" if leave.manager_actioned_at else '') + "\n"
+        + (f"Manager's comment: {leave.manager_comment}\n" if leave.manager_comment else '')
+        + (f"\nWithdrawal reason: {leave.withdraw_reason}\n" if event == 'withdrawn' else '')
+        + (f"\nView it here: {url}\n" if url else '')
+    )
+    sent_all, problems = True, []
+    for addr in recipients:
+        sent, problem = _send_leave_email(subject, 'email/leave_hr_record_email.html', {
+            'leave': leave, 'event': event, 'employee_name': _person(leave.employee),
+            'manager_name': _person(leave.manager), 'leave_url': url,
+        }, addr, text)
+        if not sent:
+            sent_all = False
+            problems.append(f"{addr}: {problem}")
+    return sent_all, '; '.join(problems)
 
 
 def _report_email(request, sent_problem, who):
@@ -353,8 +407,11 @@ def leave_approve(request, pk):
     form.is_valid()
     leave.approve(request.user, comment=(form.cleaned_data.get('comment') or '').strip())
     sent = _notify_employee(leave, request)
-    messages.success(request, f"Leave approved. {_person(leave.employee)} has been notified.")
+    hr_sent = _notify_hr(leave, request, 'approved')
+    messages.success(request, f"Leave approved. {_person(leave.employee)} has been notified"
+                              f"{' and HR has a copy for their records' if _hr_emails() else ''}.")
     _report_email(request, sent, _person(leave.employee))
+    _report_email(request, hr_sent, "HR")
     return redirect('leave_detail', pk=pk)
 
 
@@ -391,10 +448,16 @@ def leave_withdraw(request, pk):
     if not allowed:
         messages.error(request, "This leave application can no longer be withdrawn.")
         return redirect('leave_detail', pk=pk)
-    leave.withdraw()
+    reason = (request.POST.get('reason') or '').strip()
+    if not reason:
+        messages.error(request, "Please state why you are withdrawing this leave application.")
+        return redirect('leave_detail', pk=pk)
+    leave.withdraw(reason)
     sent = _notify_manager(leave, request, 'withdrawn')
     messages.success(request, "Leave application withdrawn. Your manager has been notified.")
     _report_email(request, sent, _person(leave.manager))
+    if leave.was_approved_before_withdrawal:
+        _report_email(request, _notify_hr(leave, request, 'withdrawn'), "HR")
     return redirect('leave_detail', pk=pk)
 
 
@@ -472,7 +535,7 @@ def leave_export_excel(request):
     headers = [
         ('ID', 7), ('Employee', 24), ('Employee No.', 14), ('Type', 22), ('From', 12), ('To', 12),
         ('Working Days', 12), ('Status', 12), ('Manager', 22), ('Submitted', 17),
-        ('Decided', 17), ('Reason', 40), ('Manager Comment', 40),
+        ('Decided', 17), ('Reason', 40), ('Manager Comment', 40), ('Withdrawal Reason', 40),
     ]
     ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(headers))
     ws['A1'] = f"Leave register — generated {date.today():%d %b %Y}"
@@ -493,12 +556,12 @@ def leave_export_excel(request):
             lv.pk, _person(lv.employee), lv.employee_number, lv.type_label,
             lv.start_date, lv.end_date, lv.working_days, lv.get_status_display(),
             _person(lv.manager), naive(lv.submitted_at), naive(lv.manager_actioned_at),
-            lv.reason, lv.manager_comment,
+            lv.reason, lv.manager_comment, lv.withdraw_reason,
         ]
         for col, val in enumerate(values, start=1):
             c = ws.cell(row=row, column=col, value=val)
             c.border = border
-            c.alignment = Alignment(vertical='top', wrap_text=col in (12, 13))
+            c.alignment = Alignment(vertical='top', wrap_text=col in (12, 13, 14))
             if col in (5, 6) and val:
                 c.number_format = 'DD/MM/YYYY'
             elif col in (10, 11) and val:
