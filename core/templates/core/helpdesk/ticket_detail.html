@@ -11,133 +11,199 @@
 <div class="ticket-detail-container">
   <div class="ticket-card">
 
-    <div class="ticket-header d-flex justify-content-between align-items-center flex-wrap">
-        <h2><i class="fas fa-info-circle"></i> Ticket 0{{ ticket.id }} - {{ ticket.title }}</h2>
-        {% if user_group in allowed_roles or request.user.is_superuser %}
-        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editTicketModal">✏️ Edit Ticket</button>
-        <a href="{% url 'ticket_activity_log' ticket.id %}" class="btn view-log-btn">View Activity Log</a>
-        {% endif %}
-    </div>
+    <!-- ── Header ─────────────────────────────────────────── -->
+    <div class="ticket-header">
+      <a href="{% url 'tickets' %}?{{ request.GET.urlencode }}" class="td-backlink"><i class="fas fa-arrow-left"></i> Back to Tickets</a>
 
-    <div class="ticket-info">
-      <div><strong>Status:</strong> <span class="badge badge-{{ ticket.status }}">{{ ticket.get_status_display }}</span></div>
-      <div><strong>Priority:</strong> <span class="badge badge-{{ ticket.priority }}">{{ ticket.get_priority_display }}</span></div>
-      <div><strong>BRTS Unit:</strong> {{ ticket.brts_unit }}</div>
-      <div><strong>Customer:</strong> {{ ticket.customer }}</div>
-      <div><strong>Terminal:</strong> {{ ticket.terminal }}</div>
-      <div><strong>Region:</strong> {{ ticket.region }}</div>
-      <!--<div><strong>Comments:</strong><br><p class="comment-summary">{{ ticket.comment_summary }}</p></div>-->
-      <div><strong>Problem Category:</strong> {{ ticket.problem_category }}</div>
-      <div><strong>Description:</strong><br><p class="description">{{ ticket.description }}</p></div>
-      <div><strong>Created By:</strong> {{ ticket.created_by }}</div>
-      <div class="assigned-to-wrapper">
-          <strong>Assigned To:</strong>
-          {% if is_manager %}
-              <form method="post" class="assigned-form" data-spinner="assign"> 
-                  {% csrf_token %}
-                  <select name="assigned_to" class="form-select form-select-sm">
-                      <option value="">-- Select Staff --</option>
-                      {% for staff in staff_users %}
-                          <option value="{{ staff.id }}" {% if ticket.assigned_to and ticket.assigned_to.id == staff.id %}selected{% endif %}>
-                              {{ staff.get_full_name|default:staff.username }}
-                          </option>
-                      {% endfor %}
-                  </select>
-                  <button type="submit" name="assign_ticket" class="btn btn-success btn-sm">Assign</button>
-              </form>
-          {% else %}
-              <span class="assigned-name">
-                  {% if ticket.assigned_to %}
-                      {{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username }}
-                  {% else %}
-                      <em class="text-muted">Not assigned</em>
-                  {% endif %}
-              </span>
-          {% endif %}
-      </div>
-      <div><strong>Created At:</strong> {{ ticket.created_at|date:"Y-m-d H:i" }}</div>
-      <div><strong>Updated At:</strong> {{ ticket.updated_at|date:"Y-m-d H:i" }}</div>
-      <div><strong>Resolved By:</strong> {% if ticket.resolved_by %}{{ ticket.resolved_by.username }}{% else %}Not resolved yet{% endif %}</div>
-      <div><strong>Resolved At:</strong> {% if ticket.resolved_at %}{{ ticket.resolved_at|date:"Y-m-d H:i" }}{% else %}Not resolved yet{% endif %}</div>
-      {% if ticket.job_card_number %}
-        <div><strong>Job Card Number:</strong> {{ ticket.job_card_number }}</div>
-      {% endif %}
-      {% if ticket.resolution %}
-        <div><strong>Resolution Statement:</strong><br><p class="description">{{ ticket.resolution }}</p></div>
-      {% endif %}
-      {% if ticket.is_escalated %}
-        <div class="alert alert-warning mt-3 p-3 rounded">
-          <strong><i class="fa-solid fa-triangle-exclamation"></i> Escalated</strong><br>
-          <strong>By:</strong> {{ ticket.escalated_by }}<br>
-          <strong>At:</strong> {{ ticket.escalated_at|date:"Y-m-d H:i" }}<br>
-          <strong>Reason:</strong> <em>{{ ticket.escalation_reason }}</em>
+      <div class="td-title-row">
+        <span class="td-title-icon"><i class="fas fa-ticket"></i></span>
+        <div class="td-title-text">
+          <span class="td-id">Ticket 0{{ ticket.id }}</span>
+          <h2>{{ ticket.title }}</h2>
+          <div class="td-badges">
+            <span class="badge badge-{{ ticket.status }}">{{ ticket.get_status_display }}</span>
+            <span class="badge badge-{{ ticket.priority }}">{{ ticket.get_priority_display }} priority</span>
+            {% if ticket.is_escalated %}<span class="badge badge-escalated"><i class="fa-solid fa-triangle-exclamation"></i> Escalated</span>{% endif %}
+          </div>
         </div>
-      {% endif %}
-    </div>
+      </div>
 
-    <div class="mt-4">
-
-          {% if user_group in allowed_roles or request.user.is_superuser %}
+      <div class="td-actions">
+        {% if user_group in allowed_roles or request.user.is_superuser or can_resolve %}
           <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#resolveTicketModal">
-            ✅ Resolve Ticket
+            <i class="fas fa-circle-check"></i> Resolve Ticket
           </button>
-
+        {% endif %}
+        {% if user_group in allowed_roles or request.user.is_superuser %}
           <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#escalateTicketModal">
             <i class="fa-solid fa-triangle-exclamation"></i> Escalate Ticket
           </button>
-          {% endif %}
-
-          <a href="{% url 'tickets' %}?{{ request.GET.urlencode }}" 
-            class="btn btn-back">
-            ← Back to Tickets
-          </a>
-
-
-      {% if can_resolve %}
-       
-          <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#resolveTicketModal">
-            ✅ Resolve Ticket
-          </button>
-      {% endif %}
-
+          <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editTicketModal"><i class="fas fa-pen"></i> Edit Ticket</button>
+          <a href="{% url 'ticket_activity_log' ticket.id %}" class="btn view-log-btn"><i class="fas fa-clock-rotate-left"></i> View Activity Log</a>
+        {% endif %}
+      </div>
     </div>
 
-    <div class="card mt-5">
-      <div class="card-header bg-light">
-        <h4 class="card-title"><i class="fas fa-sticky-note"></i> Comments</h4>
-      </div>
-      <div class="card-body">
-        {% if comments %}
-          {% for comment in comments %}
-            <div class="comment mb-3 p-2 border rounded">
-              <div class="d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>{{ comment.created_by }}</strong>
-                  <small class="text-muted">({{ comment.created_at|date:"Y-m-d H:i" }})</small>
-                </div>
-                {% if comment.created_by == request.user or user.is_superuser %}
-                  <div class="comment-actions">
-                    <a href="{% url 'edit_comment' comment.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
-                    <form method="post" action="{% url 'delete_comment' comment.id %}" style="display:inline;">
-                      {% csrf_token %}
-                      <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
-                    </form>
-                  </div>
-                {% endif %}
-              </div>
-              <p class="mt-2 mb-0">{{ comment.content }}</p>
-            </div>
-          {% endfor %}
-        {% else %}
-          <p class="text-muted">No comments yet.</p>
+    <div class="td-grid">
+
+      <!-- ── Main column ──────────────────────────────────── -->
+      <div class="td-main">
+
+        {% if ticket.is_escalated %}
+        <div class="alert alert-warning td-escalation">
+          <span class="td-esc-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+          <div>
+            <strong>Escalated</strong>
+            <div class="td-esc-meta">By <b>{{ ticket.escalated_by }}</b> · {{ ticket.escalated_at|date:"Y-m-d H:i" }}</div>
+            <div class="td-esc-reason"><em>{{ ticket.escalation_reason }}</em></div>
+          </div>
+        </div>
         {% endif %}
 
-        <form method="post" class="mt-4">
-          {% csrf_token %}
-          {{ comment_form.as_p }}
-          <button type="submit" name="add_comment" class="btn btn-primary"><i class="fa-solid fa-comment-dots"></i> Add Comment</button>
-        </form>
+        <div class="card td-section">
+          <div class="card-header"><h4 class="card-title"><i class="fas fa-align-left"></i> Description</h4></div>
+          <div class="card-body">
+            <p class="description">{{ ticket.description }}</p>
+          </div>
+        </div>
+
+        {% if ticket.resolution or ticket.job_card_number %}
+        <div class="card td-section td-resolution">
+          <div class="card-header"><h4 class="card-title"><i class="fas fa-circle-check"></i> Resolution</h4></div>
+          <div class="card-body">
+            {% if ticket.resolution %}<p class="description">{{ ticket.resolution }}</p>{% endif %}
+            {% if ticket.job_card_number %}
+              <div class="td-jobcard"><i class="fas fa-file-signature"></i> Job Card Number: <strong>{{ ticket.job_card_number }}</strong></div>
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="card td-section">
+          <div class="card-header">
+            <h4 class="card-title"><i class="fas fa-comments"></i> Comments {% if comments %}<span class="td-count">{{ comments|length }}</span>{% endif %}</h4>
+          </div>
+          <div class="card-body">
+            {% if comments %}
+              {% for comment in comments %}
+                <div class="comment">
+                  <span class="avatar">{{ comment.created_by|stringformat:"s"|slice:":1"|upper }}</span>
+                  <div class="comment-body">
+                    <div class="comment-top">
+                      <div>
+                        <strong>{{ comment.created_by }}</strong>
+                        <small class="text-muted">{{ comment.created_at|date:"Y-m-d H:i" }}</small>
+                      </div>
+                      {% if comment.created_by == request.user or user.is_superuser %}
+                        <div class="comment-actions">
+                          <a href="{% url 'edit_comment' comment.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                          <form method="post" action="{% url 'delete_comment' comment.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                          </form>
+                        </div>
+                      {% endif %}
+                    </div>
+                    <p class="comment-text">{{ comment.content }}</p>
+                  </div>
+                </div>
+              {% endfor %}
+            {% else %}
+              <p class="td-empty"><i class="far fa-comment-dots"></i> No comments yet.</p>
+            {% endif %}
+
+            <form method="post" class="comment-form">
+              {% csrf_token %}
+              {{ comment_form.as_p }}
+              <button type="submit" name="add_comment" class="btn btn-primary"><i class="fa-solid fa-comment-dots"></i> Add Comment</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card td-section">
+          <div class="card-header">
+            <h4 class="card-title"><i class="fas fa-history"></i> Escalation History</h4>
+          </div>
+          <div class="card-body">
+            {% if ticket.escalation_history.all %}
+              <ol class="td-timeline">
+                {% for history in ticket.escalation_history.all %}
+                  <li class="escalation-history-item">
+                    <div class="td-tl-top">
+                      <span class="td-level">{{ history.from_level }} <i class="fas fa-arrow-right"></i> {{ history.to_level }}</span>
+                      <small>{{ history.timestamp|date:"Y-m-d H:i" }}</small>
+                    </div>
+                    <div class="td-tl-by">Escalated by <strong>{{ history.escalated_by.username }}</strong></div>
+                    <div class="td-tl-note">{{ history.note }}</div>
+                  </li>
+                {% endfor %}
+              </ol>
+            {% else %}
+              <p class="td-empty"><i class="far fa-circle-check"></i> No escalation history yet.</p>
+            {% endif %}
+          </div>
+        </div>
       </div>
+
+      <!-- ── Side column ──────────────────────────────────── -->
+      <aside class="td-side">
+        <div class="card td-section">
+          <div class="card-header"><h4 class="card-title"><i class="fas fa-circle-info"></i> Details</h4></div>
+          <div class="card-body">
+            <dl class="ticket-info">
+              <div><dt>BRTS Unit</dt><dd>{{ ticket.brts_unit }}</dd></div>
+              <div><dt>Customer</dt><dd>{{ ticket.customer }}</dd></div>
+              <div><dt>Terminal</dt><dd>{{ ticket.terminal }}</dd></div>
+              <div><dt>Region</dt><dd>{{ ticket.region }}</dd></div>
+              <div><dt>Problem Category</dt><dd>{{ ticket.problem_category }}</dd></div>
+              <div><dt>Created By</dt><dd>{{ ticket.created_by }}</dd></div>
+              <div><dt>Created At</dt><dd>{{ ticket.created_at|date:"Y-m-d H:i" }}</dd></div>
+              <div><dt>Updated At</dt><dd>{{ ticket.updated_at|date:"Y-m-d H:i" }}</dd></div>
+            </dl>
+          </div>
+        </div>
+
+        <div class="card td-section">
+          <div class="card-header"><h4 class="card-title"><i class="fas fa-user-gear"></i> Assignment</h4></div>
+          <div class="card-body">
+            <div class="assigned-to-wrapper">
+              <strong>Assigned To</strong>
+              {% if is_manager %}
+                  <form method="post" class="assigned-form" data-spinner="assign"> 
+                      {% csrf_token %}
+                      <select name="assigned_to" class="form-select form-select-sm">
+                          <option value="">-- Select Staff --</option>
+                          {% for staff in staff_users %}
+                              <option value="{{ staff.id }}" {% if ticket.assigned_to and ticket.assigned_to.id == staff.id %}selected{% endif %}>
+                                  {{ staff.get_full_name|default:staff.username }}
+                              </option>
+                          {% endfor %}
+                      </select>
+                      <button type="submit" name="assign_ticket" class="btn btn-success btn-sm">Assign</button>
+                  </form>
+              {% else %}
+                  <span class="assigned-name">
+                      {% if ticket.assigned_to %}
+                          {{ ticket.assigned_to.get_full_name|default:ticket.assigned_to.username }}
+                      {% else %}
+                          <em class="text-muted">Not assigned</em>
+                      {% endif %}
+                  </span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="card td-section">
+          <div class="card-header"><h4 class="card-title"><i class="fas fa-flag-checkered"></i> Resolution Status</h4></div>
+          <div class="card-body">
+            <dl class="ticket-info">
+              <div><dt>Resolved By</dt><dd>{% if ticket.resolved_by %}{{ ticket.resolved_by.username }}{% else %}<span class="text-muted">Not resolved yet</span>{% endif %}</dd></div>
+              <div><dt>Resolved At</dt><dd>{% if ticket.resolved_at %}{{ ticket.resolved_at|date:"Y-m-d H:i" }}{% else %}<span class="text-muted">Not resolved yet</span>{% endif %}</dd></div>
+            </dl>
+          </div>
+        </div>
+      </aside>
     </div>
   </div>
 </div>
@@ -226,27 +292,6 @@
       </form>
     </div>
   </div>
-</div>
-
-<div class="card mt-5">
-    <div class="card-header bg-light">
-        <h4 class="card-title"><i class="fas fa-history"></i> Escalation History</h4>
-    </div>
-    <div class="card-body">
-        {% if ticket.escalation_history.all %}
-            {% for history in ticket.escalation_history.all %}
-                <div class="escalation-history-item mb-3">
-                    <strong>Escalated by:</strong> {{ history.escalated_by.username }} <br>
-                    <strong>From Level:</strong> {{ history.from_level }} <br>
-                    <strong>To Level:</strong> {{ history.to_level }} <br>
-                    <strong>Note:</strong> {{ history.note }} <br>
-                    <strong>Escalated at:</strong> {{ history.timestamp|date:"Y-m-d H:i" }} <br>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p>No escalation history yet.</p>
-        {% endif %}
-    </div>
 </div>
 
 <!-- Modal: Resolve Ticket with Resolution -->

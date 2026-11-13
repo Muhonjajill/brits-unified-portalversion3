@@ -1,113 +1,119 @@
+/* ══════════════════════════════════════════════════════════════
+   BRITS Helpdesk — Ticket activity log (timeline)
+   ══════════════════════════════════════════════════════════════ */
+
 .activity-log-container {
-    overflow-x: auto;
-    padding: 10px; 
-    margin-top: 50px;
+    --primary: #123692;
+    --deep: #172d69;
+    --text: #1b2540;
+    --muted: #6b7489;
+    --border: #e4e8f1;
+
+    max-width: 1100px;
+    margin: 60px auto 40px;
+    padding: 0 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--text);
 }
 
+/* ── Header ─────────────────────────────────────────────────── */
+.al-header {
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 1px 2px rgba(16, 30, 74, 0.04), 0 8px 24px rgba(16, 30, 74, 0.06);
+    padding: 16px 20px 18px;
+    margin-bottom: 22px;
+}
+.al-header form { margin: 0; }
+.al-title-wrap { min-width: 0; flex: 1; }
+.al-backlink { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: var(--muted); text-decoration: none; margin-bottom: 10px; }
+.al-backlink:hover { color: var(--primary); }
+.al-title-row { display: flex; align-items: center; gap: 14px; }
+.al-icon {
+    width: 46px; height: 46px; border-radius: 13px; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--deep) 100%);
+    color: #fff; font-size: 1.15rem;
+    box-shadow: 0 6px 16px rgba(18, 54, 146, 0.28);
+}
 .ticket-title {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    text-align: center;
-    font-size: 1.5em; 
-    font-weight: bold;
-}
-
-.activity-log-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-    font-family: 'Segoe UI', sans-serif;
-    min-width: 600px; 
-}
-
-.activity-log-table th, .activity-log-table td {
-    border: 1px solid #ddd;
-    padding: 12px;
-    vertical-align: top;
-    font-size: 16px; 
-}
-
-.activity-log-table th {
-    background-color: #172d69;
-    color: #fff;
-    text-align: left;
-}
-
-.activity-log-table td ul {
-    padding-left: 20px;
     margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--text);
+    text-align: left;
+    overflow-wrap: anywhere;
 }
-
-.activity-log-table td li {
-    list-style-type: disc;
-    margin-bottom: 5px;
-    color: #333;
-}
+.al-sub { margin: 2px 0 0; color: var(--muted); font-size: 0.88rem; }
 
 .clear-logs-btn {
-    background-color: #e74c3c;
-    color: #fff;
-    border: none;
-    padding: 12px 16px;
-    border-radius: 5px;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: #fff;
+    color: #dc3545;
+    border: 1.5px solid #f2c4c9;
+    padding: 9px 16px;
+    border-radius: 9px;
     cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.2s ease;
-    text-align: center; 
-    width: auto;  
-    margin-top: 50px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
+.clear-logs-btn:hover { background: #dc3545; color: #fff; border-color: #dc3545; }
 
-.clear-logs-btn:hover {
-    background-color: #c0392b;
+/* ── Timeline ───────────────────────────────────────────────── */
+.activity-log-timeline { list-style: none; margin: 0; padding: 0; position: relative; }
+.activity-log-timeline::before {
+    content: ''; position: absolute; left: 19px; top: 8px; bottom: 8px; width: 2px;
+    background: linear-gradient(180deg, #c9d4ef, #e4e8f1);
 }
+.al-item { position: relative; display: flex; gap: 16px; padding-bottom: 16px; }
+.al-item:last-child { padding-bottom: 0; }
+.al-avatar {
+    position: relative; z-index: 1;
+    width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--primary), var(--deep));
+    color: #fff; font-weight: 700; font-size: 0.9rem;
+    box-shadow: 0 0 0 4px #f3f5fa;
+}
+.al-avatar-system { background: #eef1f6; color: var(--muted); }
+
+.al-card {
+    flex: 1; min-width: 0;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(16, 30, 74, 0.04);
+    padding: 12px 16px 14px;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.al-card:hover { box-shadow: 0 6px 18px rgba(16, 30, 74, 0.08); border-color: #d3daea; }
+.al-card-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.al-user { font-weight: 700; font-size: 0.92rem; color: var(--text); }
+.al-time { font-size: 0.8rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.al-action { font-size: 0.92rem; color: #3b4560; overflow-wrap: anywhere; }
+.al-action-head strong { font-weight: 600; color: var(--text); }
+.al-action ul { margin: 8px 0 0; padding: 8px 12px 8px 28px; background: #f8f9fc; border-radius: 9px; }
+.al-action li { list-style-type: disc; margin-bottom: 4px; color: #3b4560; }
+.al-action li:last-child { margin-bottom: 0; }
+.al-action li::marker { color: var(--primary); }
+
+.al-empty {
+    text-align: center; padding: 48px 20px; color: var(--muted);
+    background: #fff; border: 1px dashed #d6ddef; border-radius: 14px;
+}
+.al-empty i { font-size: 2rem; opacity: 0.4; }
+.al-empty p { margin: 10px 0 0; }
 
 @media screen and (max-width: 768px) {
-    /* Title font size for mobile */
-    .ticket-title {
-        font-size: 1.2em;
-    }
-
-    /* Table styling for smaller screens */
-    .activity-log-table th, .activity-log-table td {
-        padding: 8px;
-        font-size: 14px;
-    }
-
-    .activity-log-table td ul {
-        padding-left: 10px; 
-    }
-
-    .clear-logs-btn {
-        width: 100%;  
-        padding: 12px 0;  
-    }
-
-    .activity-log-container {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch; 
-    }
-
-    .ticket-title {
-        text-align: left;
-        padding: 10px;
-    }
-}
-
-@media screen and (max-width: 480px) {
-    .ticket-title {
-        font-size: 1.1em;
-        padding: 8px; 
-    }
-
-    .activity-log-table th, .activity-log-table td {
-        font-size: 12px;
-        padding: 6px; 
-    }
-
-    .clear-logs-btn {
-        font-size: 14px; 
-    }
+    .activity-log-container { margin-top: 30px; padding: 0 10px; }
+    .al-header { padding: 14px; align-items: stretch; }
+    .al-header form, .clear-logs-btn { width: 100%; justify-content: center; }
+    .ticket-title { font-size: 1.1rem; }
+    .activity-log-timeline::before { left: 15px; }
+    .al-avatar { width: 32px; height: 32px; font-size: 0.8rem; }
+    .al-item { gap: 10px; }
 }

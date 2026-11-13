@@ -9,40 +9,51 @@
 
 
 <div class="activity-log-container">
-    {% if request.user.is_superuser %}
-    <form method="post" action="{% url 'clear_activity_logs' ticket.id %}" style="margin-bottom: 20px;" onsubmit="return confirmClearLogs()">
-        {% csrf_token %}
-        <button type="submit" class="clear-logs-btn">Clear All Logs</button>
-    </form>
-    {% endif %}
 
-    <h2 class="ticket-title">Activity Log for Ticket: {{ ticket.title }}</h2>
+    <div class="al-header">
+        <div class="al-title-wrap">
+            <a href="{% url 'ticket_detail' ticket.id %}" class="al-backlink"><i class="fas fa-arrow-left"></i> Back to ticket</a>
+            <div class="al-title-row">
+                <span class="al-icon"><i class="fas fa-clock-rotate-left"></i></span>
+                <div>
+                    <h2 class="ticket-title">Activity Log for Ticket: {{ ticket.title }}</h2>
+                    <p class="al-sub">Ticket #{{ ticket.id }}{% if activity_logs %} · {{ activity_logs|length }} entr{{ activity_logs|length|pluralize:"y,ies" }}{% endif %}</p>
+                </div>
+            </div>
+        </div>
+
+        {% if request.user.is_superuser %}
+        <form method="post" action="{% url 'clear_activity_logs' ticket.id %}" onsubmit="return confirmClearLogs()">
+            {% csrf_token %}
+            <button type="submit" class="clear-logs-btn"><i class="fas fa-trash-can"></i> Clear All Logs</button>
+        </form>
+        {% endif %}
+    </div>
 
     {% if activity_logs %}
-    <table class="activity-log-table">
-        <thead>
-            <tr>
-                <th>User</th>
-                <th>Action</th>
-                <th>Timestamp</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for log in activity_logs %}
-            <tr>
-                <td>
-                    {% if log.user %}
-                        {{ log.user.username }}
-                    {% else %}
-                        System
-                    {% endif %}
-                </td>
-                <td>
+    <ol class="activity-log-timeline">
+        {% for log in activity_logs %}
+        <li class="al-item">
+            <span class="al-avatar {% if not log.user %}al-avatar-system{% endif %}">
+                {% if log.user %}{{ log.user.username|slice:":1"|upper }}{% else %}<i class="fas fa-gear"></i>{% endif %}
+            </span>
+            <div class="al-card">
+                <div class="al-card-top">
+                    <span class="al-user">
+                        {% if log.user %}
+                            {{ log.user.username }}
+                        {% else %}
+                            System
+                        {% endif %}
+                    </span>
+                    <time class="al-time">{{ log.timestamp }}</time>
+                </div>
+                <div class="al-action">
                     {% if log.action %}
                         {% with log.action.splitlines as lines %}
                             {% if lines %}
                                 <!-- Heading -->
-                                <div><strong>{{ lines.0 }}</strong></div>
+                                <div class="al-action-head"><strong>{{ lines.0 }}</strong></div>
 
                                 <!-- Remaining details in bullet form -->
                                 {% if lines|length > 1 %}
@@ -57,14 +68,13 @@
                             {% endif %}
                         {% endwith %}
                     {% endif %}
-                </td>
-                <td>{{ log.timestamp }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                </div>
+            </div>
+        </li>
+        {% endfor %}
+    </ol>
     {% else %}
-        <p>No activity yet for this ticket.</p>
+        <div class="al-empty"><i class="far fa-clock"></i><p>No activity yet for this ticket.</p></div>
     {% endif %}
 </div>
 

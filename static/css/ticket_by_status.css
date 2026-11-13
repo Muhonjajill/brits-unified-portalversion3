@@ -1,555 +1,167 @@
-/* ==================== CONTAINER ==================== */
+/* ══════════════════════════════════════════════════════════════
+   BRITS Helpdesk — Tickets by status
+   Status: open #007bff, in progress #c0392b, closed #6c757d
+   (All rules are scoped to this page's container.)
+   ══════════════════════════════════════════════════════════════ */
+
 .container.ticket-status-container {
-  max-width: 100%;
+  --primary: #123692;
+  --deep: #172d69;
+  --text: #1b2540;
+  --muted: #6b7489;
+  --border: #e4e8f1;
+  --accent: #123692;
+
+  max-width: 1500px;
   width: 100%;
-  margin: 0 auto;
-  margin-top: 4rem;
-  padding: 2rem 20px;
+  margin: 4rem auto 2rem;
+  padding: 26px 28px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(16, 30, 74, 0.04), 0 8px 24px rgba(16, 30, 74, 0.06);
+  font-variant-numeric: tabular-nums;
 }
+.container.ticket-status-container.status-page-open        { --accent: #007bff; }
+.container.ticket-status-container.status-page-in-progress,
+.container.ticket-status-container.status-page-in_progress { --accent: #c0392b; }
+.container.ticket-status-container.status-page-closed      { --accent: #6c757d; }
 
-/* ==================== HEADING ==================== */
-h2 {
-  font-size: 2.4rem;
-  color: #2c3e50;
-  text-align: center;
-  margin-bottom: 40px;
+/* ── Header ─────────────────────────────────────────────────── */
+.ticket-status-container .tbs-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.ticket-status-container .tbs-icon {
+  width: 48px; height: 48px; border-radius: 13px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--deep) 140%);
+  color: #fff; font-size: 1.2rem;
+  box-shadow: 0 6px 16px rgba(18, 54, 146, 0.22);
+}
+.ticket-status-container h2 {
+  margin: 0;
+  font-size: 1.6rem;
   font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  line-height: 1.15;
+  color: var(--text);
+  text-align: left;
+  text-transform: none;
+  letter-spacing: 0;
 }
+.ticket-status-container .tbs-sub { display: flex; align-items: center; gap: 8px; margin: 3px 0 0; color: var(--muted); font-size: 0.9rem; }
+.ticket-status-container .tbs-pill { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
 
-/* ==================== TABLE ==================== */
-.table.ticket-table {
+/* ── Table ──────────────────────────────────────────────────── */
+.ticket-status-container .tbs-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.ticket-status-container .table.ticket-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-  margin-bottom: 2rem;
-}
-
-/* ==================== TABLE HEAD ==================== */
-.table thead {
-  background: linear-gradient(90deg, #4a90e2, #357ABD);
-  color: #fff;
-}
-
-.table thead th {
-  font-weight: 600;
-  font-size: 1.1rem;
-  padding: 14px 16px;
-  text-align: center;
-  border: none;
-  letter-spacing: 0.05em;
-}
-
-/* ==================== TABLE BODY ==================== */
-.table tbody tr {
-  transition: background-color 0.25s ease, transform 0.15s ease;
-  cursor: pointer;
-  background-color: #fff;
-}
-
-.table tbody tr:hover {
-  background-color: #f0f7ff;
-  transform: scale(1.01);
-  box-shadow: 0 4px 10px rgba(53, 122, 189, 0.15);
-}
-
-/* ==================== TABLE CELLS ==================== */
-.table td {
-  padding: 14px 16px;
-  font-size: 1rem;
-  color: #34495e;
-  border-bottom: 1px solid #e0e4e8;
-  text-align: center;
-  vertical-align: middle;
-  word-wrap: break-word;
-}
-
-.table td.title-cell {
-  text-align: left;
-  font-weight: 600;
-  color: #2c3e50;
-  max-width: 300px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.table td.no-record {
-  color: #999;
-  font-style: italic;
-  font-size: 1.1rem;
-  padding: 40px 20px;
-  text-align: center;
-}
-
-/* ==================== STATUS LABELS ==================== */
-.status-label {
-  display: inline-block;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-}
-
-.status-open {
-  background-color: #123692;
-}
-
-.status-in_progress {
-  background-color: #c0392b;
-}
-
-.status-closed {
-  background-color: rgb(25, 164, 25);
-}
-
-.status-resolved {
-  background-color: #27ae60;
-}
-
-/* ==================== PAGINATION ==================== */
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  margin-top: 2rem;
-  margin-bottom: 2rem;
-}
-
-.pagination-container nav {
-  display: flex;
-  justify-content: center;
-}
-
-.pagination {
-  display: flex;
-  list-style: none;
-  padding: 0;
   margin: 0;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.page-item {
-  display: inline-block;
-}
-
-.page-link {
-  display: block;
-  padding: 0.75rem 1rem;
-  color: #4a90e2;
-  text-decoration: none;
-  background-color: #fff;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  font-weight: 500;
-  min-width: 44px;
-  text-align: center;
-}
-
-.page-link:hover {
-  background-color: #4a90e2;
-  color: #fff;
-  border-color: #4a90e2;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(74, 144, 226, 0.3);
-}
-
-.page-item.active .page-link {
-  background-color: #357ABD;
-  color: #fff;
-  border-color: #357ABD;
-  cursor: default;
-  font-weight: 600;
-}
-
-.page-item.active .page-link:hover {
-  transform: none;
+  font-size: 0.93rem;
   box-shadow: none;
 }
-
-/* ==================== RESPONSIVE DESIGN ==================== */
-
-/* Tablet (768px - 1024px) */
-@media (max-width: 1024px) {
-  .container.ticket-status-container {
-    padding: 1.75rem 18px;
-  }
-
-  h2 {
-    font-size: 2rem;
-    margin-bottom: 30px;
-  }
-
-  .table thead th {
-    font-size: 1rem;
-    padding: 12px 14px;
-  }
-
-  .table td {
-    font-size: 0.95rem;
-    padding: 12px 14px;
-  }
+.ticket-status-container .table thead { background: none; color: inherit; }
+.ticket-status-container .table thead th {
+  background: #f1f4fb;
+  color: #4a5573;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 12px 16px;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0;
+  white-space: nowrap;
 }
+.ticket-status-container .table td {
+  padding: 13px 16px;
+  color: #3b4560;
+  border: none;
+  border-bottom: 1px solid #edf0f6;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 0.93rem;
+}
+.ticket-status-container .table tbody tr { transition: background-color 0.15s ease; background: #fff; }
+.ticket-status-container .table tbody tr:last-child td { border-bottom: none; }
+.ticket-status-container .table tbody tr:hover { background: #f4f7fe; transform: none; box-shadow: none; }
+.ticket-status-container .table tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 
-/* Mobile (768px and below) */
+.ticket-status-container .ticket-id {
+  display: inline-block; font-weight: 700; color: var(--primary);
+  background: rgba(18, 54, 146, 0.07); border-radius: 6px; padding: 2px 8px; font-size: 0.9em;
+}
+.ticket-status-container .table td.title-cell {
+  font-weight: 600; color: var(--text);
+  max-width: 420px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ticket-status-container .cell-date { white-space: nowrap; }
+
+.ticket-status-container .table td.no-record { text-align: center; padding: 42px 20px; color: var(--muted); font-style: normal; }
+.ticket-status-container .no-record i { display: block; font-size: 2.2rem; margin-bottom: 10px; opacity: 0.35; }
+.ticket-status-container .no-record p { margin: 6px 0 0; font-size: 0.92rem; }
+
+/* ── Status pills ───────────────────────────────────────────── */
+.ticket-status-container .status-label {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: 999px;
+  font-weight: 700; font-size: 0.82rem;
+  text-transform: none; letter-spacing: 0; white-space: nowrap;
+  color: #4a5573; background: #eef1f6;
+}
+.ticket-status-container .status-label::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.ticket-status-container .status-open        { color: #007bff; background: rgba(0, 123, 255, 0.11); }
+.ticket-status-container .status-in_progress { color: #c0392b; background: rgba(192, 57, 43, 0.11); }
+.ticket-status-container .status-resolved    { color: #28a745; background: rgba(40, 167, 69, 0.12); }
+.ticket-status-container .status-closed      { color: #6c757d; background: rgba(108, 117, 125, 0.13); }
+
+/* ── Pagination ─────────────────────────────────────────────── */
+.ticket-status-container .pagination-container { display: flex; justify-content: center; margin-top: 20px; }
+.ticket-status-container .pagination { display: flex; list-style: none; padding: 0; margin: 0; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.ticket-status-container .page-link {
+  display: block;
+  padding: 8px 14px;
+  color: var(--primary);
+  background: #fff;
+  border: 1px solid #d6ddef;
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  min-width: 40px;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.ticket-status-container .page-link:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+.ticket-status-container .page-item.active .page-link { background: #f1f4fb; color: var(--text); border-color: transparent; cursor: default; }
+
+/* ── Mobile: rows become cards ──────────────────────────────── */
 @media (max-width: 768px) {
-  /* Container */
-  .container.ticket-status-container {
-    margin-top: 3rem;
-    padding: 1.5rem 15px;
-    border-radius: 10px;
+  .container.ticket-status-container { margin: 2rem 10px; padding: 18px; }
+  .ticket-status-container h2 { font-size: 1.3rem; }
+  .ticket-status-container .table thead { display: none; }
+  .ticket-status-container .table, .ticket-status-container .table tbody { display: block; border: none; }
+  .ticket-status-container .table tbody tr {
+    display: block; margin-bottom: 12px; padding: 10px 14px;
+    border: 1px solid var(--border); border-radius: 12px; background: #fff;
+    box-shadow: 0 2px 8px rgba(16, 30, 74, 0.05);
   }
-
-  /* Heading */
-  h2 {
-    font-size: 1.8rem;
-    margin-bottom: 25px;
-    letter-spacing: 0.5px;
+  .ticket-status-container .table tbody tr:hover td:first-child { box-shadow: none; }
+  .ticket-status-container .table td {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 8px 0; border-bottom: 1px solid #f1f3f8; text-align: right;
   }
-
-  /* Hide table header on mobile */
-  .table thead {
-    display: none;
-  }
-
-  /* Transform table rows to cards */
-  .table tbody tr {
-    display: block;
-    margin-bottom: 20px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    background: #fff;
-    padding: 15px 18px;
-    border: 1px solid #e0e4e8;
-  }
-
-  .table tbody tr:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(53, 122, 189, 0.2);
-  }
-
-  /* Table cells as flex rows */
-  .table td {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 10px 0;
-    border: none;
-    font-size: 0.95rem;
-    text-align: right;
-  }
-
-  .table td:not(:last-child) {
-    border-bottom: 1px solid #f0f0f0;
-  }
-
-  /* Add labels before content */
-  .table td::before {
-    content: attr(data-label);
-    font-weight: 700;
-    color: #555;
-    flex-basis: 45%;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    text-align: left;
-    padding-right: 10px;
-  }
-
-  /* Title cell adjustments */
-  .table td.title-cell {
-    max-width: 100%;
-    white-space: normal;
-    word-wrap: break-word;
-    text-align: right;
-  }
-
-  .table td.title-cell::after {
-    content: '';
-    flex-basis: 55%;
-    text-align: right;
-  }
-
-  /* No record styling */
-  .table td.no-record {
-    justify-content: center;
-    text-align: center;
-    padding: 30px 15px;
-  }
-
-  .table td.no-record::before {
-    display: none;
-  }
-
-  /* Status label in mobile */
-  .status-label {
-    font-size: 0.85rem;
-    padding: 5px 12px;
-  }
-
-  /* Pagination */
-  .pagination-container {
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .pagination {
-    gap: 0.4rem;
-  }
-
-  .page-link {
-    padding: 0.6rem 0.8rem;
-    font-size: 0.9rem;
-    min-width: 40px;
-  }
-
-  /* Hide text on pagination, keep only arrows */
-  .page-item.active .page-link {
-    padding: 0.6rem 0.8rem;
-    font-size: 0.85rem;
-  }
+  .ticket-status-container .table td:last-child { border-bottom: none; }
+  .ticket-status-container .table td::before { content: attr(data-label); font-weight: 600; color: var(--muted); font-size: 0.8rem; text-align: left; }
+  .ticket-status-container .table td.title-cell { max-width: none; white-space: normal; }
+  .ticket-status-container .table td.no-record { display: block; text-align: center; }
+  .ticket-status-container .table td.no-record::before { display: none; }
 }
 
-/* Small Mobile (576px and below) */
-@media (max-width: 576px) {
-  /* Container */
-  .container.ticket-status-container {
-    margin-top: 2.5rem;
-    padding: 1.25rem 12px;
-  }
-
-  /* Heading */
-  h2 {
-    font-size: 1.5rem;
-    margin-bottom: 20px;
-    letter-spacing: 0.3px;
-  }
-
-  /* Table cards */
-  .table tbody tr {
-    padding: 12px 15px;
-    margin-bottom: 15px;
-  }
-
-  .table td {
-    font-size: 0.9rem;
-    padding: 8px 0;
-  }
-
-  .table td::before {
-    font-size: 0.8rem;
-    flex-basis: 40%;
-  }
-
-  /* Status label */
-  .status-label {
-    font-size: 0.8rem;
-    padding: 4px 10px;
-  }
-
-  /* Pagination */
-  .pagination {
-    gap: 0.3rem;
-  }
-
-  .page-link {
-    padding: 0.5rem 0.7rem;
-    font-size: 0.85rem;
-    min-width: 36px;
-  }
-
-  .page-item.active .page-link {
-    padding: 0.5rem 0.6rem;
-    font-size: 0.8rem;
-  }
-}
-
-/* Very Small Mobile (480px and below) */
-@media (max-width: 480px) {
-  /* Container */
-  .container.ticket-status-container {
-    margin-top: 2rem;
-    padding: 1rem 10px;
-    border-radius: 8px;
-  }
-
-  /* Heading */
-  h2 {
-    font-size: 1.35rem;
-    margin-bottom: 18px;
-  }
-
-  /* Table cards */
-  .table tbody tr {
-    padding: 12px;
-    margin-bottom: 12px;
-    border-radius: 8px;
-  }
-
-  .table td {
-    font-size: 0.85rem;
-    padding: 7px 0;
-  }
-
-  .table td::before {
-    font-size: 0.75rem;
-  }
-
-  /* Status label */
-  .status-label {
-    font-size: 0.75rem;
-    padding: 4px 8px;
-  }
-
-  /* Pagination - make more compact */
-  .pagination-container {
-    margin-top: 1.25rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .pagination {
-    gap: 0.25rem;
-  }
-
-  .page-link {
-    padding: 0.45rem 0.6rem;
-    font-size: 0.8rem;
-    min-width: 32px;
-  }
-
-  .page-item.active .page-link {
-    padding: 0.45rem 0.5rem;
-    font-size: 0.75rem;
-    white-space: nowrap;
-  }
-}
-
-/* Very Small Mobile (360px and below) */
-@media (max-width: 360px) {
-  .container.ticket-status-container {
-    padding: 0.85rem 8px;
-  }
-
-  h2 {
-    font-size: 1.2rem;
-    margin-bottom: 15px;
-  }
-
-  .table tbody tr {
-    padding: 10px;
-  }
-
-  .table td {
-    font-size: 0.8rem;
-    padding: 6px 0;
-  }
-
-  .table td::before {
-    font-size: 0.7rem;
-    flex-basis: 38%;
-  }
-
-  .status-label {
-    font-size: 0.7rem;
-    padding: 3px 7px;
-  }
-
-  .page-link {
-    padding: 0.4rem 0.5rem;
-    font-size: 0.75rem;
-    min-width: 30px;
-  }
-
-  .page-item.active .page-link {
-    font-size: 0.7rem;
-  }
-}
-
-/* Landscape mode on mobile */
-@media (max-width: 768px) and (orientation: landscape) {
-  .container.ticket-status-container {
-    margin-top: 2rem;
-  }
-
-  h2 {
-    font-size: 1.6rem;
-    margin-bottom: 20px;
-  }
-
-  .table tbody tr {
-    padding: 12px 15px;
-    margin-bottom: 15px;
-  }
-}
-
-/* Touch device optimizations */
-@media (hover: none) {
-  .table tbody tr:hover {
-    transform: none;
-  }
-
-  .table tbody tr:active {
-    transform: scale(0.98);
-    background-color: #e8f4fd;
-  }
-
-  .page-link:hover {
-    transform: none;
-  }
-
-  .page-link:active {
-    transform: scale(0.95);
-  }
-}
-
-/* Print styles */
 @media print {
-  .container.ticket-status-container {
-    box-shadow: none;
-    padding: 1rem;
-  }
-
-  .pagination-container {
-    display: none;
-  }
-
-  .table tbody tr {
-    page-break-inside: avoid;
-  }
-
-  .table tbody tr:hover {
-    transform: none;
-    box-shadow: none;
-    background-color: transparent;
-  }
-
-  h2 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
-}
-
-/* Accessibility improvements */
-@media (prefers-reduced-motion: reduce) {
-  .table tbody tr,
-  .page-link {
-    transition: none;
-  }
-
-  .table tbody tr:hover {
-    transform: none;
-  }
+  .container.ticket-status-container { box-shadow: none; border: none; }
+  .ticket-status-container .pagination-container { display: none; }
 }
