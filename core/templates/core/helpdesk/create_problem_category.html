@@ -8,12 +8,17 @@
 
 {% block content %}
 <div class="form-container">
-  <h2>
-    <i class="fas fa-folder{{ selected_category|yesno:'-open,' }}"></i>
-    {% if selected_category %} Update “{{ selected_category.name }}”
-    {% else %} Create Problem Category
-    {% endif %}
-  </h2>
+  <div class="pc-header">
+    <span class="pc-icon"><i class="fas fa-folder{{ selected_category|yesno:'-open,' }}"></i></span>
+    <div>
+      <h2>
+        {% if selected_category %} Update “{{ selected_category.name }}”
+        {% else %} Create Problem Category
+        {% endif %}
+      </h2>
+      <p class="pc-sub">Group related issue types under a category and the BRTS unit that handles them.</p>
+    </div>
+  </div>
   <form method="post" novalidate>
     {% csrf_token %}
 

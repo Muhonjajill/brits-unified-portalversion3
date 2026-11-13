@@ -1,121 +1,140 @@
+/* ══════════════════════════════════════════════════════════════
+   BRITS Helpdesk — Create / update problem category
+   ══════════════════════════════════════════════════════════════ */
 :root {
   --primary-color: #123692;
   --secondary-color: #6c757d;
-  --accent-color: #f7bb10;
-  --background-color: #f8f9fa;
+  --accent-color: #dc9c35;
+  --background-color: #f3f5fa;
   --card-bg: #ffffff;
-  --text-color: #343a40;
-  --border-color: #dee2e6;
+  --text-color: #1b2540;
+  --border-color: #e4e8f1;
 }
 
-/* Form Container */
 .form-container {
+  --primary: #123692;
+  --deep: #172d69;
+  --muted: #6b7489;
+
   background-color: var(--card-bg);
-  max-width: 600px;
-  margin: 40px auto;
-  padding: 30px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-}
-
-.form-container h2 {
-  font-size: 1.8em;
-  margin-bottom: 20px;
-  color: var(--primary-color);
-  text-align: center;
-}
-
-/* Form Groups */
-.form-group {
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  font-weight: 600;
-  margin-bottom: 5px;
+  max-width: 760px;
+  margin: 70px auto 40px;
+  padding: 26px 28px 28px;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(16, 30, 74, 0.04), 0 8px 24px rgba(16, 30, 74, 0.06);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: var(--text-color);
+  box-sizing: border-box;
 }
 
+/* ── Header ─────────────────────────────────────────────────── */
+.pc-header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.pc-icon {
+  width: 48px; height: 48px; border-radius: 13px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--deep) 100%);
+  color: #fff; font-size: 1.15rem;
+  box-shadow: 0 6px 16px rgba(18, 54, 146, 0.28);
+}
+.form-container h2 { margin: 0; font-size: 1.45rem; font-weight: 700; line-height: 1.2; color: var(--text-color); text-align: left; }
+.pc-sub { margin: 3px 0 0; color: var(--muted); font-size: 0.9rem; }
+
+/* ── Sections ───────────────────────────────────────────────── */
+.section {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: #fafbfe;
+  padding: 14px 18px 6px;
+  margin: 0 0 16px;
+  min-width: 0;
+}
+.section legend {
+  float: left; width: 100%;
+  display: flex; align-items: center; gap: 10px;
+  padding: 0; margin: 0 0 14px;
+  font-size: 0.95rem; font-weight: 650; color: var(--text-color);
+}
+.section > :not(legend) { clear: both; }
+.section legend i {
+  width: 30px; height: 30px; border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(18, 54, 146, 0.08); color: var(--primary); font-size: 0.82rem;
+}
+
+.form-group { margin-bottom: 14px; display: flex; flex-direction: column; }
+.form-group label { font-weight: 600; font-size: 0.86rem; margin-bottom: 6px; color: #4a5573; }
 .form-group select,
 .form-group input[type="text"],
 .form-group input[type="email"],
 .form-group input[type="number"],
-.form-group textarea {
-  padding: 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 1em;
+.form-group textarea,
+.issue-item input[type="text"] {
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 9px;
+  font-size: 0.95rem;
+  font-family: inherit;
   width: 100%;
   background-color: #fff;
+  color: var(--text-color);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
+.form-group select:focus,
+.form-group input:focus,
+.issue-item input[type="text"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(18, 54, 146, 0.12); }
 
-/* Button Group */
+/* Issue types */
+.issues-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.issue-item { display: flex; align-items: center; gap: 8px; }
+.issue-item input[type="text"] { flex: 1; }
+.btn-icon {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 10px; border-radius: 9px;
+  border: 1.5px solid #f2c4c9; background: #fff; color: #dc3545;
+  cursor: pointer; font-size: 0.85rem;
+  transition: background-color 0.2s ease;
+}
+.btn-icon:hover { background: rgba(220, 53, 69, 0.07); }
+
+/* ── Buttons ────────────────────────────────────────────────── */
 .btn-group {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  justify-content: center;
+  justify-content: flex-end;
   margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-color);
 }
-
 .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   padding: 10px 20px;
-  font-size: 1em;
-  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 9px;
   cursor: pointer;
-  border: none;
-  transition: all 0.3s ease;
-}
-
-.btn-primary {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
-.btn-primary:hover {
-  background-color: #172d69;
-}
-
-.btn-outline {
-  background-color: transparent;
-  border: 1px solid var(--primary-color);
-  color: var(--primary-color);
-}
-
-.btn-outline:hover {
-  background-color: var(--primary-color);
-  color: #fff;
-}
-
-.btn-cancel {
-  background-color: transparent;
-  border: 1px solid var(--secondary-color);
-  color: var(--secondary-color);
+  border: 1.5px solid transparent;
   text-decoration: none;
-  text-align: center;
-  display: inline-block;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
+.btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--deep) 100%); color: #fff; box-shadow: 0 4px 12px rgba(18, 54, 146, 0.22); order: 2; }
+.btn-primary:hover { box-shadow: 0 6px 18px rgba(18, 54, 146, 0.32); }
+.btn-outline { background: #fff; border-color: #c9d4ef; color: var(--primary); margin-bottom: 12px; }
+.btn-outline:hover { background: rgba(18, 54, 146, 0.06); border-color: var(--primary); }
+.btn-cancel { background: #fff; border-color: #d6ddef; color: #4a5573; order: 1; }
+.btn-cancel:hover { background: #f1f4fb; color: var(--text-color); }
 
-.btn-cancel:hover {
-  background-color: var(--secondary-color);
-  color: #fff;
-}
-
-/* Responsive */
 @media (max-width: 600px) {
-  .form-container {
-    padding: 20px;
-  }
+  .form-container { margin: 40px 10px; padding: 18px; }
+  .btn-group { flex-direction: column-reverse; align-items: stretch; }
+  .btn { width: 100%; }
+}
 
-  .btn-group {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .btn {
-    width: 100%;
-    text-align: center;
-  }
+/* This page's .btn-group is not Bootstrap's button group — undo Bootstrap's version */
+.form-container .btn-group { display: flex; width: auto; vertical-align: initial; position: static; }
+.form-container .btn-group > .btn { flex: 0 0 auto; position: static; margin-left: 0; border-radius: 9px !important; }
+@media (max-width: 600px) {
+  .form-container .btn-group > .btn { flex: 1 1 auto; }
 }

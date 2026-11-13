@@ -388,3 +388,9 @@
 @media (prefers-reduced-motion: reduce) {
   .modal-content { animation: none; }
 }
+
+/* Neutralise Bootstrap's modal-header/body/footer rules for this custom popup */
+.modal-overlay .modal-header { justify-content: flex-start; padding: 0; border-bottom: 0; }
+.modal-overlay .modal-body { padding: 0; }
+.modal-overlay .modal-footer { padding: 0; border-top: 0; background: none; }
+.modal-overlay .modal-content { border: none; border-top: 4px solid #e74c3c; display: block; }

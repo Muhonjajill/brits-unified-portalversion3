@@ -10,15 +10,20 @@
 {% block content %}
 <br>
 <div class="page-container">
-  <h2><i class="fas fa-users"></i> Customers</h2>
-  <p>Manage customer records here.</p>
+  <div class="cu-header">
+    <span class="cu-icon"><i class="fas fa-users"></i></span>
+    <div>
+      <h2>Customers</h2>
+      <p>Manage customer records here.</p>
+    </div>
+  </div>
 
   <!-- Upload Form -->
   <div class="page-header-actions">
     <form method="POST" enctype="multipart/form-data" class="upload-form">
       {% csrf_token %}
       <label for="file">
-        <i class="fas fa-file-csv"></i> Upload Customer CSV:
+        <i class="fas fa-file-csv"></i> Upload Customer CSV
       </label>
       <input type="file" name="file" id="file" accept=".csv" required>
       <button type="submit" class="btn btn-primary">
@@ -54,8 +59,9 @@
       <tr>
         <td>{{ forloop.counter }}</td>
         <td>
-          <a href="{% url 'customer_terminals' customer.id %}">
-            <i class="fas fa-building"></i> {{ customer.name }}
+          <a href="{% url 'customer_terminals' customer.id %}" class="cu-name">
+            <span class="cu-avatar">{{ customer.name|slice:":1"|upper }}</span> {{ customer.name }}
+            <i class="fas fa-chevron-right cu-go"></i>
           </a>
         </td>
         <td>

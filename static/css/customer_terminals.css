@@ -1,134 +1,80 @@
-/* Container styles */
+/* ══════════════════════════════════════════════════════════════
+   BRITS Helpdesk — Terminals for a customer
+   ══════════════════════════════════════════════════════════════ */
 .page-container {
-  margin: 0;
-  padding: 30px;
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  max-width: 100%;
+  --primary: #123692;
+  --deep: #172d69;
+  --text: #1b2540;
+  --muted: #6b7489;
+  --border: #e4e8f1;
+
+  max-width: 1400px;
   width: 100%;
-  margin-top: 4rem;
+  margin: 4rem auto 2rem;
+  padding: 22px 28px 26px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(16, 30, 74, 0.04), 0 8px 24px rgba(16, 30, 74, 0.06);
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text);
 }
 
-.page-container h2 {
-  font-size: 1.8rem;
-  color: #123692;
-  margin-bottom: 1.5rem;
-  font-weight: 600;
-  text-align: center;
-}
+.ct-backlink { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; color: var(--muted); text-decoration: none; margin-bottom: 12px; }
+.ct-backlink:hover { color: var(--primary); }
 
-/* Table Styles */
+.cu-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.cu-icon {
+  width: 48px; height: 48px; border-radius: 13px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--deep) 100%);
+  color: #fff; font-size: 1.15rem;
+  box-shadow: 0 6px 16px rgba(18, 54, 146, 0.28);
+}
+.page-container h2 { margin: 0; font-size: 1.55rem; font-weight: 700; line-height: 1.15; color: var(--text); text-align: left; }
+.cu-header p { margin: 2px 0 0; color: var(--muted); font-size: 0.92rem; }
+
+.table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .ticket-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  font-size: 0.93rem;
+  margin: 0;
 }
-
-.ticket-table th, .ticket-table td {
-  padding: 12px 20px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-  font-size: 1rem;
+.ticket-table th, .ticket-table td { padding: 12px 18px; text-align: left; border-bottom: 1px solid #edf0f6; color: #3b4560; }
+.ticket-table th { background: #f1f4fb; color: #4a5573; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+.ticket-table tbody tr { transition: background-color 0.15s ease; }
+.ticket-table tbody tr:hover { background: #f4f7fe; }
+.ticket-table tbody tr:last-child td { border-bottom: none; }
+.ticket-table td:first-child { color: var(--muted); font-weight: 600; width: 60px; }
+.branch-cell { font-weight: 650; color: var(--text) !important; }
+.serial {
+  display: inline-block; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-size: 0.85em; color: #4a5573; background: #f1f4fb; padding: 2px 8px; border-radius: 6px;
 }
+.empty-cell { text-align: center !important; color: var(--muted) !important; padding: 30px !important; }
+.ticket-table td a { color: var(--primary); text-decoration: none; font-weight: 600; }
+.ticket-table td a:hover { text-decoration: underline; }
 
-.ticket-table th {
-  background-color: #f1f1f1;
-  font-weight: bold;
-  color: #333;
-}
-
-.ticket-table tr:hover {
-  background-color: #f1f1f1;
-}
-
-.ticket-table td {
-  color: #555;
-}
-
-.ticket-table td a {
-  color: #123692;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.ticket-table td a:hover {
-  color: #172d69;
-  text-decoration: underline;
-}
-
-/* Pagination styles */
-.pagination {
-  margin-top: 30px;
-  text-align: center;
-}
-
-.page-links {
-  display: inline-block;
-}
-
+.pagination { margin-top: 20px; text-align: center; }
+.page-links { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; }
 .page-links a {
-  padding: 8px 16px;
-  background-color: #123692;
-  color: #fff;
-  text-decoration: none;
-  border-radius: 5px;
-  font-size: 14px;
-  transition: background-color 0.3s ease;
-  margin: 0 5px;
+  padding: 8px 15px; background: #fff; color: var(--primary);
+  border: 1px solid #d6ddef; text-decoration: none; border-radius: 9px;
+  font-size: 0.9rem; font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
+.page-links a:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+.current-page { font-size: 0.9rem; font-weight: 600; color: var(--text); padding: 8px 15px; background: #f1f4fb; border-radius: 9px; }
 
-.page-links a:hover {
-  background-color: #172d69;
-}
-
-.current-page {
-  font-size: 14px;
-  color: #333;
-  padding: 8px 16px;
-}
-
-/* Mobile Responsiveness */
 @media (max-width: 768px) {
-  .ticket-table th, .ticket-table td {
-    font-size: 14px;
-    padding: 10px;
-  }
-
-  .ticket-table {
-    font-size: 14px;
-  }
-
-  .pagination {
-    font-size: 14px;
-  }
-
-  .page-links a {
-    padding: 8px 14px;
-    font-size: 12px;
-  }
-}
-
-/* Tablet and smaller screen adjustments */
-@media (max-width: 480px) {
-  .ticket-table th, .ticket-table td {
-    padding: 8px 12px;
-  }
-
-  .ticket-table {
-    font-size: 12px;
-  }
-
-  .pagination {
-    font-size: 12px;
-  }
-
-  .page-links a {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
+  .page-container { margin: 2rem 10px; padding: 18px; }
+  .page-container h2 { font-size: 1.25rem; }
+  .ticket-table th, .ticket-table td { padding: 10px 12px; }
 }

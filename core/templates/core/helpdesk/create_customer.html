@@ -7,7 +7,13 @@
 
 <div class="create-customer-container">
   <div class="form-card">
-    <h2 class="form-header"><i class="fas fa-user-plus"></i> Create Customer</h2>
+    <div class="form-header">
+      <span class="fh-icon"><i class="fas fa-user-plus"></i></span>
+      <div>
+        <h2>Create Customer</h2>
+        <p>Add a bank or organisation you support. Its terminals can be added afterwards.</p>
+      </div>
+    </div>
     <form method="POST" novalidate>
       {% csrf_token %}
       <div class="form-group">

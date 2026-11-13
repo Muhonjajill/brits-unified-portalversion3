@@ -2,90 +2,94 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid px-4" style="margin-top: 80px;">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold" style="color: #123692;"><i class="fas fa-exclamation-circle"></i> Escalated Tickets</h2>
-        <span class="badge bg-danger fs-6">{{ total_count }} Active</span>
+<div class="esc-page">
+    <div class="esc-header">
+        <div class="esc-title">
+            <span class="esc-icon"><i class="fas fa-exclamation-circle"></i></span>
+            <div>
+                <h2>Escalated Tickets</h2>
+                <p>Tickets that have been raised to a higher support level.</p>
+            </div>
+        </div>
+        <span class="esc-count"><i class="fas fa-arrow-trend-up"></i> {{ total_count }} Active</span>
     </div>
 
     {% if tickets %}
-        <div class="card shadow-sm border-0 rounded-3">
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead>
+        <div class="esc-card">
+            <div class="table-responsive">
+                <table class="esc-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Ticket ID</th>
+                            <th scope="col">Title</th>
+                            <th scope="col">Priority</th>
+                            <th scope="col">Escalation Level</th>
+                            <th scope="col">Created</th>
+                            <th scope="col">Escalated</th>
+                            <th scope="col" class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ticket in tickets %}
                             <tr>
-                                <th scope="col" class="px-4 py-3 text-muted fw-normal small">TICKET ID</th>
-                                <th scope="col" class="py-3 text-muted fw-normal small">TITLE</th>
-                                <th scope="col" class="py-3 text-muted fw-normal small">PRIORITY</th>
-                                <th scope="col" class="py-3 text-muted fw-normal small">ESCALATION LEVEL</th>
-                                <th scope="col" class="py-3 text-muted fw-normal small">CREATED</th>
-                                <th scope="col" class="py-3 text-muted fw-normal small">ESCALATED</th>
-                                <th scope="col" class="text-center py-3 text-muted fw-normal small">ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for ticket in tickets %}
-                                <tr class="border-bottom">
-                                    <td class="px-4 py-3">
-                                        <span class="fw-semibold text-dark">{{ ticket.id }}</span>
-                                    </td>
-                                    <td class="py-3">
-                                        <div class="fw-semibold text-dark mb-1">{{ ticket.title|truncatechars:50 }}</div>
-                                        <small class="text-muted">{{ ticket.description|truncatewords:10 }}</small>
-                                    </td>
-                                    <td class="py-3">
-                                        {% if ticket.priority == 'critical' %}
-                                            <span class="status-badge badge-critical">
-                                                Critical
-                                            </span>
-                                        {% elif ticket.priority == 'high' %}
-                                            <span class="status-badge badge-high">
-                                                High
-                                            </span>
-                                        {% elif ticket.priority == 'medium' %}
-                                            <span class="status-badge badge-medium">
-                                                Medium
-                                            </span>
-                                        {% else %}
-                                            <span class="status-badge badge-low">
-                                                Low
-                                            </span>
-                                        {% endif %}
-                                    </td>
-                                    <td class="py-3">
-                                        <span class="status-badge badge-escalated">
-                                            {{ ticket.get_current_escalation_level_display }}
+                                <td>
+                                    <span class="esc-id">#{{ ticket.id }}</span>
+                                </td>
+                                <td class="esc-title-cell">
+                                    <div class="esc-ticket-title">{{ ticket.title|truncatechars:50 }}</div>
+                                    <small>{{ ticket.description|truncatewords:10 }}</small>
+                                </td>
+                                <td>
+                                    {% if ticket.priority == 'critical' %}
+                                        <span class="status-badge badge-critical">
+                                            Critical
                                         </span>
-                                    </td>
-                                    <td class="py-3">
-                                        <div class="text-muted small">
-                                            <div><i class="bi bi-calendar3 me-1"></i>{{ ticket.created_at|date:"M d, Y" }}</div>
-                                            <div><i class="bi bi-clock me-1"></i>{{ ticket.created_at|date:"H:i" }}</div>
-                                        </div>
-                                    </td>
-                                    <td class="py-3">
-                                        <div class="text-danger small">
-                                            <i class="bi bi-arrow-up-circle-fill me-1"></i>{{ ticket.escalated_at|date:"M d, Y H:i" }}
-                                        </div>
-                                    </td>
-                                    <td class="text-center py-3">
-                                        <a href="{% url 'ticket_detail' ticket.id %}" class="btn btn-sm btn-outline-primary px-3">
-                                            <i class="bi bi-eye me-1"></i> View
-                                        </a>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                    {% elif ticket.priority == 'high' %}
+                                        <span class="status-badge badge-high">
+                                            High
+                                        </span>
+                                    {% elif ticket.priority == 'medium' %}
+                                        <span class="status-badge badge-medium">
+                                            Medium
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge badge-low">
+                                            Low
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge badge-escalated">
+                                        <i class="fas fa-layer-group"></i> {{ ticket.get_current_escalation_level_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="esc-date">
+                                        <div><i class="far fa-calendar"></i>{{ ticket.created_at|date:"M d, Y" }}</div>
+                                        <div><i class="far fa-clock"></i>{{ ticket.created_at|date:"H:i" }}</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="esc-escalated-at">
+                                        <i class="fas fa-circle-arrow-up"></i>{{ ticket.escalated_at|date:"M d, Y H:i" }}
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <a href="{% url 'ticket_detail' ticket.id %}" class="esc-view-btn">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
 
         <!-- Pagination -->
         {% if tickets.has_other_pages %}
-            <nav aria-label="Ticket pagination" class="mt-4">
-                <ul class="pagination justify-content-center">
+            <nav aria-label="Ticket pagination" class="esc-pagination">
+                <ul class="pagination">
                     <!-- Previous Button -->
                     {% if tickets.has_previous %}
                         <li class="page-item">
@@ -143,137 +147,122 @@
                 </ul>
                 
                 <!-- Pagination Info -->
-                <p class="text-center text-muted small">
+                <p class="esc-page-info">
                     Showing {{ tickets.start_index }} to {{ tickets.end_index }} of {{ total_count }} tickets
                 </p>
             </nav>
         {% endif %}
     {% else %}
-        <div class="alert alert-success text-center p-4 rounded-3 shadow-sm">
-            <i class="bi bi-check-circle-fill text-success fs-3"></i>
-            <p class="mt-2 mb-0 fw-semibold">No escalated tickets found</p>
+        <div class="esc-empty">
+            <span class="esc-empty-icon"><i class="fas fa-circle-check"></i></span>
+            <p>No escalated tickets found</p>
+            <small>Everything is running at the normal support level.</small>
         </div>
     {% endif %}
 </div>
 
 <style>
-    /* Clean table styling */
-    .table {
-        background-color: white;
+    .esc-page {
+        --primary: #123692; --deep: #172d69; --text: #1b2540; --muted: #6b7489; --border: #e4e8f1;
+        max-width: 1600px; margin: 80px auto 40px; padding: 0 24px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: var(--text);
+        font-variant-numeric: tabular-nums;
     }
-    
-    .table thead th {
-        background-color: #f8f9fa;
-        border-bottom: 2px solid #e9ecef;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-        font-size: 0.75rem;
+    .esc-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+    .esc-title { display: flex; align-items: center; gap: 14px; }
+    .esc-icon {
+        width: 48px; height: 48px; border-radius: 13px; flex-shrink: 0;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: linear-gradient(135deg, #dc3545 0%, #8f1d2a 100%);
+        color: #fff; font-size: 1.25rem; box-shadow: 0 6px 16px rgba(220, 53, 69, 0.28);
     }
-    
-    .table tbody tr {
-        transition: background-color 0.15s ease;
-        border-bottom: 1px solid #e9ecef;
+    .esc-title h2 { margin: 0; font-size: 1.6rem; font-weight: 700; line-height: 1.15; color: var(--text); }
+    .esc-title p { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
+    .esc-count {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 8px 16px; border-radius: 999px;
+        background: rgba(220, 53, 69, 0.1); color: #b02a37;
+        font-weight: 700; font-size: 0.92rem;
     }
-    
-    .table tbody tr:hover {
-        background-color: #f8f9fa;
+
+    .esc-card { background: #fff; border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 1px 2px rgba(16,30,74,.04), 0 8px 24px rgba(16,30,74,.06); overflow: hidden; }
+    .esc-card .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .esc-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.92rem; min-width: 900px; margin: 0; background: #fff; }
+    .esc-table thead th {
+        background: #f1f4fb; color: #4a5573;
+        font-size: 0.78rem; font-weight: 600;
+        padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap;
     }
-    
-    .table tbody tr:last-child {
-        border-bottom: none;
-    }
-    
-    /* Status Badge Base Style - Matching your image */
+    .esc-table td { padding: 14px 16px; border-bottom: 1px solid #edf0f6; vertical-align: middle; }
+    .esc-table tbody tr { transition: background-color 0.15s ease; }
+    .esc-table tbody tr:hover { background: #fdf6f7; }
+    .esc-table tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 #dc3545; }
+    .esc-table tbody tr:last-child td { border-bottom: none; }
+    .esc-table .text-center { text-align: center; }
+
+    .esc-id { display: inline-block; font-weight: 700; color: var(--primary); background: rgba(18, 54, 146, 0.07); border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
+    .esc-title-cell { min-width: 240px; }
+    .esc-ticket-title { font-weight: 650; color: var(--text); margin-bottom: 2px; }
+    .esc-title-cell small { color: var(--muted); font-size: 0.82rem; }
+
+    /* Priority + escalation badges — system colours */
     .status-badge {
-        display: inline-block;
-        padding: 0.25rem 0.75rem;
-        border-radius: 50px; /* Full pill shape */
-        font-size: 0.75rem;
-        font-weight: 500;
-        text-align: center;
-        white-space: nowrap;
-        border: none;
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 4px 11px; border-radius: 999px;
+        font-size: 0.8rem; font-weight: 700; white-space: nowrap;
     }
-    
-    /* Priority Badges */
-    .badge-critical {
-        background-color: #e74c3c;
-        color: white;
+    .status-badge:not(.badge-escalated)::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+    .badge-critical { color: #e74c3c; background: rgba(231, 76, 60, 0.12); }
+    .badge-high     { color: #dc9c35; background: rgba(220, 156, 53, 0.14); }
+    .badge-medium   { color: #007bff; background: rgba(0, 123, 255, 0.11); }
+    .badge-low      { color: #17b845; background: rgba(23, 184, 69, 0.12); }
+    .badge-escalated { color: #fff; background: linear-gradient(135deg, #e74c3c, #c0392b); font-size: 0.78rem; }
+    .badge-escalated i { font-size: 0.72rem; }
+
+    .esc-date { color: var(--muted); font-size: 0.84rem; line-height: 1.55; white-space: nowrap; }
+    .esc-date i, .esc-escalated-at i { margin-right: 6px; width: 13px; text-align: center; }
+    .esc-escalated-at { color: #c0392b; font-size: 0.84rem; font-weight: 600; white-space: nowrap; }
+
+    .esc-view-btn {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 6px 14px; border-radius: 8px;
+        border: 1.5px solid #c9d4ef; color: var(--primary);
+        font-weight: 600; font-size: 0.84rem; text-decoration: none;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     }
-    
-    .badge-high { 
-        background-color: #dc9c35;
-        color: white;
-    }    
-    
-    .badge-medium { 
-        background-color: #007bff;
-        color: #000;
-    } 
-    
-    .badge-low { 
-        background-color: #17b845;
-        color: white;
+    .esc-view-btn:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    .esc-pagination { margin-top: 20px; }
+    .esc-pagination .pagination { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; list-style: none; padding: 0; margin: 0; }
+    .esc-pagination .page-link {
+        display: block; min-width: 38px; text-align: center;
+        padding: 7px 12px; border-radius: 9px;
+        border: 1px solid #d6ddef; background: #fff; color: var(--primary);
+        font-weight: 600; font-size: 0.88rem; text-decoration: none; margin: 0;
+        transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     }
-    
-    /* Escalation Badge */
-    .badge-escalated {
-        background-color: #ff9800;
-        color: white;
+    .esc-pagination .page-link:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .esc-pagination .page-item.active .page-link { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 3px 10px rgba(18, 54, 146, 0.25); }
+    .esc-pagination .page-item.disabled .page-link { color: #b6bccb; background: #f8f9fc; border-color: #edf0f6; }
+    .esc-page-info { text-align: center; color: var(--muted); font-size: 0.85rem; margin: 10px 0 0; }
+
+    .esc-empty {
+        text-align: center; padding: 48px 20px;
+        background: #fff; border: 1px solid var(--border); border-radius: 14px;
+        box-shadow: 0 1px 2px rgba(16,30,74,.04), 0 8px 24px rgba(16,30,74,.06);
     }
-    
-    /* Button styling */
-    .btn-outline-primary {
-        border-color: #123692;
-        color: #123692;
-        font-weight: 500;
-        transition: all 0.15s ease;
+    .esc-empty-icon {
+        width: 58px; height: 58px; border-radius: 50%;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: rgba(23, 184, 69, 0.12); color: #17b845; font-size: 1.6rem;
     }
-    
-    .btn-outline-primary:hover {
-        background-color: #172d69;
-        border-color: #172d69;
-        color: white;
-        transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
-    }
-    
-    /* Pagination styling */
-    .pagination {
-        margin-top: 1.5rem;
-    }
-    
-    .pagination .page-link {
-        color: #123692;
-        border: 1px solid #dee2e6;
-        padding: 0.5rem 0.75rem;
-        margin: 0 0.125rem;
-        border-radius: 0.375rem;
-        transition: all 0.15s ease;
-    }
-    
-    .pagination .page-link:hover {
-        background-color: #e7f1ff;
-        border-color: #123692;
-    }
-    
-    .pagination .page-item.active .page-link {
-        background-color: #123692;
-        border-color: #123692;
-        color: white;
-        box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
-    }
-    
-    .pagination .page-item.disabled .page-link {
-        color: #6c757d;
-        background-color: #fff;
-        border-color: #dee2e6;
-    }
-    
-    /* Card styling */
-    .card {
-        border: 1px solid #e9ecef;
+    .esc-empty p { margin: 12px 0 2px; font-weight: 650; font-size: 1.05rem; }
+    .esc-empty small { color: var(--muted); }
+
+    @media (max-width: 768px) {
+        .esc-page { margin-top: 60px; padding: 0 12px; }
+        .esc-title h2 { font-size: 1.3rem; }
+        .esc-count { width: 100%; justify-content: center; }
     }
 </style>
 

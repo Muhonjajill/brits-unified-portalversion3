@@ -11,7 +11,13 @@
 {% block content %}
 <div class="form-wrapper">
 
-    <h2>Create New Ticket</h2>
+    <div class="ct-header">
+        <span class="ct-icon"><i class="fas fa-ticket"></i></span>
+        <div>
+            <h2>Create New Ticket</h2>
+            <p class="ct-sub">Log a new support issue. Pick the terminal and the customer and region fill in automatically.</p>
+        </div>
+    </div>
 
     {% if form.errors %}
     <div class="form-errors">
@@ -35,6 +41,7 @@
 
             <!-- LEFT COLUMN -->
             <div class="form-column">
+                <h3 class="ct-section"><i class="fas fa-clipboard-list"></i> Ticket details</h3>
 
                 <div class="form-group">
                     <label for="{{ form.brts_unit.id_for_label }}">BRTS Unit</label>
@@ -71,6 +78,7 @@
 
             <!-- RIGHT COLUMN -->
             <div class="form-column">
+                <h3 class="ct-section"><i class="fas fa-location-dot"></i> Issue &amp; location</h3>
 
                 <div class="form-group">
                     <label for="{{ form.title.id_for_label }}">Issue</label>
@@ -166,13 +174,13 @@
 
         </div>
 
-        <div class="form-group">
+        <div class="form-group ct-description">
             <label for="{{ form.description.id_for_label }}">Description</label>
             {{ form.description }}
         </div>
 
         <div class="form-actions">
-            <button type="submit" name="create" class="btn btn-primary">Create</button>
+            <button type="submit" name="create" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Create</button>
             <!--<button type="submit" name="create_another" class="btn btn-outline">Create & Add Another</button>-->
             <a href="{% url 'tickets' %}" class="btn btn-cancel">Cancel</a>
         </div>
