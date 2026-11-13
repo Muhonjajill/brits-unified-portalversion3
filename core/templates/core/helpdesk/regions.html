@@ -11,14 +11,17 @@
 {% block content %}
 <br>
 <div class="page-container">
-  <div class="header-section">
-    <h2><i class="fas fa-globe-americas"></i> Regions Management</h2>
-    <p>Organize and manage your regional infrastructure. Click on any region to explore its zones and terminals.</p>
+  <div class="header-section pg-header">
+    <span class="pg-icon"><i class="fas fa-globe-americas"></i></span>
+    <div>
+      <h2>Regions Management</h2>
+      <p>Organize and manage your regional infrastructure. Click on any region to explore its zones and terminals.</p>
+    </div>
   </div>
 
   <form method="post" action="{% url 'add_region' %}" class="region-form">
     {% csrf_token %}
-    <input type="text" name="region_name" placeholder="Enter new region name..." required>
+    <div class="pg-input"><i class="fas fa-globe-africa"></i><input type="text" name="region_name" placeholder="Enter new region name..." required></div>
     <button type="submit" class="btn">
       <i class="fas fa-plus-circle"></i> Add Region
     </button>

@@ -10,7 +10,13 @@
 {% block content %}
 <br>
 <div class="page-container">
-  <h2><i class="fas fa-user-friends"></i> Registered Users</h2>
+  <div class="pg-header">
+    <span class="pg-icon"><i class="fas fa-user-friends"></i></span>
+    <div>
+      <h2>Registered Users</h2>
+      <p>Everyone with an account on the portal, with their role and status.</p>
+    </div>
+  </div>
 
   {% if messages %}
     <ul class="messages">
@@ -37,9 +43,9 @@
         {% for user in page_obj %}
         <tr>
           <td data-label="Name">
-            <i class="fas fa-user"></i> {{ user.username }}
+            <span class="user-cell"><span class="avatar">{{ user.username|slice:":1"|upper }}</span>{{ user.username }}</span>
           </td>
-          <td data-label="Email">
+          <td data-label="Email" class="email-cell">
             <i class="fas fa-envelope"></i> {{ user.email }}
           </td>
           <td data-label="Role">

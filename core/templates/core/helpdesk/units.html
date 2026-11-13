@@ -10,13 +10,18 @@
 {% block content %}
 <br>
 <div class="page-container">
-  <h2><i class="fas fa-cube"></i> Units</h2>
-  <p>Manage unit information here.</p>
+  <div class="pg-header">
+    <span class="pg-icon"><i class="fas fa-cube"></i></span>
+    <div>
+      <h2>Units</h2>
+      <p>Manage unit information here.</p>
+    </div>
+  </div>
 
   <form method="post" action="{% url 'units' %}" class="unit-form">
     {% csrf_token %}
-    <input type="text" name="name" placeholder="Unit Name" required>
-    <input type="text" name="description" placeholder="Description" required>
+    <div class="pg-input"><i class="fas fa-cube"></i><input type="text" name="name" placeholder="Unit Name" required></div>
+    <div class="pg-input pg-input--wide"><i class="fas fa-align-left"></i><input type="text" name="description" placeholder="Description" required></div>
     <button type="submit" class="btn">
       <i class="fas fa-plus-circle"></i> Add Unit
     </button>
@@ -46,8 +51,8 @@
         {% for unit in page_obj %}
         <tr>
           <td>{{ forloop.counter }}</td>
-          <td>{{ unit.name }}</td>
-          <td>{{ unit.description }}</td>
+          <td class="name-cell"><span class="row-badge"><i class="fas fa-cube"></i></span>{{ unit.name }}</td>
+          <td class="desc-cell">{{ unit.description }}</td>
           <td>
             <a href="#" 
                class="view-link delete-unit-btn"

@@ -9,19 +9,23 @@
 
 {% block content %}
 <div class="page-container">
-    <h2><i class="fas fa-building"></i> Terminals</h2>
-    <p>Manage terminal information here.</p>
-
-    <!-- Create Terminal Button -->
-    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTerminalModal">
-        <i class="fas fa-plus-circle"></i> Create Terminal
-    </button>
+    <div class="pg-header">
+        <span class="pg-icon"><i class="fas fa-building"></i></span>
+        <div>
+            <h2>Terminals</h2>
+            <p>Manage terminal information here. Click a row to see that terminal's tickets.</p>
+        </div>
+        <!-- Create Terminal Button -->
+        <button class="btn btn-primary pg-header-btn" data-bs-toggle="modal" data-bs-target="#createTerminalModal">
+            <i class="fas fa-plus-circle"></i> Create Terminal
+        </button>
+    </div>
 
     <!-- Upload CSV Form -->
     <form method="POST" enctype="multipart/form-data" action="{% url 'terminals' %}" class="upload-form">
         {% csrf_token %}
         <div class="form-group">
-            <label for="upload_file">Upload Terminals CSV</label>
+            <label for="upload_file"><i class="fas fa-file-csv"></i> Upload Terminals CSV</label>
             <input type="file" name="file" class="form-control" required>
         </div>
         <button type="submit" class="btn btn-success mt-3">Upload CSV</button>
@@ -72,9 +76,9 @@
                 <tr class="clickable-row" data-bs-toggle="modal" data-bs-target="#ticketModal{{ terminal.id }}" data-terminal-id="{{ terminal.id }}">
                     <td>{{ forloop.counter }}</td>
                     <td>{{ terminal.customer.name }}</td>
-                    <td>{{ terminal.branch_name }}</td>
+                    <td class="branch-cell">{{ terminal.branch_name }}{% if not terminal.is_active %} <span class="inactive-tag">Disabled</span>{% endif %}</td>
                     <td>{{ terminal.cdm_name }}</td>
-                    <td>{{ terminal.serial_number }}</td>
+                    <td><span class="serial">{{ terminal.serial_number }}</span></td>
                     <td>{{ terminal.region.name }}</td>
                     <td>{{ terminal.model }}</td>
                     <td>{{ terminal.zone.name }}</td>
@@ -100,7 +104,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8">No terminals added yet.</td>
+                    <td colspan="9" class="empty-cell">No terminals added yet.</td>
                 </tr>
                 {% endfor %}
             </tbody>
