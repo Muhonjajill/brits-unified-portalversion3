@@ -9,13 +9,25 @@
 
 {% block content %}
 <div class="ticket-list-container">
-    <h1>Tickets for {{ period|capfirst }} Period</h1>
+    <div class="tl-header">
+        <span class="tl-icon"><i class="fas fa-calendar-check"></i></span>
+        <div>
+            <h1>Tickets for {{ period|capfirst }} Period</h1>
+            <p class="tl-sub">
+                {% if tickets.paginator %}{{ tickets.paginator.count }} ticket{{ tickets.paginator.count|pluralize }}{% endif %}
+                {% if search_query %} matching “{{ search_query }}”{% endif %}
+            </p>
+        </div>
+    </div>
 
     <!-- Search Bar -->
     <div class="search-bar-container">
         <form method="get" action="{% url 'show_tickets_by_period' period=period %}" class="search-form">
-            <input type="text" name="q" placeholder="Search tickets..."
-                   value="{{ search_query }}" class="search-bar">
+            <div class="search-field">
+                <i class="fas fa-magnifying-glass"></i>
+                <input type="text" name="q" placeholder="Search tickets..."
+                       value="{{ search_query }}" class="search-bar">
+            </div>
             <button type="submit" class="search-button">Search</button>
         </form>
     </div>
@@ -37,17 +49,17 @@
             <tbody>
                 {% for ticket in tickets %}
                 <tr onclick="window.location='{% url 'ticket_detail' ticket_id=ticket.id %}'" class="ticket-row">
-                    <td data-label="Title">{{ ticket.title }}</td>
+                    <td data-label="Title" class="cell-title">{{ ticket.title }}</td>
 
                     <td data-label="Status">
                         <span class="badge status-{{ ticket.status|lower }}">
-                            {{ ticket.status }}
+                            {{ ticket.get_status_display|default:ticket.status }}
                         </span>
                     </td>
 
                     <td data-label="Priority">
                         <span class="badge priority-{{ ticket.priority|lower }}">
-                            {{ ticket.priority }}
+                            {{ ticket.get_priority_display|default:ticket.priority }}
                         </span>
                     </td>
 
@@ -55,13 +67,19 @@
 
                     <td data-label="Terminal">{{ ticket.terminal|default:"—" }}</td>
 
-                    <td data-label="Assigned To">{{ ticket.assigned_to|default:"Unassigned" }}</td>
+                    <td data-label="Assigned To">
+                        {% if ticket.assigned_to %}
+                            <span class="assignee"><span class="avatar">{{ ticket.assigned_to|stringformat:"s"|slice:":1"|upper }}</span>{{ ticket.assigned_to }}</span>
+                        {% else %}
+                            <span class="muted">Unassigned</span>
+                        {% endif %}
+                    </td>
 
-                    <td data-label="Created On">{{ ticket.created_at|date:"Y-m-d" }}</td>
+                    <td data-label="Created On" class="cell-date">{{ ticket.created_at|date:"d M Y" }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="no-tickets">No tickets found for the selected period.</td>
+                    <td colspan="7" class="no-tickets"><i class="far fa-folder-open"></i> No tickets found for the selected period.</td>
                 </tr>
                 {% endfor %}
             </tbody>

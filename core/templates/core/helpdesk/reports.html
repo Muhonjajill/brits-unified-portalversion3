@@ -6,18 +6,23 @@
 {% block content %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <link rel="stylesheet" href="{% static 'css/reports.css' %}">
 {% endblock %}
 
 <div class="page-container">
-  <br>
-  <h2><i class="fas fa-file-alt"></i> Reports</h2>
-  <p>View system reports here.</p>
+  <div class="rp-header">
+    <span class="rp-icon"><i class="fas fa-file-alt"></i></span>
+    <div>
+      <h2>Reports</h2>
+      <p>Filter tickets by customer, terminal, category and date, then download the result to Excel.</p>
+    </div>
+  </div>
 
     <!-- Filters -->
     <form method="get" class="report-filters" id="reportFilterForm">
       <div class="form-header">
-        <h3>Filter Options</h3>
+        <h3><i class="fas fa-sliders-h"></i> Filter Options</h3>
         <div class="button-row">
           <button type="submit" name="download" value="excel" class="btn btn-success">
             <i class="fas fa-file-excel" style="display: inline;"></i> Download Excel
@@ -121,11 +126,11 @@
         <tbody>
            {% for ticket in tickets %}
           <tr>
-            <td><a href="{% url 'ticket_detail' ticket.id %}">{{ ticket.id }}</a></td>
+            <td><a href="{% url 'ticket_detail' ticket.id %}" class="ticket-id">#{{ ticket.id }}</a></td>
             <td>{{ ticket.problem_category.name }}</td>
             <td>{{ ticket.title }}</td>
             <td>{{ ticket.description|truncatewords:10 }}</td>
-            <td>{{ ticket.status }}</td>
+            <td><span class="status-pill status-{{ ticket.status|lower }}">{{ ticket.get_status_display|default:ticket.status }}</span></td>
             <td>{{ ticket.assigned_to }}</td>
             <td>
               {% if ticket.resolved_by %}
@@ -186,7 +191,7 @@
         <tbody>
           {% for ticket in tickets %}
           <tr>
-            <td><a href="{% url 'ticket_detail' ticket.id %}">{{ ticket.id }}</a></td>
+            <td><a href="{% url 'ticket_detail' ticket.id %}" class="ticket-id">#{{ ticket.id }}</a></td>
             <td>
               {% if ticket.customer %}
                 {{ ticket.customer.name }}
@@ -198,7 +203,7 @@
             <td>{{ ticket.problem_category.name }}</td>
             <td>{{ ticket.title }}</td>
             <td>{{ ticket.description|truncatewords:10 }}</td>
-            <td>{{ ticket.status }}</td>
+            <td><span class="status-pill status-{{ ticket.status|lower }}">{{ ticket.get_status_display|default:ticket.status }}</span></td>
             <td>{{ ticket.assigned_to }}</td>
             <td>
               {% if ticket.resolved_by %}

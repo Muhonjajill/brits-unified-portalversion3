@@ -3,7 +3,147 @@ $(document).ready(function() {
     const data = window.initialData;
     const allowAll = window.allowAll;
     // Declare chart instances outside of updateCharts function
-    let statusChart, terminalChart, categoryChart, monthlyChart, assigneeChart, resolverChart, unresolvedChart, ticketsTimeChart, slaEscalationChart;  
+    let statusChart, terminalChart, categoryChart, monthlyChart, assigneeChart, resolverChart, unresolvedChart, ticketsTimeChart, slaEscalationChart;
+
+    // =====================================================================
+    //  APPEARANCE ONLY — shared look for every chart on this page
+    //  (colours match the dashboard and the rest of the system)
+    // =====================================================================
+    const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const FONT = getComputedStyle(document.body).fontFamily || "'Segoe UI', Roboto, sans-serif";
+    const UI = { text: '#1b2540', muted: '#6b7489', grid: 'rgba(18, 54, 146, 0.07)' };
+    const BRAND = { navy: '#123692', deep: '#172d69', sky: '#4f7be8', red: '#dc3545', redDeep: '#b02a37' };
+    const STATUS_COLORS = { open: '#007bff', in_progress: '#c0392b', resolved: '#28a745', closed: '#6c757d', escalated: '#dc9c35' };
+    const FALLBACK = ['#123692', '#4f7be8', '#dc9c35', '#17b845', '#c0392b', '#6c757d'];
+    const HAS_LABELS = typeof ChartDataLabels !== 'undefined';
+
+    Chart.defaults.font.family = FONT;
+    Chart.defaults.color = UI.muted;
+
+    function statusColor(label, i) {
+        const key = String(label || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+        return STATUS_COLORS[key] || FALLBACK[i % FALLBACK.length];
+    }
+
+    function withAlpha(hex, a) {
+        const n = parseInt(hex.replace('#', ''), 16);
+        return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+    }
+
+    // Gradient bar fill; the largest bar is highlighted
+    function barFill(values, from, to, horizontal = false, highlightTop = true) {
+        const max = Math.max(...values.map(v => +v || 0));
+        return (ctx) => {
+            const { chart, dataIndex } = ctx;
+            const area = chart.chartArea;
+            const isTop = highlightTop && (+values[dataIndex] || 0) === max && max > 0;
+            const [a, b] = isTop ? [BRAND.redDeep, '#f0616f'] : [from, to];
+            if (!area) return a;
+            const g = horizontal
+                ? chart.ctx.createLinearGradient(area.left, 0, area.right, 0)
+                : chart.ctx.createLinearGradient(0, area.bottom, 0, area.top);
+            g.addColorStop(0, a);
+            g.addColorStop(1, b);
+            return g;
+        };
+    }
+
+    const tooltipStyle = {
+        backgroundColor: '#0f1d4a',
+        titleColor: '#ffffff',
+        bodyColor: 'rgba(255,255,255,0.88)',
+        titleFont: { size: 13, weight: '600', family: FONT },
+        bodyFont: { size: 12, family: FONT },
+        padding: 12, cornerRadius: 10, caretSize: 6, boxPadding: 5,
+        usePointStyle: true,
+        borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1,
+    };
+
+    const legendBottom = {
+        display: true, position: 'bottom',
+        labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 14, color: UI.text, font: { size: 12, weight: '500' } },
+    };
+
+    function integerTicks(value) { return Number.isInteger(value) ? value.toLocaleString() : null; }
+
+    function shortLabel(max) {
+        return function (value) {
+            const label = this.getLabelForValue(value) || '';
+            return label.length > max ? label.slice(0, max - 1) + '…' : label;
+        };
+    }
+
+    function scales({ horizontal = false, labelMax = 16, skip = false } = {}) {
+        const valueAxis = {
+            beginAtZero: true, grace: '8%',
+            border: { display: false },
+            grid: { color: UI.grid, drawTicks: false },
+            ticks: { color: UI.muted, padding: 8, font: { size: 11 }, callback: integerTicks },
+        };
+        const categoryAxis = {
+            border: { display: false },
+            grid: { display: false },
+            ticks: { color: UI.muted, padding: 6, font: { size: 11 }, autoSkip: skip, autoSkipPadding: 8, maxRotation: horizontal ? 0 : 40, callback: shortLabel(labelMax) },
+        };
+        return horizontal ? { x: valueAxis, y: categoryAxis } : { x: categoryAxis, y: valueAxis };
+    }
+
+    const valueLabels = {
+        anchor: 'end', align: 'end', offset: 2, clamp: true,
+        color: UI.text, font: { size: 11, weight: '600' },
+        formatter: (v) => (+v > 0 ? (+v).toLocaleString() : ''),
+    };
+
+    const sliceLabels = {
+        color: '#ffffff',
+        font: { size: 11, weight: '700' },
+        formatter: (value, ctx) => {
+            const total = ctx.dataset.data.reduce((a, b) => a + (+b || 0), 0);
+            const pct = total ? (value / total) * 100 : 0;
+            return pct >= 6 ? `${Math.round(pct)}%` : '';
+        },
+    };
+
+    const barMotion = REDUCED_MOTION ? { animation: false } : {
+        animation: { duration: 900, easing: 'easeOutQuart', delay: (c) => (c.type === 'data' && c.mode === 'default') ? c.dataIndex * 60 : 0 },
+    };
+    const donutMotion = REDUCED_MOTION ? { animation: false } : {
+        animation: { animateRotate: true, animateScale: true, duration: 1100, easing: 'easeOutQuart' },
+    };
+
+    // Number (and caption) in the middle of a doughnut
+    function centerText(getText) {
+        return {
+            id: 'centerText',
+            afterDraw(chart) {
+                const meta = chart.getDatasetMeta(0);
+                if (!meta || !meta.data || !meta.data.length) return;
+                const arc = meta.data[0];
+                const r = arc.innerRadius;
+                if (!r) return;
+                const { main, sub } = getText(chart);
+                const c = chart.ctx;
+                c.save();
+                c.textAlign = 'center';
+                c.textBaseline = 'middle';
+                c.fillStyle = UI.text;
+                c.font = `700 ${Math.round(r * 0.38)}px ${FONT}`;
+                c.fillText(main, arc.x, arc.y - r * 0.1);
+                c.fillStyle = UI.muted;
+                c.font = `500 ${Math.max(11, Math.round(r * 0.15))}px ${FONT}`;
+                c.fillText(sub, arc.x, arc.y + r * 0.28);
+                c.restore();
+            },
+        };
+    }
+    const totalCenter = centerText((chart) => ({
+        main: chart.data.datasets[0].data.reduce((a, b) => a + (+b || 0), 0).toLocaleString(),
+        sub: 'tickets',
+    }));
+
+    function pointerCursor(e, elements) { e.native.target.style.cursor = elements.length ? 'pointer' : 'default'; }
+
+    // =====================================================================
 
 
     // Initialize the chart rendering with the default data
@@ -33,13 +173,13 @@ $(document).ready(function() {
         const ctxAssignee = document.getElementById('ticketsByAssigneeChart').getContext('2d');
         const ctxResolver = document.getElementById('ticketsByResolverChart').getContext('2d');
         const ctxUnresolved = document.getElementById('unresolvedTicketsChart').getContext('2d');
-        destroyChart(unresolvedChart); 
-        destroyChart(assigneeChart); 
+        destroyChart(unresolvedChart);
+        destroyChart(assigneeChart);
 
-        
+
         destroyChart(resolverChart);
 
-    
+
         destroyChart(statusChart);
         destroyChart(terminalChart);
         destroyChart(categoryChart);
@@ -90,16 +230,19 @@ $(document).ready(function() {
                 datasets: [{
                     label: "Tickets",
                     data: values,
-                    borderColor: "#007bff",
-                    pointBackgroundColor: "#007bff",
-                    borderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 8,
+                    borderColor: BRAND.navy,
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: BRAND.navy,
+                    pointBorderWidth: 2,
+                    pointRadius: values.length > 40 ? 0 : 3.5,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: BRAND.navy,
                     backgroundColor: function(context) {
                         const chart = context.chart;
                         const { ctx, chartArea } = chart;
                         if (!chartArea) return null;
-                        return createGradient(ctx, chartArea, "rgba(0,123,255,0.5)", "rgba(0,123,255,0)");
+                        return createGradient(ctx, chartArea, withAlpha(BRAND.navy, 0.28), withAlpha(BRAND.navy, 0.01));
                     },
                     fill: true,
                     tension: 0.4,
@@ -107,79 +250,68 @@ $(document).ready(function() {
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
-                animation: { duration: 1500, easing: "easeOutBounce" },
+                ...(REDUCED_MOTION ? { animation: false } : { animation: { duration: 1000, easing: "easeOutQuart" } }),
                 plugins: {
-                    legend: { display: true, labels: { color: "#333", font: { size: 14, weight: 'bold' } } },
+                    legend: { display: false },
                     tooltip: {
-                        backgroundColor: "rgba(0,0,0,0.7)",
-                        titleFont: { size: 14, weight: "bold" },
-                        bodyFont: { size: 13 },
-                        padding: 10,
-                        cornerRadius: 8,
+                        ...tooltipStyle,
                         callbacks: {
                             label: (ctx) => ` ${ctx.formattedValue} tickets`
                         }
                     }
                 },
-                elements: {
-                    line: { borderJoinStyle: "round", shadowBlur: 8, shadowColor: "rgba(0,0,0,0.15)" },
-                    point: { hoverBorderWidth: 3 }
-                }
+                scales: scales({ labelMax: 12, skip: true })
             }
         });
     }
 
 
-        // Ticket statuses chart (Pie chart) with hover animations
+        // Ticket statuses chart (doughnut) — status colours as everywhere else
         statusChart = new Chart(ctxStatus, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
-                labels: data.ticketStatuses.labels, 
+                labels: data.ticketStatuses.labels,
                 datasets: [{
                     label: 'Ticket Statuses',
                     data: data.ticketStatuses.data,
-                    backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545'],
+                    backgroundColor: data.ticketStatuses.labels.map((l, i) => statusColor(l, i)),
+                    borderColor: '#ffffff',
+                    borderWidth: 3,
+                    hoverOffset: 10,
+                    spacing: 2,
+                    borderRadius: 6,
                 }]
             },
+            plugins: [totalCenter, ...(HAS_LABELS ? [ChartDataLabels] : [])],
             options: {
                 responsive: true,
-                animation: {
-                    animateRotate: true,
-                    animateScale: true,
-                    duration: 1200,
-                },
+                maintainAspectRatio: false,
+                cutout: '64%',
+                layout: { padding: 8 },
+                ...donutMotion,
                 plugins: {
+                    legend: { display: false },
                     tooltip: {
-                        enabled: true,
-                        backgroundColor: 'rgba(0, 123, 255, 0.8)',
+                        ...tooltipStyle,
+                        callbacks: {
+                            label(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const value = context.raw;
+                                const percent = total ? ((value / total) * 100).toFixed(1) : 0;
+                                return `${context.label}: ${value} (${percent}%)`;
+                            }
+                        }
                     },
-                    datalabels: {
-                        display: true,
-                        color: '#fff',
-                        formatter: (value, context) => {
-                            const total = context.chart._metasets[0].data.reduce((acc, val) => acc + val, 0);
-                            const percentage = ((value / total) * 100).toFixed(2);  
-                            return `${value} (${percentage}%)`;  
-                        },
-                        font: {
-                            weight: 'bold',
-                            size: 14
-                        },
-                        anchor: 'end',
-                        align: 'center',
-                        offset: 10
-                    }
+                    datalabels: sliceLabels
                 },
-                events: ['resize', 'afterUpdate'],
-                onResize: function(chart) {
-                    chart.update();
-                },
-                hover: { mode: 'nearest', onHover: (e, elements) => e.native.target.style.cursor = elements.length ? 'pointer' : 'default'} 
+                onHover: pointerCursor
             }
         });
 
         // Tickets per Terminal Chart
+        const terminalCounts = data.ticketsPerTerminal.map(entry => entry.count);
         terminalChart = new Chart(ctxTerminal, {
             type: 'bar',
             data: {
@@ -188,20 +320,27 @@ $(document).ready(function() {
                 datasets: [{
                     label: 'Tickets per Terminal',
                    // data: data.ticketsPerTerminal,
-                   data: data.ticketsPerTerminal.map(entry => entry.count),
-                    backgroundColor: function(context) {
-                        const chartArea = context.chart.chartArea;
-                        return createGradient(ctxTerminal, chartArea, '#007bff', '#00b0ff');
-                    },
+                   data: terminalCounts,
+                    backgroundColor: barFill(terminalCounts, BRAND.deep, BRAND.sky),
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    minBarLength: 3,
+                    maxBarThickness: 34,
                 }]
             },
+            plugins: (HAS_LABELS && terminalCounts.length <= 30) ? [ChartDataLabels] : [],
             options: {
                 responsive: true,
-                animation: { duration: 1200, easing: 'easeOutQuart', delay: (context) => context.dataIndex * 100 },
+                maintainAspectRatio: false,
+                layout: { padding: { top: 18 } },
+                ...barMotion,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: false }, tooltip: tooltipStyle, datalabels: valueLabels },
+                scales: scales({ labelMax: 14 })
             }
         });
 
-    
+
     function renderCategoryChart(data) {
         // If an existing chart instance exists, destroy it first
         if (categoryChart) {
@@ -211,78 +350,30 @@ $(document).ready(function() {
         const ctxCategory = document
             .getElementById('ticketsByCategoryChart')
             .getContext('2d');
+        const catValues = data.ticketCategories.data;
+        // Horizontal bars: category names are long and compare more easily this way
         categoryChart = new Chart(ctxCategory, {
-            type: 'radar',
+            type: 'bar',
             data: {
             labels: data.ticketCategories.labels,
             datasets: [{
                 label: 'Tickets by Category',
-                data: data.ticketCategories.data,
-                backgroundColor: context => {
-                const { chartArea } = context.chart;
-                return createGradient(
-                    ctxCategory,
-                    chartArea,
-                    'rgba(0, 123, 255, 0.3)',
-                    'rgba(0, 123, 255, 0.1)'
-                );
-                },
-                borderColor: context => {
-                const v = context.dataset.data[context.dataIndex];
-                return v > 10 ? '#ff4500' : '#007bff';
-                },
-                borderWidth: 2,
-                pointBackgroundColor: context => {
-                const v = context.dataset.data[context.dataIndex];
-                return v > 10 ? '#ff4500' : '#007bff';
-                },
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 8,
-                pointHoverBackgroundColor: context => {
-                const v = context.dataset.data[context.dataIndex];
-                return v > 10 ? '#ff6347' : '#007bff';
-                },
-                pointHoverBorderWidth: 2,
-                fill: true
+                data: catValues,
+                backgroundColor: barFill(catValues, BRAND.deep, BRAND.sky, true),
+                borderRadius: 6,
+                borderSkipped: false,
+                minBarLength: 3,
+                barPercentage: 0.72,
+                maxBarThickness: 26
             }]
             },
+            plugins: HAS_LABELS ? [ChartDataLabels] : [],
             options: {
+            indexAxis: 'y',
             responsive: true,
-            scale: {
-                ticks: {
-                beginAtZero: true,
-                backdropColor: 'rgba(0, 0, 0, 0.1)',
-                color: '#333',
-                font: { size: 14 }
-                },
-                pointLabels: {
-                color: '#007bff',
-                font: { size: 14, weight: 'bold' }
-                }
-            },
-            animation: {
-                duration: 2000,
-                easing: 'easeOutBounce',
-                onComplete: function(anim) {
-                const chart = anim.chart;
-                const ctx   = chart.ctx;
-                if (!ctx) return;
-                ctx.save();
-                ctx.globalAlpha = 0.5;
-                chart.data.datasets.forEach((ds, idx) => {
-                    ctx.fillStyle = ds.borderColor;
-                    ds.data.forEach((_, i) => {
-                    const pt = chart.getDatasetMeta(idx).data[i];
-                    ctx.beginPath();
-                    ctx.arc(pt.x, pt.y, 6, 0, 2 * Math.PI);
-                    ctx.fill();
-                    });
-                });
-                ctx.restore();
-                }
-            },
+            maintainAspectRatio: false,
+            layout: { padding: { right: 28 } },
+            ...barMotion,
             hover: {
                 onHover: (e, active) => {
                 e.native.target.style.cursor = active.length ? 'pointer' : 'default';
@@ -290,71 +381,41 @@ $(document).ready(function() {
             },
             plugins: {
                 tooltip: {
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                titleFont: { size: 14, weight: 'bold' },
-                bodyFont: { size: 12 },
-                padding: 10,
-                cornerRadius: 6,
+                ...tooltipStyle,
                 callbacks: {
                     label: ctx => `${ctx.dataset.label}: ${ctx.formattedValue} tickets`
                 }
                 },
-                legend: {
-                display: true,
-                labels: {
-                    color: '#333',
-                    font: { size: 14, weight: 'bold' }
-                }
-                }
-            }
+                legend: { display: false },
+                datalabels: valueLabels
+            },
+            scales: scales({ horizontal: true, labelMax: 30 })
             }
         });
         }
 
 
-      
+
 
        // SLA Chart (Doughnut)
         const ctxSLAEsc = document.getElementById("slaEscalationChart");
 
         if (ctxSLAEsc && window.initialData.escalationSLAStats) {
-            destroyChart(slaEscalationChart); 
+            destroyChart(slaEscalationChart);
             const data = window.initialData.escalationSLAStats;
             const ctx = ctxSLAEsc.getContext("2d");
 
-            // --- Gradients for each slice ---
-            // Softer, modern gradients
-            const gradBreachedEsc = ctx.createLinearGradient(0, 0, 0, 300);
-            gradBreachedEsc.addColorStop(0, "#FF7E67");  // warm coral
-            gradBreachedEsc.addColorStop(1, "#FF3C38");  // soft red
+            // Breached & escalated → critical red, breached only → amber, met → green
+            const slaColors = ['#e74c3c', '#dc9c35', '#17b845'];
 
-            const gradBreachedNoEsc = ctx.createLinearGradient(0, 0, 0, 300);
-            gradBreachedNoEsc.addColorStop(0, "#6DD5FA"); // aqua blue
-            gradBreachedNoEsc.addColorStop(1, "#2980B9"); // calm teal
-
-            const gradMet = ctx.createLinearGradient(0, 0, 0, 300);
-            gradMet.addColorStop(0, "#A5E1CE");  // soft mint
-            gradMet.addColorStop(1, "#2E8B57");  // deeper sea-gree
-
-            // Custom plugin for center percentage text
-            const centerTextPlugin = {
-                id: "centerText",
-                afterDraw(chart) {
-                    const { ctx, chartArea } = chart;
-                    const dataset = chart.data.datasets[0];
-                    const total = dataset.data.reduce((a, b) => a + b, 0);
-                    const breached = dataset.data[0] ?? 0;
-                    const percent = total ? ((breached / total) * 100).toFixed(1) : 0;
-
-                    ctx.save();
-                    ctx.font = "bold 20px 'Segoe UI', sans-serif";
-                    ctx.fillStyle = "#444";
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-                    ctx.fillText(`${percent}%`, (chartArea.left + chartArea.right) / 2, (chartArea.top + chartArea.bottom) / 2);
-                    ctx.restore();
-                },
-            };
+            // Breach percentage in the centre (first slice = breached, as before)
+            const centerTextPlugin = centerText((chart) => {
+                const dataset = chart.data.datasets[0];
+                const total = dataset.data.reduce((a, b) => a + b, 0);
+                const breached = dataset.data[0] ?? 0;
+                const percent = total ? ((breached / total) * 100).toFixed(1) : 0;
+                return { main: `${percent}%`, sub: 'breached' };
+            });
 
             slaEscalationChart = new Chart(ctxSLAEsc, {
                 type: "doughnut",
@@ -364,46 +425,29 @@ $(document).ready(function() {
                         {
                             label: "SLA Escalation",
                             data: data.data,
-                            backgroundColor: [gradBreachedEsc, gradBreachedNoEsc, gradMet],
+                            backgroundColor: data.data.map((_, i) => slaColors[i % slaColors.length]),
                             borderColor: "#fff",
-                            borderWidth: 2,
-                            hoverOffset: 12,
-                            hitRadius: 4,
-                            shadowColor: "rgba(0,0,0,0.15)",
-                            shadowBlur: 8,
+                            borderWidth: 3,
+                            hoverOffset: 10,
+                            spacing: 2,
+                            borderRadius: 6,
                         },
                     ],
                 },
                 options: {
                     responsive: true,
-                    cutout: "68%",
-                    animation: {
-                        animateRotate: true,
-                        animateScale: true,
-                        duration: 1800,
-                        easing: "easeOutElastic",
-                    },
+                    maintainAspectRatio: false,
+                    cutout: "66%",
+                    layout: { padding: 8 },
+                    ...donutMotion,
                     interaction: {
                         mode: "point",   // precise detection of slices
                         intersect: true, // only fire when pointer is inside slice
                     },
                     plugins: {
-                        legend: {
-                            position: "bottom",
-                            labels: {
-                                usePointStyle: true,
-                                pointStyle: "circle",
-                                font: { size: 14, weight: "bold" },
-                                color: "#333",
-                                padding: 14,
-                            },
-                        },
+                        legend: legendBottom,
                         tooltip: {
-                            backgroundColor: "#222",
-                            titleFont: { size: 14, weight: "bold" },
-                            bodyFont: { size: 13 },
-                            padding: 12,
-                            cornerRadius: 6,
+                            ...tooltipStyle,
                             callbacks: {
                                 label(context) {
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -424,25 +468,39 @@ $(document).ready(function() {
 
 
 
-        
+
+        const resolutionCenter = centerText((chart) => {
+            const d = chart.data.datasets[0].data;
+            const total = d.reduce((a, b) => a + (+b || 0), 0);
+            const pct = total ? Math.round(((+d[0] || 0) / total) * 100) : 0;
+            return { main: `${pct}%`, sub: 'resolved' };
+        });
+
         unresolvedChart = new Chart(ctxUnresolved, {
             type: 'doughnut',
             data: {
                 labels: ['Resolved', 'Unresolved'],
                 datasets: [{
                     label: 'Ticket Resolution',
-                    data: [data.resolvedTickets, data.unresolvedCount], 
-                    backgroundColor: ['#28a745', '#dc3545'],
+                    data: [data.resolvedTickets, data.unresolvedCount],
+                    backgroundColor: ['#17b845', '#e74c3c'],
+                    borderColor: '#ffffff',
+                    borderWidth: 3,
+                    hoverOffset: 10,
+                    spacing: 2,
+                    borderRadius: 6,
                 }]
             },
             options: {
                 responsive: true,
-                cutout: '70%',
+                maintainAspectRatio: false,
+                cutout: '68%',
+                layout: { padding: 8 },
+                ...donutMotion,
                 plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
+                    legend: legendBottom,
                     tooltip: {
+                        ...tooltipStyle,
                         callbacks: {
                             label: function(context) {
                                 let total = context.dataset.data.reduce((a, b) => a + b, 0);
@@ -452,71 +510,74 @@ $(document).ready(function() {
                             }
                         }
                     },
-                    datalabels: {
-                        color: '#fff',
-                        formatter: (value, ctx) => {
-                            let total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                            return total ? ((value / total) * 100).toFixed(1) + '%' : '0%';
-                        },
-                        font: {
-                            weight: 'bold',
-                            size: 14
-                        }
-                    }
-                }
+                    datalabels: { display: false }
+                },
+                onHover: pointerCursor
             },
-            animation: { animateRotate: true, animateScale: true, duration: 1200 },
-            hover: { mode: 'nearest', onHover: (e, elements) => e.native.target.style.cursor = elements.length ? 'pointer' : 'default' },
-            plugins: [ChartDataLabels]
+            plugins: [resolutionCenter, ...(HAS_LABELS ? [ChartDataLabels] : [])]
         });
 
+        const assigneeValues = data.ticketsByAssignee.data;
         assigneeChart = new Chart(ctxAssignee, {
             type: 'bar',
             data: {
                 labels: data.ticketsByAssignee.labels,
                 datasets: [{
                     label: 'Tickets Assigned',
-                    data: data.ticketsByAssignee.data,
-                    backgroundColor: data.ticketsByAssignee.labels.map((_, i) => {
-                        const colors = [
-                            '#007bff', '#28a745', '#ffc107', '#dc3545',
-                            '#17a2b8', '#6f42c1', '#fd7e14', '#20c997'
-                        ];
-                        return colors[i % colors.length]; 
-                    }),
+                    data: assigneeValues,
+                    backgroundColor: barFill(assigneeValues, BRAND.deep, BRAND.sky),
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    minBarLength: 3,
+                    maxBarThickness: 36,
                 }]
             },
+            plugins: HAS_LABELS ? [ChartDataLabels] : [],
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { top: 18 } },
+                ...barMotion,
+                interaction: { mode: 'index', intersect: false },
                 plugins: {
-                    tooltip: { enabled: true }
+                    legend: { display: false },
+                    tooltip: { ...tooltipStyle, enabled: true },
+                    datalabels: valueLabels
                 },
-                animation: {
-                    duration: 1200,
-                    easing: 'easeOutQuart',
-                    delay: (context) => context.dataIndex * 100 
-                }
+                scales: scales({ labelMax: 10 })
             }
         });
 
 
         // Tickets by Resolver (Bar)
+        const resolverValues = data.ticketsByResolver.data;
         resolverChart = new Chart(ctxResolver, {
             type: 'bar',
             data: {
                 labels: data.ticketsByResolver.labels,
                 datasets: [{
                     label: 'Tickets Resolved',
-                    data: data.ticketsByResolver.data,
-                    backgroundColor: '#17a2b8',
+                    data: resolverValues,
+                    backgroundColor: barFill(resolverValues, '#128a35', '#4cd07a', false, false),
+                    borderRadius: 6,
+                    borderSkipped: false,
+                    minBarLength: 3,
+                    maxBarThickness: 36,
                 }]
             },
-            options: { responsive: true,
-                animation: {
-                    duration: 1200,
-                    easing: 'easeOutQuart',
-                    delay: (context) => context.dataIndex * 100 
-                }
+            plugins: HAS_LABELS ? [ChartDataLabels] : [],
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { top: 18 } },
+                ...barMotion,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: tooltipStyle,
+                    datalabels: valueLabels
+                },
+                scales: scales({ labelMax: 10 })
              }
         });
 
@@ -528,14 +589,22 @@ $(document).ready(function() {
         labels.forEach((label, index) => {
             const count = data[index];
             const percentage = ((count / total) * 100).toFixed(2);
-            breakdownHTML += `<p><strong>${label}:</strong> ${count} tickets (${percentage}%)</p>`;
+            const color = statusColor(label, index);
+            breakdownHTML += `
+              <div class="status-item">
+                <div class="status-item-top">
+                  <span class="label"><i class="status-dot" style="background:${color}"></i>${label}</span>
+                  <span class="value"><strong>${count}</strong> tickets <em>${percentage}%</em></span>
+                </div>
+                <div class="status-track"><span style="width:${isFinite(percentage) ? percentage : 0}%; background:${color}"></span></div>
+              </div>`;
         });
         document.getElementById('ticket-status-breakdown').innerHTML = breakdownHTML;
     }
 
     // Call the function to display the breakdown
     updateTicketStatusBreakdown(data.ticketStatuses.labels, data.ticketStatuses.data);
-    
+
     // Populate Dropdowns
     function populateDropdown(id, items, idKey, nameKey, allowAll = true, defaultValue = null, allLabel = "All") {
         const dropdown = document.getElementById(id);
@@ -607,7 +676,7 @@ $(document).ready(function() {
                     try {
                         console.log("New Data:", response);
                         window.initialData = response;
-                        updateCharts(response); 
+                        updateCharts(response);
                         console.log("Resolved:", response.resolvedTickets, "Unresolved:", response.unresolvedCount);
                     } catch (error) {
                         console.error("Error while updating charts:", error);

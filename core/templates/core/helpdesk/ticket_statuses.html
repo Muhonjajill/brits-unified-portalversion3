@@ -10,88 +10,81 @@
 
 {% block content %}
 
-<div class="page-container">
-  <!-- Ticket Statuses Section -->
-  <div class="content-card">
-    <div class="card-header">
-      <h2><i class="fas fa-clipboard-list"></i> Ticket Statuses Overview</h2> 
-      <p class="subtitle">
-        Understanding the current state of support tickets in the system.
-      </p>
-      <p class="access-info"> 
-        {% if is_custodian %}
-          You are viewing ticket statuses for your assigned terminal only.
-        {% elif is_overseer or is_customer %}
-          You are viewing ticket statuses for your assigned customer only.
-        {% else %}
-          You have global access and are viewing all ticket statuses.
-        {% endif %}
-      </p>
-    </div>
+<div class="page-container ts-page">
 
-    <div class="table-wrapper">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>Status</th>
-            <th>Description</th>
-            <th class="text-center">Visual Cue</th> 
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <a href="{% url 'ticket_by_status' 'open' %}" class="status-link"> 
-                <span class="badge badge-open">Open</span>
-              </a>
-            </td>
-            <td>Tickets that are currently active and require attention.</td> 
-            <td class="text-center"><span class="color-box bg-open"></span></td> 
-          </tr>
-          <tr>
-            <td>
-              <a href="{% url 'ticket_by_status' 'in-progress' %}" class="status-link">
-                <span class="badge badge-in-progress">In Progress</span> 
-              </a>
-            </td>
-            <td>Tickets that are actively being worked on by a support agent.</td>
-            <td class="text-center"><span class="color-box bg-in-progress"></span></td>
-          </tr>
-          <tr>
-            <td>
-              <a href="{% url 'ticket_by_status' 'closed' %}" class="status-link">
-                <span class="badge badge-closed">Closed</span>
-              </a>
-            </td>
-            <td>Tickets that have been successfully completed and archived.</td>
-            <td class="text-center"><span class="color-box bg-closed"></span></td>
-          </tr>
-        </tbody>
-      </table>
+  <!-- Page header -->
+  <div class="ts-header">
+    <span class="ts-header-icon"><i class="fas fa-clipboard-list"></i></span>
+    <div>
+      <h2>Ticket Statuses Overview</h2>
+      <p class="subtitle">Understanding the current state of support tickets in the system.</p>
     </div>
+  </div>
+  <p class="access-info">
+    <i class="fas fa-eye"></i>
+    {% if is_custodian %}
+      You are viewing ticket statuses for your assigned terminal only.
+    {% elif is_overseer or is_customer %}
+      You are viewing ticket statuses for your assigned customer only.
+    {% else %}
+      You have global access and are viewing all ticket statuses.
+    {% endif %}
+  </p>
+
+  <!-- Ticket Statuses Section -->
+  <div class="status-tiles">
+    <a href="{% url 'ticket_by_status' 'open' %}" class="status-tile status-link tile-open">
+      <span class="tile-icon"><i class="fas fa-folder-open"></i></span>
+      <span class="tile-body">
+        <span class="badge badge-open">Open</span>
+        <span class="tile-desc">Tickets that are currently active and require attention.</span>
+      </span>
+      <span class="tile-go">View tickets <i class="fas fa-arrow-right"></i></span>
+    </a>
+    <a href="{% url 'ticket_by_status' 'in-progress' %}" class="status-tile status-link tile-in-progress">
+      <span class="tile-icon"><i class="fas fa-spinner"></i></span>
+      <span class="tile-body">
+        <span class="badge badge-in-progress">In Progress</span>
+        <span class="tile-desc">Tickets that are actively being worked on by a support agent.</span>
+      </span>
+      <span class="tile-go">View tickets <i class="fas fa-arrow-right"></i></span>
+    </a>
+    <a href="{% url 'ticket_by_status' 'closed' %}" class="status-tile status-link tile-closed">
+      <span class="tile-icon"><i class="fas fa-circle-check"></i></span>
+      <span class="tile-body">
+        <span class="badge badge-closed">Closed</span>
+        <span class="tile-desc">Tickets that have been successfully completed and archived.</span>
+      </span>
+      <span class="tile-go">View tickets <i class="fas fa-arrow-right"></i></span>
+    </a>
   </div>
 
   <!-- Staff Performance Table - Only visible to internal staff -->
   {% if user_group in allowed_roles or request.user.is_superuser %}
-  <div class="content-card mt-4">
+  <div class="content-card">
     <div class="card-header">
-      <h2><i class="fas fa-users"></i> Staff Performance Overview</h2>
-      <p class="subtitle">Track ticket assignments and resolution rates for staff members.</p>
-    </div>
+      <div class="card-title">
+        <span class="card-icon"><i class="fas fa-users"></i></span>
+        <div>
+          <h3>Staff Performance Overview</h3>
+          <p class="subtitle">Track ticket assignments and resolution rates for staff members.</p>
+        </div>
+      </div>
 
-    <!-- Date Range Filter -->
-    <div class="filter-section">
-      <form method="get" class="filter-form">
-        <label for="date_range">Time Range:</label>
-        <select name="date_range" id="date_range" class="form-select" onchange="this.form.submit()">
-          <option value="all" {% if date_range == 'all' %}selected{% endif %}>All Time</option>
-          <option value="today" {% if date_range == 'today' %}selected{% endif %}>Today</option>
-          <option value="week" {% if date_range == 'week' %}selected{% endif %}>This Week</option>
-          <option value="month" {% if date_range == 'month' %}selected{% endif %}>This Month</option>
-          <option value="quarter" {% if date_range == 'quarter' %}selected{% endif %}>This Quarter</option>
-          <option value="year" {% if date_range == 'year' %}selected{% endif %}>This Year</option>
-        </select>
-      </form>
+      <!-- Date Range Filter -->
+      <div class="filter-section">
+        <form method="get" class="filter-form">
+          <label for="date_range"><i class="fas fa-calendar-alt"></i> Time Range</label>
+          <select name="date_range" id="date_range" class="form-select" onchange="this.form.submit()">
+            <option value="all" {% if date_range == 'all' %}selected{% endif %}>All Time</option>
+            <option value="today" {% if date_range == 'today' %}selected{% endif %}>Today</option>
+            <option value="week" {% if date_range == 'week' %}selected{% endif %}>This Week</option>
+            <option value="month" {% if date_range == 'month' %}selected{% endif %}>This Month</option>
+            <option value="quarter" {% if date_range == 'quarter' %}selected{% endif %}>This Quarter</option>
+            <option value="year" {% if date_range == 'year' %}selected{% endif %}>This Year</option>
+          </select>
+        </form>
+      </div>
     </div>
 
     <div class="table-wrapper">
@@ -105,15 +98,16 @@
             <th class="text-center">In Progress</th>
             <th class="text-center">Closed Tickets</th>
             <th class="text-center">Total Assigned</th>
+            <th class="col-mix">Workload</th>
           </tr>
         </thead>
         <tbody>
           {% for staff_data in staff_performance %}
           <tr>
-            <td>{{ forloop.counter }}</td>
+            <td class="col-rank">{{ forloop.counter }}</td>
             <td>
               <div class="staff-info">
-                <i class="fas fa-user-circle"></i>
+                <span class="avatar">{{ staff_data.staff.get_full_name|default:staff_data.staff.username|slice:":1"|upper }}</span>
                 <span>{{ staff_data.staff.get_full_name|default:staff_data.staff.username }}</span>
               </div>
             </td>
@@ -132,16 +126,29 @@
               <span class="count-badge count-closed">{{ staff_data.closed_count }}</span>
             </td>
             <td class="text-center">
-              <strong>{{ staff_data.total_count }}</strong>
+              <strong class="total-count">{{ staff_data.total_count }}</strong>
+            </td>
+            <td class="col-mix">
+              <div class="mix-bar" title="Open {{ staff_data.open_count }} · In progress {{ staff_data.in_progress_count }} · Closed {{ staff_data.closed_count }}">
+                <span class="mix-open" style="width: {% widthratio staff_data.open_count staff_data.total_count 100 %}%"></span>
+                <span class="mix-progress" style="width: {% widthratio staff_data.in_progress_count staff_data.total_count 100 %}%"></span>
+                <span class="mix-closed" style="width: {% widthratio staff_data.closed_count staff_data.total_count 100 %}%"></span>
+              </div>
             </td>
           </tr>
           {% empty %}
           <tr>
-            <td colspan="7" class="text-center text-muted">No staff data available.</td>
+            <td colspan="8" class="text-center text-muted empty-cell">No staff data available.</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
+    </div>
+
+    <div class="mix-legend">
+      <span><i class="dot dot-open"></i> Open</span>
+      <span><i class="dot dot-progress"></i> In progress</span>
+      <span><i class="dot dot-closed"></i> Closed</span>
     </div>
 
     <!-- Pagination -->

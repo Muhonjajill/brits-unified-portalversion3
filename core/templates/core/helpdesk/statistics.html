@@ -105,10 +105,10 @@
   </form>
 
   <!-- Timeline Charts -->
-  <div class="row mb-5 align-items-stretch">
-    <div class="col-md-6">
+  <div class="row g-4 mb-4 align-items-stretch">
+    <div class="col-lg-7">
       <div class="card chart-card">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="chart-head">
           <h5 class="mb-0"><i class="fas fa-chart-area chart-icon"></i> Tickets Over Time</h5>
           <select id="timeUnitFilter" class="form-select form-select-sm" style="width: auto;">
             <option value="hour">Hourly</option>
@@ -118,82 +118,82 @@
             <option value="year">Yearly</option>
           </select>
         </div>
-        <div class="card-body">
-          <canvas id="ticketsTimeChart"></canvas>
-        </div>
+        <div class="chart-box"><canvas id="ticketsTimeChart"></canvas></div>
       </div>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-lg-5">
       <div class="card chart-card">
-        <div class="card-body">
-          <h5 class="card-title text-center"><i class="fas fa-chart-pie chart-icon"></i> Ticket Statuses</h5>
-          <canvas id="ticketStatusChart"></canvas>
-          <div id="ticket-status-breakdown" class="mt-3"></div>
+        <div class="chart-head">
+          <h5 class="mb-0"><i class="fas fa-chart-pie chart-icon"></i> Ticket Statuses</h5>
+        </div>
+        <div class="status-split">
+          <div class="chart-box chart-box--donut"><canvas id="ticketStatusChart"></canvas></div>
+          <div id="ticket-status-breakdown"></div>
         </div>
       </div>
     </div>
   </div>
 
   <!-- SLA & Category -->
-  <div class="row mb-5 align-items-stretch">
-    <div class="col-md-6 {% if hide_sla %}hidden{% endif %}">
+  <div class="row g-4 mb-4 align-items-stretch">
+    <div class="col-lg-5 {% if hide_sla %}hidden{% endif %}">
       <div class="card chart-card">
-        <div class="card-body">
-          <h5 class="card-title text-center"><i class="fas fa-stopwatch chart-icon"></i> SLA Escalation</h5>
-          <canvas id="slaEscalationChart"></canvas>
+        <div class="chart-head">
+          <h5 class="mb-0"><i class="fas fa-stopwatch chart-icon"></i> SLA Escalation</h5>
         </div>
+        <div class="chart-box chart-box--donut"><canvas id="slaEscalationChart"></canvas></div>
       </div>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-lg-7">
       <div class="card chart-card">
-        <div class="card-body">
-          <h5 class="card-title text-center"><i class="fas fa-tags chart-icon"></i> Tickets by Category</h5>
-          <canvas id="ticketsByCategoryChart"></canvas>
+        <div class="chart-head">
+          <h5 class="mb-0"><i class="fas fa-tags chart-icon"></i> Tickets by Category</h5>
         </div>
+        <div class="chart-box"><canvas id="ticketsByCategoryChart"></canvas></div>
       </div>
     </div>
   </div>
 
   <!-- Users -->
-  <div class="row mb-5 align-items-stretch">
-    <div class="col-md-4 {% if hide_assignee %}hidden{% endif %}">
+  <div class="row g-4 mb-4 align-items-stretch">
+    <div class="col-lg-4 {% if hide_assignee %}hidden{% endif %}">
       <div class="card chart-card">
-        <div class="card-body">
-          <h5 class="card-title text-center"><i class="fas fa-user-tag chart-icon"></i> Tickets by Assignee</h5>
-          <canvas id="ticketsByAssigneeChart"></canvas>
+        <div class="chart-head">
+          <h5 class="mb-0"><i class="fas fa-user-tag chart-icon"></i> Tickets by Assignee</h5>
         </div>
+        <div class="chart-box"><canvas id="ticketsByAssigneeChart"></canvas></div>
       </div>
     </div>
 
-    <div class="col-md-4 {% if hide_resolver %}hidden{% endif %}">
+    <div class="col-lg-4 {% if hide_resolver %}hidden{% endif %}">
       <div class="card chart-card">
-        <div class="card-body">
-          <h5 class="card-title text-center"><i class="fas fa-user-check chart-icon"></i> Tickets by Resolver</h5>
-          <canvas id="ticketsByResolverChart"></canvas>
+        <div class="chart-head">
+          <h5 class="mb-0"><i class="fas fa-user-check chart-icon"></i> Tickets by Resolver</h5>
         </div>
+        <div class="chart-box"><canvas id="ticketsByResolverChart"></canvas></div>
       </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-lg-4">
       <div class="card chart-card">
-        <div class="card-body">
-          <h5 class="card-title text-center"><i class="fas fa-circle-check chart-icon"></i> Unresolved Tickets</h5>
-          <canvas id="unresolvedTicketsChart"></canvas>
+        <div class="chart-head">
+          <h5 class="mb-0"><i class="fas fa-circle-check chart-icon"></i> Unresolved Tickets</h5>
         </div>
+        <div class="chart-box"><canvas id="unresolvedTicketsChart"></canvas></div>
       </div>
     </div>
   </div>
 
   <!-- Categories & Terminals -->
-  <div class="row mb-5 {% if hide_terminal %}hidden{% endif %}">
+  <div class="row mb-4 {% if hide_terminal %}hidden{% endif %}">
     <div class="col-md-12">
       <div class="card chart-card">
-        <div class="card-body">
-          <h5 class="card-title text-center"><i class="fas fa-server chart-icon"></i> Tickets per Terminal</h5>
-          <canvas id="ticketsPerTerminalChart"></canvas>
+        <div class="chart-head">
+          <h5 class="mb-0"><i class="fas fa-server chart-icon"></i> Tickets per Terminal</h5>
         </div>
+        <div class="chart-box chart-box--wide"><canvas id="ticketsPerTerminalChart"></canvas></div>
       </div>
     </div>
   </div>
