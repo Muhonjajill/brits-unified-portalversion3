@@ -27,8 +27,8 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(10, 18, 45, 0.55);
+  backdrop-filter: blur(5px);
   animation: fadeIn 0.3s ease;
 }
 
@@ -44,10 +44,10 @@
   max-width: 1200px;
   max-height: 85vh;
   border-radius: 16px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 24px 70px rgba(10, 18, 45, 0.35);
   display: flex;
   flex-direction: column;
-  animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideUp 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
   overflow: hidden;
 }
 
@@ -66,7 +66,7 @@
 .modal-header {
   background: linear-gradient(135deg, #123692, #172d69);
   color: #ffffff;
-  padding: 1.5rem 2rem;
+  padding: 1.15rem 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -74,8 +74,8 @@
 }
 
 .modal-title {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 650;
   margin: 0;
   display: flex;
   align-items: center;
@@ -83,8 +83,13 @@
 }
 
 .modal-title::before {
-  content: '🎟️';
-  font-size: 1.75rem;
+  content: '\f145';                      /* Font Awesome ticket */
+  font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free';
+  font-weight: 900;
+  font-size: 1rem;
+  width: 34px; height: 34px; border-radius: 9px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .modal-close {
@@ -111,11 +116,23 @@
 
 /* Modal Body */
 .modal-body {
-  padding: 1.5rem;
-  overflow-x: auto;
+  padding: 1.25rem 1.5rem 1.5rem;
+  overflow: auto;
   flex: 1;
-  background: #f8f9fa;
+  background: #f5f7fb;
   width: 100%;
+}
+
+/* "Total Tickets: N" line above the table */
+.modal-tickets > p {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  margin: 0 0 0.9rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: rgba(18, 54, 146, 0.08);
+  color: #123692;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .modal-body::-webkit-scrollbar {
@@ -414,23 +431,43 @@
 }
 
 .tickets-table {
-  width: 100% !important; 
-  min-width: unset; 
+  width: 100% !important;
+  min-width: unset;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #ffffff;
+  border: 1px solid #e4e8f1;
+  border-radius: 12px;
+  overflow: hidden;
+  font-size: 0.88rem;
 }
 
-.tickets-table th, 
+.tickets-table th,
 .tickets-table td {
-  padding: 0.75rem 0.85rem;
-  border: 1px solid #e9ecef;
-  text-align: center; 
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid #edf0f6;
+  text-align: center;
   vertical-align: middle;
   white-space: nowrap;
 }
 
+.tickets-table thead th {
+  background: #f1f4fb;
+  color: #4a5573;
+  font-size: 0.78rem;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.tickets-table tbody tr:last-child td { border-bottom: none; }
+.tickets-table tbody td:first-child { font-weight: 700; color: #123692; }
+
 .tickets-table tbody tr:hover {
   background-color: #f0f4ff;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.2s ease;
 }
 
 /* Pagination */
@@ -444,15 +481,19 @@
 }
 
 .page-btn {
-  padding: 0.4rem 0.8rem;
-  border: 1px solid #123692;
+  padding: 0.45rem 0.95rem;
+  border: 1px solid #c9d4ef;
   background: #fff;
+  color: #123692;
+  font-weight: 600;
+  font-size: 0.85rem;
   cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.3s ease;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 .page-btn:hover {
-  background: #172d69;
+  background: #123692;
+  border-color: #123692;
   color: #fff;
 }
 

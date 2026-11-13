@@ -93,256 +93,6 @@ window.addEventListener('DOMContentLoaded', () => {
     terminalRegionBase: '#4A6572' 
   };
 
-  // === Enhanced Chart Animation and Styling Config ===
-  const animationOptions = {
-    animation: {
-      duration: 1500, // Smooth, professional animation duration
-      easing: 'easeInOutCubic', // Sophisticated easing for smooth transitions
-      delay: (context) => {
-        // Staggered animation for bar/line charts
-        let delay = 0;
-        if (context.type === 'data' && context.mode === 'default') {
-          delay = context.dataIndex * 80 + context.datasetIndex * 100;
-        }
-        return delay;
-      },
-      onProgress: function(animation) {
-        // Optional: Track animation progress
-        const progress = animation.currentStep / animation.numSteps;
-        // Can be used for custom loading indicators
-      },
-      onComplete: function (animation) {
-        // Subtle completion callback
-        const chart = animation.chart;
-        chart.options.animation.duration = 300; // Faster updates after initial render
-      }
-    },
-    animations: {
-      // Enhanced property-specific animations
-      tension: {
-        duration: 1000,
-        easing: 'easeInOutCubic',
-        from: 0.3,
-        to: 0.4,
-        loop: false
-      },
-      radius: {
-        duration: 800,
-        easing: 'easeOutElastic',
-        from: 0,
-        to: 5
-      },
-      borderWidth: {
-        duration: 600,
-        easing: 'easeInOutQuad'
-      }
-    },
-    transitions: {
-      // Smooth transitions on data updates
-      active: {
-        animation: {
-          duration: 400,
-          easing: 'easeInOutQuart'
-        }
-      },
-      resize: {
-        animation: {
-          duration: 500,
-          easing: 'easeInOutQuad'
-        }
-      },
-      show: {
-        animations: {
-          x: {
-            from: 0
-          },
-          y: {
-            from: 0
-          }
-        }
-      },
-      hide: {
-        animations: {
-          x: {
-            to: 0
-          },
-          y: {
-            to: 0
-          }
-        }
-      }
-    },
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      mode: 'index',
-      intersect: false,
-      animationDuration: 200 // Quick hover response
-    },
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          boxWidth: 15,
-          padding: 20,
-          font: {
-            size: 14,
-            family: 'Roboto, sans-serif',
-            weight: '500'
-          },
-          color: COLOR_MAP.textDark,
-          usePointStyle: true, // Rounded legend markers
-          pointStyle: 'circle'
-        },
-        onHover: function(event, legendItem, legend) {
-          event.native.target.style.cursor = 'pointer';
-        },
-        onLeave: function(event, legendItem, legend) {
-          event.native.target.style.cursor = 'default';
-        }
-      },
-      tooltip: {
-        enabled: true,
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        titleFont: {
-          size: 15,
-          weight: 'bold',
-          family: 'Roboto, sans-serif',
-        },
-        bodyFont: {
-          size: 13,
-          family: 'Roboto, sans-serif',
-        },
-        footerFont: {
-          size: 11,
-          family: 'Roboto, sans-serif',
-          style: 'italic'
-        },
-        padding: 14,
-        caretPadding: 12,
-        caretSize: 6,
-        cornerRadius: 10,
-        displayColors: true,
-        borderColor: COLOR_MAP.primary,
-        borderWidth: 2,
-        boxPadding: 6,
-        usePointStyle: true,
-        callbacks: {
-          // Enhanced tooltip with animations
-          title: function(context) {
-            return context[0].label || '';
-          },
-          label: function(context) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.parsed.y !== null) {
-              label += context.parsed.y;
-            }
-            return label;
-          }
-        },
-        animation: {
-          duration: 300,
-          easing: 'easeOutQuart'
-        }
-      },
-      // Subtle animation on hover
-      decimation: {
-        enabled: false
-      }
-    },
-    hover: {
-      mode: 'nearest',
-      intersect: true,
-      animationDuration: 300,
-      onHover: function(event, activeElements) {
-        event.native.target.style.cursor = activeElements.length > 0 ? 'pointer' : 'default';
-      }
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: COLOR_MAP.textLight,
-          font: {
-            family: 'Roboto, sans-serif',
-            size: 12
-          },
-          maxRotation: 45,
-          minRotation: 0
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
-          borderColor: COLOR_MAP.neutralLight,
-          lineWidth: 1,
-          drawBorder: true,
-          drawOnChartArea: true,
-          drawTicks: true,
-          tickLength: 8,
-          offset: true
-        },
-        border: {
-          display: true,
-          color: COLOR_MAP.neutralLight,
-          width: 2
-        }
-      },
-      y: {
-        ticks: {
-          color: COLOR_MAP.textLight,
-          font: {
-            family: 'Roboto, sans-serif',
-            size: 12
-          },
-          callback: function(value) {
-            return Number.isInteger(value) ? value : null; // Only show integer ticks
-          }
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.08)',
-          borderColor: COLOR_MAP.neutralLight,
-          lineWidth: 1,
-          drawBorder: true,
-          drawOnChartArea: true,
-          drawTicks: true,
-          tickLength: 8
-        },
-        border: {
-          display: true,
-          color: COLOR_MAP.neutralLight,
-          width: 2
-        }
-      }
-    },
-    // Element-specific hover effects
-    elements: {
-      point: {
-        radius: 4,
-        hoverRadius: 7,
-        hitRadius: 10,
-        borderWidth: 2,
-        hoverBorderWidth: 3
-      },
-      line: {
-        borderWidth: 3,
-        tension: 0.4,
-        borderCapStyle: 'round',
-        borderJoinStyle: 'round'
-      },
-      bar: {
-        borderWidth: 0,
-        borderRadius: 6,
-        borderSkipped: false
-      },
-      arc: {
-        borderWidth: 2,
-        hoverBorderWidth: 3,
-        hoverOffset: 8 // Pie slice pop-out on hover
-      }
-    }
-  };
-
   // === Initialize Charts ===
   // Helper function to safely destroy existing chart
   function destroyExistingChart(canvasId) {
@@ -533,8 +283,253 @@ window.addEventListener('DOMContentLoaded', () => {
       });
   }
 
+  // =====================================================================
+  //  CHART APPEARANCE
+  //  Only how charts look and move is defined here. Data, click handlers
+  //  and endpoints are exactly as before.
+  // =====================================================================
+  const HAS_CHART = typeof Chart !== 'undefined';
+  const HAS_LABELS = typeof ChartDataLabels !== 'undefined';
+  const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function cssVar(name, fallback) {
+    const v = getComputedStyle(document.body).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+
+  // Brand + system colours (priority/status values match tickets.css exactly)
+  const BRAND = {
+    navy: '#123692', deep: '#172d69', sky: '#4f7be8',
+    red: '#dc3545', redDeep: '#b02a37',
+  };
+  const PRIORITY_COLORS = { low: '#17b845', medium: '#007bff', high: '#dc9c35', critical: '#e74c3c' };
+  const STATUS_COLORS = { open: '#007bff', in_progress: '#c0392b', resolved: '#28a745', closed: '#6c757d' };
+
+  const THEME = {
+    text: cssVar('--dash-text', '#1b2540'),
+    muted: cssVar('--dash-muted', '#6b7489'),
+    grid: cssVar('--dash-grid', 'rgba(18, 54, 146, 0.07)'),
+    surface: cssVar('--card-background', '#ffffff'),
+    font: getComputedStyle(document.body).fontFamily || "'Segoe UI', Roboto, sans-serif",
+  };
+
+  if (HAS_CHART) {
+    Chart.defaults.font.family = THEME.font;
+    Chart.defaults.color = THEME.muted;
+  }
+
+  // ── Fills ─────────────────────────────────────────────────────────────
+  function withAlpha(hex, a) {
+    const h = hex.replace('#', '');
+    const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+  }
+
+  // Bar fill: brand gradient, the busiest bar in red so it stands out
+  function barFill(values, horizontal = false) {
+    const max = Math.max(...values.map(v => +v || 0));
+    return (ctx) => {
+      const { chart, dataIndex } = ctx;
+      const area = chart.chartArea;
+      const isTop = (+values[dataIndex] || 0) === max && max > 0;
+      const [from, to] = isTop ? [BRAND.redDeep, '#f0616f'] : [BRAND.deep, BRAND.sky];
+      if (!area) return isTop ? BRAND.red : BRAND.navy;
+      const g = horizontal
+        ? chart.ctx.createLinearGradient(area.left, 0, area.right, 0)
+        : chart.ctx.createLinearGradient(0, area.bottom, 0, area.top);
+      g.addColorStop(0, from);
+      g.addColorStop(1, to);
+      return g;
+    };
+  }
+
+  // Area fill under line charts
+  function areaFill(hex) {
+    return (ctx) => {
+      const area = ctx.chart.chartArea;
+      if (!area) return withAlpha(hex, 0.12);
+      const g = ctx.chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+      g.addColorStop(0, withAlpha(hex, 0.28));
+      g.addColorStop(1, withAlpha(hex, 0.01));
+      return g;
+    };
+  }
+
+  // ── Motion ────────────────────────────────────────────────────────────
+  const barMotion = REDUCED_MOTION ? { animation: false } : {
+    animation: {
+      duration: 900,
+      easing: 'easeOutQuart',
+      delay: (ctx) => (ctx.type === 'data' && ctx.mode === 'default') ? ctx.dataIndex * 70 : 0,
+    },
+  };
+
+  // The line draws itself from left to right
+  function lineMotion(pointCount) {
+    if (REDUCED_MOTION) return { animation: false };
+    const per = 1200 / Math.max(pointCount, 1);
+    const prevY = (ctx) => {
+      if (ctx.index === 0) return ctx.chart.scales.y.getPixelForValue(0);
+      return ctx.chart.getDatasetMeta(ctx.datasetIndex).data[ctx.index - 1].getProps(['y'], true).y;
+    };
+    return {
+      animations: {
+        x: {
+          type: 'number', easing: 'linear', duration: per, from: NaN,
+          delay(ctx) { if (ctx.type !== 'data' || ctx.xStarted) return 0; ctx.xStarted = true; return ctx.index * per; },
+        },
+        y: {
+          type: 'number', easing: 'linear', duration: per, from: prevY,
+          delay(ctx) { if (ctx.type !== 'data' || ctx.yStarted) return 0; ctx.yStarted = true; return ctx.index * per; },
+        },
+      },
+    };
+  }
+
+  const doughnutMotion = REDUCED_MOTION ? { animation: false } : {
+    animation: { animateRotate: true, animateScale: true, duration: 1100, easing: 'easeOutQuart' },
+  };
+
+  // ── Shared pieces ─────────────────────────────────────────────────────
+  const tooltipStyle = {
+    backgroundColor: '#0f1d4a',
+    titleColor: '#ffffff',
+    bodyColor: 'rgba(255,255,255,0.88)',
+    titleFont: { size: 13, weight: '600', family: THEME.font },
+    bodyFont: { size: 12, family: THEME.font },
+    padding: 12,
+    cornerRadius: 10,
+    caretSize: 6,
+    boxPadding: 5,
+    displayColors: true,
+    usePointStyle: true,
+    borderColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+  };
+
+  function integerTicks(value) { return Number.isInteger(value) ? value.toLocaleString() : null; }
+
+  function cartesianScales({ horizontal = false } = {}) {
+    const valueAxis = {
+      beginAtZero: true,
+      grace: '8%',
+      border: { display: false },
+      grid: { color: THEME.grid, drawTicks: false },
+      ticks: { color: THEME.muted, padding: 8, font: { size: 11 }, callback: integerTicks },
+    };
+    const categoryAxis = {
+      border: { display: false },
+      grid: { display: false },
+      ticks: {
+        color: THEME.muted, padding: 6, font: { size: 11 },
+        autoSkip: !horizontal, autoSkipPadding: 10, maxRotation: 0,
+        // Long labels wrap onto two lines instead of slanting
+        callback(value) {
+          const label = this.getLabelForValue(value) || '';
+          if (horizontal) return label.length > 34 ? label.slice(0, 33) + '…' : label;
+          if (label.length <= 14) return label;
+          const lines = [];
+          label.split(' ').forEach(w => {
+            const cur = lines.length ? lines[lines.length - 1] : '';
+            if (!lines.length) lines.push(w);
+            else if ((cur + ' ' + w).length > 16 && lines.length < 2) lines.push(w);
+            else lines[lines.length - 1] = cur + ' ' + w;
+          });
+          return lines.map(l => l.length > 18 ? l.slice(0, 17) + '…' : l);
+        },
+      },
+    };
+    return horizontal ? { x: valueAxis, y: categoryAxis } : { x: categoryAxis, y: valueAxis };
+  }
+
+  const barValueLabels = (horizontal = false) => ({
+    anchor: 'end',
+    align: 'end',
+    offset: 2,
+    clamp: true,
+    color: THEME.text,
+    font: { size: 11, weight: '600' },
+    formatter: (v) => (+v > 0 ? (+v).toLocaleString() : ''),
+  });
+
+  const sliceLabels = {
+    color: '#ffffff',
+    font: { size: 11, weight: '700' },
+    formatter: (value, ctx) => {
+      const total = ctx.dataset.data.reduce((a, b) => a + (+b || 0), 0);
+      const pct = total ? (value / total) * 100 : 0;
+      return pct >= 6 ? `${Math.round(pct)}%` : '';
+    },
+  };
+
+  // Total in the middle of a doughnut
+  const centerTotal = {
+    id: 'centerTotal',
+    afterDraw(chart) {
+      const meta = chart.getDatasetMeta(0);
+      if (!meta || !meta.data || !meta.data.length) return;
+      const arc = meta.data[0];
+      const r = arc.innerRadius;
+      if (!r) return;
+      const total = chart.data.datasets[0].data.reduce((a, b) => a + (+b || 0), 0);
+      const c = chart.ctx;
+      c.save();
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillStyle = THEME.text;
+      c.font = `700 ${Math.round(r * 0.42)}px ${THEME.font}`;
+      c.fillText(total.toLocaleString(), arc.x, arc.y - r * 0.1);
+      c.fillStyle = THEME.muted;
+      c.font = `500 ${Math.max(11, Math.round(r * 0.15))}px ${THEME.font}`;
+      c.fillText('tickets', arc.x, arc.y + r * 0.3);
+      c.restore();
+    },
+  };
+
+  function basePlugins(extra = {}) {
+    return {
+      legend: { display: false },
+      tooltip: tooltipStyle,
+      ...extra,
+    };
+  }
+
+  function labelPlugins() { return HAS_LABELS ? [ChartDataLabels] : []; }
+
+  // Build a chart only when it scrolls into view, so its animation is seen
+  function whenVisible(canvas, build) {
+    const target = canvas.closest('.chart-card') || canvas;
+    if (!('IntersectionObserver' in window) || REDUCED_MOTION) { build(); return; }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) { io.disconnect(); build(); }
+      });
+    }, { threshold: 0.2 });
+    io.observe(target);
+  }
+
+  // ── KPI numbers count up ──────────────────────────────────────────────
+  document.querySelectorAll('.kpi-card .details p').forEach(el => {
+    const target = parseInt((el.textContent || '').replace(/[^0-9]/g, ''), 10);
+    if (isNaN(target)) return;
+    if (REDUCED_MOTION || target === 0) { el.textContent = target.toLocaleString(); return; }
+    const start = performance.now(), duration = 1100;
+    el.textContent = '0';
+    const tick = (now) => {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(target * eased).toLocaleString();
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+
+  // =====================================================================
+  //  CHARTS
+  // =====================================================================
+
   const ticketReportChart = document.getElementById('ticketReportChart');
-  if (ticketReportChart) {
+  if (ticketReportChart && HAS_CHART) {
     destroyExistingChart('ticketReportChart');
     const statusLabels = STATUS_DATA.map(item => item.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()));
     const statusCounts = STATUS_DATA.map(item => item.count);
@@ -545,181 +540,171 @@ window.addEventListener('DOMContentLoaded', () => {
         datasets: [{
           label: 'Tickets',
           data: statusCounts,
-          backgroundColor: [COLOR_MAP.primary, COLOR_MAP.warning, COLOR_MAP.success, COLOR_MAP.danger],
-          borderRadius: 5,
-          barThickness: 40
+          backgroundColor: STATUS_DATA.map(item => STATUS_COLORS[item.status.toLowerCase().replace(' ', '_')] || BRAND.navy),
+          borderRadius: 8,
+          borderSkipped: false,
+          minBarLength: 3,
+          maxBarThickness: 46
         }]
       },
+      plugins: labelPlugins(),
       options: {
-        ...animationOptions,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: { stepSize: 1 },
-            grid: { drawBorder: false }
-          },
-          x: {
-            grid: { display: false }
-          }
-        }
+        responsive: true, maintainAspectRatio: false, ...barMotion,
+        layout: { padding: { top: 18 } },
+        plugins: basePlugins({ datalabels: barValueLabels() }),
+        scales: cartesianScales()
       }
     });
   }
 
   const monthlyTrendChart = document.getElementById('monthlyTrendChart');
-  if (monthlyTrendChart) {
-    destroyExistingChart('monthlyTrendChart');
-    const monthlyLabels = MONTHLY_DATA.map(item => item.month);
-    const monthlyCounts = MONTHLY_DATA.map(item => item.count);
-    new Chart(monthlyTrendChart, {
-      type: 'line',
-      data: {
-        labels: monthlyLabels,
-        datasets: [{
-          label: 'Tickets',
-          data: monthlyCounts,
-          borderColor: '#123692',
-          backgroundColor: 'rgba(18, 54, 146, 0.1)',
-          tension: 0.4,
-          fill: true,
-          pointBackgroundColor: '#123692',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          pointHoverBackgroundColor: '#172d69',
-          pointHoverBorderWidth: 3
-        }]
-      },
-      options: {
-        ...animationOptions,
-        scales: {
-          ...animationOptions.scales,
-          y: {
-            ...animationOptions.scales.y,
-            beginAtZero: true
-          }
+  if (monthlyTrendChart && HAS_CHART) {
+    whenVisible(monthlyTrendChart, () => {
+      destroyExistingChart('monthlyTrendChart');
+      const monthlyLabels = MONTHLY_DATA.map(item => item.month);
+      const monthlyCounts = MONTHLY_DATA.map(item => item.count);
+      new Chart(monthlyTrendChart, {
+        type: 'line',
+        data: {
+          labels: monthlyLabels,
+          datasets: [{
+            label: 'Tickets',
+            data: monthlyCounts,
+            borderColor: BRAND.navy,
+            backgroundColor: areaFill(BRAND.navy),
+            borderWidth: 2.5,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: BRAND.navy,
+            pointBorderWidth: 2,
+            pointRadius: 3.5,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: BRAND.navy,
+            pointHoverBorderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, ...lineMotion(monthlyCounts.length),
+          interaction: { mode: 'index', intersect: false },
+          plugins: basePlugins(),
+          scales: cartesianScales()
         }
-      }
+      });
     });
   }
 
   const terminalChart = document.getElementById('terminalChart');
-  if (terminalChart) {
-    destroyExistingChart('terminalChart');
-    const terminalLabels = TERMINAL_DATA.map(item => item.terminal || 'Unnamed');
-    const terminalCounts = TERMINAL_DATA.map(item => item.count);
-    const terminalIds = TERMINAL_DATA.map(item => item.terminal_id);
-    
-    new Chart(terminalChart, {
-      type: 'bar',
-      data: {
-        labels: terminalLabels,
-        datasets: [{
-          label: 'Tickets',
-          data: terminalCounts,
-          backgroundColor: terminalLabels.map((_, i) => {
-            const colors = ['#123692', '#172d69', '#dc3545'];
-            return colors[i % colors.length];
-          }),
-          borderRadius: 8,
-          barThickness: 35,
-          hoverBackgroundColor: terminalLabels.map((_, i) => {
-            const colors = ['#172d69', '#123692', '#b02a37'];
-            return colors[i % colors.length];
-          })
-        }]
-      },
-      options: {
-        ...animationOptions,
-        scales: {
-          ...animationOptions.scales,
-          y: {
-            ...animationOptions.scales.y,
-            beginAtZero: true
-          },
-          x: {
-            ...animationOptions.scales.x,
-            grid: { display: false }
-          }
+  if (terminalChart && HAS_CHART) {
+    // Horizontal bars: terminal names are long and read better this way
+    const box = terminalChart.closest('.chart-box');
+    if (box) box.style.height = Math.max(300, TERMINAL_DATA.length * 40 + 40) + 'px';
+    whenVisible(terminalChart, () => {
+      destroyExistingChart('terminalChart');
+      const terminalLabels = TERMINAL_DATA.map(item => item.terminal || 'Unnamed');
+      const terminalCounts = TERMINAL_DATA.map(item => item.count);
+      const terminalIds = TERMINAL_DATA.map(item => item.terminal_id);
+
+      new Chart(terminalChart, {
+        type: 'bar',
+        data: {
+          labels: terminalLabels,
+          datasets: [{
+            label: 'Tickets',
+            data: terminalCounts,
+            backgroundColor: barFill(terminalCounts, true),
+            borderRadius: 6,
+            borderSkipped: false,
+            minBarLength: 3,
+            barPercentage: 0.72,
+            categoryPercentage: 0.9,
+            maxBarThickness: 26
+          }]
         },
-        onClick: (event) => {
-          const chart = event.chart;
+        plugins: labelPlugins(),
+        options: {
+          indexAxis: 'y',
+          responsive: true, maintainAspectRatio: false, ...barMotion,
+          layout: { padding: { right: 28 } },
+          interaction: { mode: 'nearest', axis: 'y', intersect: true },
+          plugins: basePlugins({ datalabels: barValueLabels(true) }),
+          scales: cartesianScales({ horizontal: true }),
+          onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+          onClick: (event) => {
+            const chart = event.chart;
 
-          const points = chart.getElementsAtEventForMode(
-            event.native,
-            'nearest',
-            { intersect: true },
-            true
-          );
+            const points = chart.getElementsAtEventForMode(
+              event.native,
+              'nearest',
+              { intersect: true },
+              true
+            );
 
-          if (!points.length) return;
+            if (!points.length) return;
 
-          const index = points[0].index;
-          const terminalId = terminalIds[index];
-          const terminalName = terminalLabels[index];
+            const index = points[0].index;
+            const terminalId = terminalIds[index];
+            const terminalName = terminalLabels[index];
 
-          console.log('Clicked terminal:', terminalName, terminalId);
+            console.log('Clicked terminal:', terminalName, terminalId);
 
-          if (!terminalId) return;
+            if (!terminalId) return;
 
-          fetchAndShowTickets(
-            `/api/tickets/?terminal=${terminalId}`,
-            `Tickets for ${terminalName}`
-          );
+            fetchAndShowTickets(
+              `/api/tickets/?terminal=${terminalId}`,
+              `Tickets for ${terminalName}`
+            );
+          }
         }
-      }
+      });
     });
   }
 
   // === Region-wise Ticket Volume ===
   const regionChart = document.getElementById('regionChart');
-  if (regionChart) {
-    destroyExistingChart('regionChart');
-    const regionLabels = REGION_DATA.map(item => item.region || 'Unnamed');
-    const regionCounts = REGION_DATA.map(item => item.count);
-    
-    new Chart(regionChart, {
-      type: 'bar',
-      data: {
-        labels: regionLabels,
-        datasets: [{
-          label: 'Tickets',
-          data: regionCounts,
-          backgroundColor: regionLabels.map((_, i) => {
-            const colors = ['#123692', '#172d69', '#dc3545', '#123692', '#172d69'];
-            return colors[i % colors.length];
-          }),
-          borderRadius: 8,
-          barThickness: 35,
-          hoverBackgroundColor: regionLabels.map((_, i) => {
-            const colors = ['#172d69', '#123692', '#b02a37', '#172d69', '#123692'];
-            return colors[i % colors.length];
-          })
-        }]
-      },
-      options: {
-        ...animationOptions,
-        scales: {
-          ...animationOptions.scales,
-          y: {
-            ...animationOptions.scales.y,
-            beginAtZero: true
-          }
+  if (regionChart && HAS_CHART) {
+    whenVisible(regionChart, () => {
+      destroyExistingChart('regionChart');
+      const regionLabels = REGION_DATA.map(item => item.region || 'Unnamed');
+      const regionCounts = REGION_DATA.map(item => item.count);
+
+      new Chart(regionChart, {
+        type: 'bar',
+        data: {
+          labels: regionLabels,
+          datasets: [{
+            label: 'Tickets',
+            data: regionCounts,
+            backgroundColor: barFill(regionCounts),
+            borderRadius: 8,
+            borderSkipped: false,
+            minBarLength: 3,
+            maxBarThickness: 44
+          }]
         },
-        onClick: (event, elements) => {
-          if (elements.length > 0) {
-            const index = elements[0].index;
-            const region = regionLabels[index];
-            fetchAndShowTickets(`/api/tickets/?region=${encodeURIComponent(region)}`, `Tickets in ${region}`);
+        plugins: labelPlugins(),
+        options: {
+          responsive: true, maintainAspectRatio: false, ...barMotion,
+          layout: { padding: { top: 18 } },
+          interaction: { mode: 'index', intersect: false },
+          plugins: basePlugins({ datalabels: barValueLabels() }),
+          scales: cartesianScales(),
+          onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const region = regionLabels[index];
+              fetchAndShowTickets(`/api/tickets/?region=${encodeURIComponent(region)}`, `Tickets in ${region}`);
+            }
           }
         }
-      }
+      });
     });
   }
 
   const priorityChart = document.getElementById('priorityChart');
-    if (priorityChart) {
+  if (priorityChart && HAS_CHART) {
+    whenVisible(priorityChart, () => {
       destroyExistingChart('priorityChart');
       const priorityData = PRIORITY_DATA.map(item => ({
         priority: item.priority,
@@ -727,29 +712,27 @@ window.addEventListener('DOMContentLoaded', () => {
       }));
       const priorityLabels = priorityData.map(item => item.priority.charAt(0).toUpperCase() + item.priority.slice(1));
       const priorityCounts = priorityData.map(item => item.count);
-      
+
       const priorityChartInstance = new Chart(priorityChart, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
           labels: priorityLabels,
           datasets: [{
             data: priorityCounts,
-            backgroundColor: priorityData.map(item => {
-              const p = item.priority.toLowerCase();
-              if (p === 'low') return '#17b845';
-              if (p === 'medium') return '#007bff';
-              if (p === 'high') return '#dc9c35';
-              if (p === 'critical') return '#e74c3c';
-              return '#6c757d';
-            }),
-            borderColor: '#fff',
+            backgroundColor: priorityData.map(item => PRIORITY_COLORS[item.priority.toLowerCase()] || '#6c757d'),
+            borderColor: THEME.surface,
             borderWidth: 3,
-            hoverBorderWidth: 4,
-            hoverOffset: 12
+            hoverOffset: 10,
+            spacing: 2,
+            borderRadius: 6
           }]
         },
+        plugins: [centerTotal, ...labelPlugins()],
         options: {
-          ...animationOptions,
+          responsive: true, maintainAspectRatio: false, ...doughnutMotion,
+          cutout: '64%',
+          layout: { padding: 10 },
+          onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
           onClick: (event, elements) => {
             if (elements.length > 0) {
               const index = elements[0].index;
@@ -759,9 +742,13 @@ window.addEventListener('DOMContentLoaded', () => {
             }
           },
           plugins: {
-            ...animationOptions.plugins,
+            legend: {
+              display: true, position: 'bottom',
+              labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 16, color: THEME.text, font: { size: 12, weight: '500' } }
+            },
+            datalabels: sliceLabels,
             tooltip: {
-              ...animationOptions.plugins.tooltip,
+              ...tooltipStyle,
               callbacks: {
                 label: function(context) {
                   const label = context.label || '';
@@ -775,10 +762,12 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         }
       });
-    }
+    });
+  }
 
-    const statusChart = document.getElementById('statusChart');
-    if (statusChart) {
+  const statusChart = document.getElementById('statusChart');
+  if (statusChart && HAS_CHART) {
+    whenVisible(statusChart, () => {
       destroyExistingChart('statusChart');
       const statusData = STATUS_DATA.map(item => ({
         status: item.status,
@@ -786,29 +775,27 @@ window.addEventListener('DOMContentLoaded', () => {
       }));
       const statusLabels = statusData.map(item => item.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()));
       const statusCounts = statusData.map(item => item.count);
-      
+
       const statusChartInstance = new Chart(statusChart, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
           labels: statusLabels,
           datasets: [{
             data: statusCounts,
-            backgroundColor: statusData.map(item => {
-              const s = item.status.toLowerCase().replace(' ', '_');
-              if (s === 'open') return '#007bff';
-              if (s === 'in_progress') return '#c0392b';
-              if (s === 'resolved') return '#28a745';
-              if (s === 'closed') return '#6c757d';
-              return '#cccccc';
-            }),
-            borderColor: '#fff',
+            backgroundColor: statusData.map(item => STATUS_COLORS[item.status.toLowerCase().replace(' ', '_')] || '#cccccc'),
+            borderColor: THEME.surface,
             borderWidth: 3,
-            hoverBorderWidth: 4,
-            hoverOffset: 12
+            hoverOffset: 10,
+            spacing: 2,
+            borderRadius: 6
           }]
         },
+        plugins: [centerTotal, ...labelPlugins()],
         options: {
-          ...animationOptions,
+          responsive: true, maintainAspectRatio: false, ...doughnutMotion,
+          cutout: '64%',
+          layout: { padding: 10 },
+          onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
           onClick: (event, elements) => {
             if (elements.length > 0) {
               const index = elements[0].index;
@@ -818,9 +805,13 @@ window.addEventListener('DOMContentLoaded', () => {
             }
           },
           plugins: {
-            ...animationOptions.plugins,
+            legend: {
+              display: true, position: 'bottom',
+              labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8, padding: 16, color: THEME.text, font: { size: 12, weight: '500' } }
+            },
+            datalabels: sliceLabels,
             tooltip: {
-              ...animationOptions.plugins.tooltip,
+              ...tooltipStyle,
               callbacks: {
                 label: function(context) {
                   const label = context.label || '';
@@ -834,213 +825,216 @@ window.addEventListener('DOMContentLoaded', () => {
           }
         }
       });
-    }
-    
+    });
+  }
+
   const timeTrendChart = document.getElementById('timeTrendChart');
-  if (timeTrendChart) {
-    destroyExistingChart('timeTrendChart');
-    new Chart(timeTrendChart, {
-      type: 'line',
-      data: {
-        labels: ['Day', 'Week', 'Month', 'Year'],
-        datasets: [{
-          label: 'Ticket Volume',
-          data: [TIME_DATA.day, TIME_DATA.week, TIME_DATA.month, TIME_DATA.year],
-          borderColor: '#172d69',
-          backgroundColor: 'rgba(23, 45, 105, 0.1)',
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: '#172d69',
-          pointBorderColor: '#fff',
-          pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7,
-          pointHoverBackgroundColor: '#123692',
-          pointHoverBorderWidth: 3
-        }]
-      },
-      options: animationOptions
+  if (timeTrendChart && HAS_CHART) {
+    whenVisible(timeTrendChart, () => {
+      destroyExistingChart('timeTrendChart');
+      new Chart(timeTrendChart, {
+        type: 'line',
+        data: {
+          labels: ['Day', 'Week', 'Month', 'Year'],
+          datasets: [{
+            label: 'Ticket Volume',
+            data: [TIME_DATA.day, TIME_DATA.week, TIME_DATA.month, TIME_DATA.year],
+            borderColor: BRAND.red,
+            backgroundColor: areaFill(BRAND.red),
+            borderWidth: 2.5,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: BRAND.red,
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointHoverBackgroundColor: BRAND.red,
+            pointHoverBorderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, ...lineMotion(4),
+          interaction: { mode: 'index', intersect: false },
+          plugins: basePlugins(),
+          scales: cartesianScales()
+        }
+      });
     });
   }
 
   const categoryChart = document.getElementById('categoryChart');
-  if (categoryChart) {
+  if (categoryChart && HAS_CHART) {
     destroyExistingChart('categoryChart');
+    const catCounts = CATEGORY_DATA.map(c => c.count);
     new Chart(categoryChart, {
       type: 'bar',
       data: {
         labels: CATEGORY_DATA.map(c => c.category),
         datasets: [{
           label: 'Tickets',
-          data: CATEGORY_DATA.map(c => c.count),
-          backgroundColor: COLOR_MAP.gradientSet[1],
-          borderRadius: 4,
-          barThickness: 30
+          data: catCounts,
+          backgroundColor: barFill(catCounts),
+          borderRadius: 8,
+          borderSkipped: false,
+          minBarLength: 3,
+          maxBarThickness: 40
         }]
       },
-      options: animationOptions
+      plugins: labelPlugins(),
+      options: {
+        responsive: true, maintainAspectRatio: false, ...barMotion,
+        layout: { padding: { top: 18 } },
+        plugins: basePlugins({ datalabels: barValueLabels() }),
+        scales: cartesianScales()
+      }
     });
   }
 
   const categoryTimeChart = document.getElementById('categoryTimeChart');
-  if (categoryTimeChart) {
-    destroyExistingChart('categoryTimeChart');
-    const categoryLabels = CATEGORY_TIME_DATA.map(item => item.category);
-    const categoryCounts = CATEGORY_TIME_DATA.map(item => item.daily_count);
-    
-    new Chart(categoryTimeChart, {
-      type: 'bar',
-      data: {
-        labels: categoryLabels,
-        datasets: [{
-          label: 'Tickets by Category',
-          data: categoryCounts,
-          backgroundColor: categoryLabels.map((_, i) => {
-            const colors = ['#172d69', '#123692', '#dc3545'];
-            return colors[i % colors.length];
-          }),
-          borderRadius: 8,
-          barThickness: 30,
-          hoverBackgroundColor: categoryLabels.map((_, i) => {
-            const colors = ['#123692', '#172d69', '#b02a37'];
-            return colors[i % colors.length];
-          })
-        }]
-      },
-      options: {
-        ...animationOptions,
-        scales: {
-          ...animationOptions.scales,
-          y: {
-            ...animationOptions.scales.y,
-            beginAtZero: true
-          },
-          x: {
-            ...animationOptions.scales.x,
-            offset: true,
-            grid: { display: false }
-          }
+  if (categoryTimeChart && HAS_CHART) {
+    whenVisible(categoryTimeChart, () => {
+      destroyExistingChart('categoryTimeChart');
+      const categoryLabels = CATEGORY_TIME_DATA.map(item => item.category);
+      const categoryCounts = CATEGORY_TIME_DATA.map(item => item.daily_count);
+
+      new Chart(categoryTimeChart, {
+        type: 'bar',
+        data: {
+          labels: categoryLabels,
+          datasets: [{
+            label: 'Tickets by Category',
+            data: categoryCounts,
+            backgroundColor: barFill(categoryCounts),
+            borderRadius: 8,
+            borderSkipped: false,
+            minBarLength: 3,
+            maxBarThickness: 52
+          }]
         },
-        onClick: (event, elements) => {
-          if (elements.length > 0) {
-            const index = elements[0].index;
-            const category = categoryLabels[index];
-            fetchAndShowTickets(`/api/tickets/?category=${encodeURIComponent(category)}`, `${category} Tickets`);
+        plugins: labelPlugins(),
+        options: {
+          responsive: true, maintainAspectRatio: false, ...barMotion,
+          layout: { padding: { top: 18 } },
+          interaction: { mode: 'index', intersect: false },
+          plugins: basePlugins({ datalabels: barValueLabels() }),
+          scales: cartesianScales(),
+          onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const category = categoryLabels[index];
+              fetchAndShowTickets(`/api/tickets/?category=${encodeURIComponent(category)}`, `${category} Tickets`);
+            }
           }
         }
-      }
+      });
     });
   }
 
   const overviewChart = document.getElementById('overviewChart');
-    if (typeof OVERVIEW_DATA !== 'undefined' && overviewChart) {
-        const overviewLabels = OVERVIEW_DATA.map(item => item.label);
-        const overviewCounts = OVERVIEW_DATA.map(item => item.count);
+  if (typeof OVERVIEW_DATA !== 'undefined' && overviewChart && HAS_CHART) {
+    whenVisible(overviewChart, () => {
+      const overviewLabels = OVERVIEW_DATA.map(item => item.label);
+      const overviewCounts = OVERVIEW_DATA.map(item => item.count);
 
-        destroyExistingChart('overviewChart');
+      destroyExistingChart('overviewChart');
 
-        new Chart(overviewChart, {
-            type: 'bar',
-            data: {
-                labels: overviewLabels,
-                datasets: [{
-                    label: 'Tickets',
-                    data: overviewCounts,
-                    backgroundColor: ['#123692', '#172d69', '#dc3545', '#007bff'],
-                    borderRadius: 6,
-                    barThickness: 40
-                }]
-            },
-            options: {
-                ...animationOptions,
-                onClick: (event, elements) => {
-                    if (elements.length > 0) {
-                        const index = elements[0].index;
-                        const PERIOD_MAP = {
-                          "today": "today",
-                          "this week": "week",
-                          "this month": "month",
-                          "this year": "year",
-                          "day": "day",
-                          "week": "week",
-                          "month": "month",
-                          "year": "year"
-                        };
-
-                        const label = overviewLabels[index].toLowerCase();
-                        const period = PERIOD_MAP[label];
-
-                        if (!period) {
-                          console.warn("Unknown period label:", label);
-                          return;
-                        }
-
-                        fetchAndShowTickets(
-                          `/api/tickets/?period=${period}`,
-                          `${overviewLabels[index]} Tickets`
-                        );
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { stepSize: 1 }
-                    },
-                    x: {
-                        grid: { display: false }
-                    }
-                }
-            }
-        });
-    }
-
-  const customerChart = document.getElementById('customerChart');
-  if (customerChart) {
-    destroyExistingChart('customerChart');
-    const customerLabels = CUSTOMER_DATA.map(c => c.customer);
-    const customerCounts = CUSTOMER_DATA.map(c => c.count);
-    
-    new Chart(customerChart, {
-      type: 'bar',
-      data: {
-        labels: customerLabels,
-        datasets: [{
-          label: 'Tickets',
-          data: customerCounts,
-          backgroundColor: customerLabels.map((_, i) => {
-            const colors = ['#123692', '#dc3545', '#172d69'];
-            return colors[i % colors.length];
-          }),
-          borderRadius: 8,
-          barThickness: 30,
-          hoverBackgroundColor: customerLabels.map((_, i) => {
-            const colors = ['#172d69', '#b02a37', '#123692'];
-            return colors[i % colors.length];
-          })
-        }]
-      },
-      options: {
-        ...animationOptions,
-        scales: {
-          ...animationOptions.scales,
-          y: {
-            ...animationOptions.scales.y,
-            beginAtZero: true
-          },
-          x: {
-            ...animationOptions.scales.x,
-            offset: true,
-            grid: { display: false }
-          }
+      // Today → this year, from light to deep navy
+      const shades = ['#7fa1f0', BRAND.sky, BRAND.navy, BRAND.deep];
+      new Chart(overviewChart, {
+        type: 'bar',
+        data: {
+          labels: overviewLabels,
+          datasets: [{
+            label: 'Tickets',
+            data: overviewCounts,
+            backgroundColor: overviewLabels.map((_, i) => shades[i % shades.length]),
+            borderRadius: 8,
+            borderSkipped: false,
+            minBarLength: 3,
+            maxBarThickness: 64
+          }]
         },
-        onClick: (event, elements) => {
-          if (elements.length > 0) {
-            const index = elements[0].index;
-            const customer = customerLabels[index];
-            fetchAndShowTickets(`/api/tickets/?customer=${encodeURIComponent(customer)}`, `Tickets for ${customer}`);
+        plugins: labelPlugins(),
+        options: {
+          responsive: true, maintainAspectRatio: false, ...barMotion,
+          layout: { padding: { top: 18 } },
+          interaction: { mode: 'index', intersect: false },
+          plugins: basePlugins({ datalabels: barValueLabels() }),
+          scales: cartesianScales(),
+          onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const PERIOD_MAP = {
+                "today": "today",
+                "this week": "week",
+                "this month": "month",
+                "this year": "year",
+                "day": "day",
+                "week": "week",
+                "month": "month",
+                "year": "year"
+              };
+
+              const label = overviewLabels[index].toLowerCase();
+              const period = PERIOD_MAP[label];
+
+              if (!period) {
+                console.warn("Unknown period label:", label);
+                return;
+              }
+
+              fetchAndShowTickets(
+                `/api/tickets/?period=${period}`,
+                `${overviewLabels[index]} Tickets`
+              );
+            }
           }
         }
-      }
+      });
+    });
+  }
+
+  const customerChart = document.getElementById('customerChart');
+  if (customerChart && HAS_CHART) {
+    whenVisible(customerChart, () => {
+      destroyExistingChart('customerChart');
+      const customerLabels = CUSTOMER_DATA.map(c => c.customer);
+      const customerCounts = CUSTOMER_DATA.map(c => c.count);
+
+      new Chart(customerChart, {
+        type: 'bar',
+        data: {
+          labels: customerLabels,
+          datasets: [{
+            label: 'Tickets',
+            data: customerCounts,
+            backgroundColor: barFill(customerCounts),
+            borderRadius: 8,
+            borderSkipped: false,
+            minBarLength: 3,
+            maxBarThickness: 52
+          }]
+        },
+        plugins: labelPlugins(),
+        options: {
+          responsive: true, maintainAspectRatio: false, ...barMotion,
+          layout: { padding: { top: 18 } },
+          interaction: { mode: 'index', intersect: false },
+          plugins: basePlugins({ datalabels: barValueLabels() }),
+          scales: cartesianScales(),
+          onHover: (event, elements) => { event.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index;
+              const customer = customerLabels[index];
+              fetchAndShowTickets(`/api/tickets/?customer=${encodeURIComponent(customer)}`, `Tickets for ${customer}`);
+            }
+          }
+        }
+      });
     });
   }
 
