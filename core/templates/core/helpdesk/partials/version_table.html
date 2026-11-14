@@ -17,7 +17,7 @@
     <tbody>
       {% for version in versions %}
       <tr>
-        <td>{{ version.terminal }}</td>
+        <td class="vt-terminal">{{ version.terminal }}</td>
         <td>{{ version.template|default:"-" }}</td>
         <td>{{ version.firmware|default:"-" }}</td>
         <td>{{ version.xfs|default:"-" }}</td>
@@ -25,7 +25,7 @@
         <td>{{ version.brits|default:"-" }}</td>
         <td>{{ version.app_version|default:"-" }}</td>
         <td>{{ version.neo_atm|default:"-" }}</td>
-        <td>{{ version.created_at|date:"Y-m-d H:i" }}</td>
+        <td class="vt-date">{{ version.created_at|date:"Y-m-d H:i" }}</td>
         <td>
           <div class="table-action-buttons">
             <!-- View Button -->

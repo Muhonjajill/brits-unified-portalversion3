@@ -10,7 +10,14 @@
 {% block content %}
 
 <div class="page-container detail-page-container">
-  <h2 class="detail-header">🧾 Version Details</h2>
+  <a href="{% url 'version_controls' %}" class="vd-backlink"><i class="fas fa-arrow-left"></i> All versions</a>
+  <div class="pg-header">
+    <span class="pg-icon"><i class="fas fa-code-branch"></i></span>
+    <div>
+      <h2 class="detail-header">Version Details</h2>
+      <p>{{ version.terminal }} · {{ version.manufacturer }}</p>
+    </div>
+  </div>
 
   <div class="version-details-card">
     <table class="version-detail-table">
@@ -62,24 +69,24 @@
   </div>
 
   <div class="comments-section">
-    <h4 class="comments-header">Add a Comment</h4>
+    <h4 class="comments-header"><i class="fas fa-comment-dots"></i> Add a Comment</h4>
     <form method="post" class="comment-form">
       {% csrf_token %}
       <div class="form-group">
         <textarea name="comment" class="form-control" rows="4" placeholder="Write a comment..."></textarea>
       </div>
-      <button type="submit" class="btn btn-primary comment-submit-btn">Add Comment</button>
+      <button type="submit" class="btn btn-primary comment-submit-btn"><i class="fas fa-paper-plane"></i> Add Comment</button>
     </form>
 
     <hr class="comments-divider">
 
-    <h4 class="comments-header">Previous Comments</h4>
+    <h4 class="comments-header"><i class="fas fa-comments"></i> Previous Comments</h4>
     {% if comments %}
       <ul class="comments-list">
         {% for comment in comments %}
           <li class="comment-item">
             <p>{{ comment.text }}</p>
-            <small class="comment-meta">{{ comment.created|date:"M d, Y H:i" }}</small>
+            <small class="comment-meta"><i class="far fa-clock"></i> {{ comment.created|date:"M d, Y H:i" }}</small>
           </li>
         {% endfor %}
       </ul>
@@ -173,4 +180,5 @@
     }
   });
 </script>
+<script src="{% static 'js/ticketing_dashboard.js' %}"></script>
 {% endblock %}

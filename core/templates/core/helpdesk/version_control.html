@@ -8,16 +8,21 @@
 {% block content %}
 <br>
 <div class="page-container" id="body">
-  <h2>Version Controls</h2>
-
-  <!-- Button to trigger modal -->
-  <button class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#createVersionModal">
-    + Create Version
-  </button>
+  <div class="pg-header">
+    <span class="pg-icon"><i class="fas fa-code-branch"></i></span>
+    <div>
+      <h2>Version Controls</h2>
+      <p>Software and firmware versions installed on each terminal.</p>
+    </div>
+    <!-- Button to trigger modal -->
+    <button class="btn btn-success mb-3 pg-header-btn" data-bs-toggle="modal" data-bs-target="#createVersionModal">
+      <i class="fas fa-plus"></i> Create Version
+    </button>
+  </div>
 
   <div class="filters-row">
     <div>
-      <label for="terminalFilter">Terminal:</label>
+      <label for="terminalFilter"><i class="fas fa-building"></i> Terminal</label>
       <select id="terminalFilter" class="filter-select">
         <option value="All">All Terminals</option>
         {% for terminal in terminals %}
@@ -27,7 +32,7 @@
     </div>
 
     <div>
-      <label for="manufacturerFilter">Manufacturer:</label>
+      <label for="manufacturerFilter"><i class="fas fa-industry"></i> Manufacturer</label>
       <select id="manufacturerFilter" class="filter-select">
         <option value="All">All Manufacturers</option>
         {% for manufacturer in manufacturers %}
@@ -49,7 +54,7 @@
         <form method="POST" action="{% url 'version_controls' %}" id="versionForm">
           {% csrf_token %}
           <div class="modal-header">
-            <h5 class="modal-title" id="createVersionModalLabel">Create Version Entry</h5>
+            <h5 class="modal-title" id="createVersionModalLabel"><i class="fas fa-code-branch"></i> Create Version Entry</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body row g-3">

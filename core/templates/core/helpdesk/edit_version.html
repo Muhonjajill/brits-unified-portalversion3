@@ -14,20 +14,23 @@
   <div class="edit-version-card">
 
     <div class="edit-version-header">
-      <h2 class="edit-version-title">
-        <span class="edit-version-icon">✏️</span> Edit Version
-        <span class="edit-version-terminal">{{ version.terminal }}</span>
-      </h2>
-      <p class="edit-version-subtitle">
-        Update the details for this version entry.
-      </p>
+      <span class="edit-version-icon"><i class="fas fa-pen"></i></span>
+      <div>
+        <h2 class="edit-version-title">
+          Edit Version
+          <span class="edit-version-terminal">{{ version.terminal }}</span>
+        </h2>
+        <p class="edit-version-subtitle">
+          Update the details for this version entry.
+        </p>
+      </div>
     </div>
 
     <form method="post" class="edit-version-form">
       {% csrf_token %}
 
       <div class="form-section version-details-section">
-        <h3 class="section-title">Core Version Data</h3>
+        <h3 class="section-title"><i class="fas fa-server"></i> Core Version Data</h3>
         <div class="form-grid">
           {# Terminal Field #}
           <div class="form-group">
@@ -50,7 +53,7 @@
       </div>
 
       <div class="form-section software-versions-section">
-        <h3 class="section-title">Software & Firmware</h3>
+        <h3 class="section-title"><i class="fas fa-microchip"></i> Software & Firmware</h3>
         <div class="form-grid">
           {# Firmware Field #}
           <div class="form-group">
@@ -91,7 +94,7 @@
 
       <div class="form-actions">
         <button type="submit" class="btn btn-primary animate-bounce-once">
-          <span class="btn-icon">💾</span> Save Changes
+          <i class="fas fa-floppy-disk btn-icon"></i> Save Changes
         </button>
         <a href="{% url 'version_detail' version.pk %}" class="btn btn-secondary">
           Cancel
@@ -101,4 +104,8 @@
   </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/ticketing_dashboard.js' %}"></script>
 {% endblock %}

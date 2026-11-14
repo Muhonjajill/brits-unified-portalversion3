@@ -9,9 +9,13 @@
 
 {% block content %}
 <div class="form-container">
+  <a href="{% url 'problem_category' %}" class="pc-backlink"><i class="fas fa-arrow-left"></i> All categories</a>
   <div class="section-header">
-    <h2>✏️ Edit Problem Category</h2>
-    <p>Update the problem category details.</p>
+    <span class="pg-icon"><i class="fas fa-pen"></i></span>
+    <div>
+      <h2>Edit Problem Category</h2>
+      <p>Update the problem category details.</p>
+    </div>
   </div>
 
   <form method="POST" class="category-form">
@@ -19,9 +23,13 @@
     {{ form.as_p }}
 
     <div class="form-buttons">
-      <button type="submit" class="btn btn-success">Update Category</button>
+      <button type="submit" class="btn btn-success"><i class="fas fa-floppy-disk"></i> Update Category</button>
       <a href="{% url 'problem_category' %}" class="btn btn-secondary">Cancel</a>
     </div>
   </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/ticketing_dashboard.js' %}"></script>
 {% endblock %}

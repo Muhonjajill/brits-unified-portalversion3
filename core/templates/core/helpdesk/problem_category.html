@@ -10,8 +10,11 @@
 {% block content %}
 <div class="tickets-container">
   <div class="section-header">
-    <h2><i class="fas fa-tags"></i> Problem Categories</h2>
-    <p>List or manage problem categories here.</p>
+    <span class="pg-icon"><i class="fas fa-tags"></i></span>
+    <div>
+      <h2>Problem Categories</h2>
+      <p>List or manage problem categories here.</p>
+    </div>
   </div>
 
   <div class="ticket-actions">
@@ -19,7 +22,10 @@
       <i class="fas fa-plus"></i> Add New Category
     </button>
     <form method="GET" class="ticket-search-form">
-      <input type="text" name="search" class="ticket-search" value="{{ search_query }}" placeholder="Search categories..." />
+      <div class="search-field">
+        <i class="fas fa-magnifying-glass"></i>
+        <input type="text" name="search" class="ticket-search" value="{{ search_query }}" placeholder="Search categories..." />
+      </div>
       <button type="submit" class="btn btn-primary">
         <i class="fas fa-search"></i> Search
       </button>
@@ -49,8 +55,8 @@
         {% for category in page_obj %}
         <tr>
           <td>{{ forloop.counter }}</td>
-          <td>{{ category.name }}</td>
-          <td>{{ category.brts_unit.description|default:category.brts_unit }}</td>
+          <td class="name-cell"><span class="row-badge"><i class="fas fa-tag"></i></span>{{ category.name }}</td>
+          <td class="desc-cell">{{ category.brts_unit.description|default:category.brts_unit }}</td>
           <td>
             <a href="{% url 'edit_problem_category' category.id %}" class="view-link">
               <i class="fas fa-edit"></i> Edit
