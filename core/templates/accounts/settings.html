@@ -26,12 +26,17 @@
     <!-- Sidebar -->
     <aside class="settings-sidebar">
       <div class="sidebar-header">
-        <i class="fas fa-user-circle"></i>
+        {% if user.profile.avatar %}
+          <img src="{{ user.profile.avatar.url }}" alt="" class="sidebar-avatar">
+        {% else %}
+          <span class="sidebar-avatar sidebar-initials">{{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}{% if not user.first_name and not user.last_name %}{{ user.username|slice:":1"|upper }}{% endif %}</span>
+        {% endif %}
         <h2>{{ user.username }}</h2>
       </div>
       <nav class="sidebar-nav">
             <a href="#" {% if request.path == '/settings/' %}class="active"{% endif %}><i class="fas fa-cog"></i> Settings</a>
             <a href="{% url 'profile_view' %}" {% if request.path == '/profile/' %}class="active"{% endif %}><i class="fas fa-user"></i> Profile</a>
+            <a href="{% url 'pre_dashboards' %}"><i class="fas fa-grip"></i> Pre-Dashboards</a>
             <!--<a href="{% url 'password_reset' %}" {% if request.path == '/password_reset/' %}class="active"{% endif %}><i class="fas fa-lock"></i> Change Password</a>-->
         </nav>
     </aside>

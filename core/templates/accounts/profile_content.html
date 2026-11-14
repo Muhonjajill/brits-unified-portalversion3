@@ -31,7 +31,7 @@
             {% endif %}
             <div class="profile-info">
                 <h1>{{ user.get_full_name|default:user.username }}</h1>
-                <p>{{ user.profile.role }}</p>
+                <p><span class="role-chip"><i class="fas fa-id-badge"></i> {{ user.profile.role }}</span></p>
             </div>
         </div>
 
@@ -40,7 +40,7 @@
 
             <!-- Basic Info -->
             <div class="details-card">
-                <h2>👤 Basic Info</h2>
+                <h2><i class="fas fa-user"></i> Basic Info</h2>
                 <p><strong>First Name:</strong> {{ user.first_name }}</p>
                 <p><strong>Last Name:</strong> {{ user.last_name }}</p>
                 <p><strong>Username:</strong> {{ user.username }}</p>
@@ -49,7 +49,7 @@
 
             <!-- Role & Assignments -->
             <div class="details-card">
-                <h2>🛠 Role & Assignments</h2>
+                <h2><i class="fas fa-user-gear"></i> Role & Assignments</h2>
                 <p><strong>Role:</strong> {{ user.profile.role }}</p>
 
                 {% if user.overseeing_branches.exists %}
@@ -89,7 +89,7 @@
 
             <!-- Account Info -->
             <div class="details-card">
-                <h2>📅 Account Info</h2>
+                <h2><i class="fas fa-calendar-check"></i> Account Info</h2>
                 <p><strong>Phone Number:</strong> {{ user.profile.phone_number }}</p>
                 <p><strong>ID Number:</strong> {{ user.profile.id_number }}</p>
                 <p><strong>Date Joined:</strong> {{ user.date_joined|date:"M d, Y" }}</p>
@@ -100,14 +100,14 @@
 
         <!-- Action Buttons -->
         <div class="profile-actions">
-            <a href="{% url 'settings' %}" class="settings">⚙️ Update Settings</a>
+            <a href="{% url 'settings' %}" class="settings"><i class="fas fa-gear"></i> Update Settings</a>
             
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
                 <button type="submit" class="logout"><i class="fas fa-door-open"></i> Logout</button>
             </form>
             
-            <a href="{% url 'pre_dashboards' %}" class="back">⬅️ Back to Pre-dashboards</a>
+            <a href="{% url 'pre_dashboards' %}" class="back"><i class="fas fa-arrow-left"></i> Back to Pre-dashboards</a>
         </div>
 
     </div>
