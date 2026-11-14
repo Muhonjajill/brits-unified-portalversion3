@@ -4,27 +4,45 @@
 <meta charset="UTF-8">
 <title>Leave application — {{ leave.employee.get_full_name }} — {{ leave.start_date|date:"d M Y" }} to {{ leave.end_date|date:"d M Y" }}</title>
 <style>
-  @page { size: A4 portrait; margin: 1.6cm 1.8cm; }
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10pt; color: #343a40; }
-  .company { font-size: 17pt; font-weight: bold; color: #123692; letter-spacing: .02em; margin: 0; line-height: 1.2; }
-  .form-title { font-size: 11pt; font-weight: bold; margin: 6px 0 14px; }
-  .band { background: #123692; color: #fff; font-weight: bold; text-align: center; padding: 5px; font-size: 10.5pt; margin: 14px 0 12px; }
+  @page {
+    size: A4 portrait; margin: 1.5cm 1.8cm 1.7cm;
+    @bottom-left  { content: "Blue River Technology Solutions — Leave application"; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 7.5pt; color: #8a92a6; }
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 7.5pt; color: #8a92a6; }
+  }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10pt; color: #1b2540; }
+
+  /* Letterhead */
+  .company { font-size: 17pt; font-weight: bold; color: #123692; letter-spacing: .02em; margin: 0; line-height: 1.2;
+             padding-left: 12px; border-left: 5px solid #123692; }
+  .form-title { font-size: 10.5pt; font-weight: 600; color: #6b7489; margin: 4px 0 14px; padding: 0 0 10px 17px;
+                border-bottom: 1.5px solid #e4e8f1; }
+
+  /* Section headers (were solid navy bars) */
+  .band { background: #f1f4fb; color: #123692; font-weight: bold; text-align: left; padding: 6px 12px; font-size: 10.5pt;
+          margin: 16px 0 12px; border-left: 4px solid #123692; letter-spacing: .02em; }
+
   table { width: 100%; border-collapse: collapse; }
   td { padding: 5px 4px; vertical-align: bottom; }
-  .label { width: 30%; color: #495057; }
-  .line { border-bottom: 1px solid #6c757d; font-weight: bold; }
-  .types td { padding: 6px 4px; width: 25%; vertical-align: middle; }
-  .box { display: inline-block; width: 11px; height: 11px; border: 1.2px solid #343a40; margin-right: 6px; vertical-align: -1px;
+  .label { width: 30%; color: #6b7489; }
+  .line { border-bottom: 1px solid #8a92a6; font-weight: bold; color: #1b2540; }
+
+  /* Absence-type tick boxes */
+  .types td { padding: 6px 4px; width: 25%; vertical-align: middle; color: #3b4560; }
+  .box { display: inline-block; width: 11px; height: 11px; border: 1.2px solid #4a5573; border-radius: 2px; margin-right: 6px; vertical-align: -1px;
          text-align: center; font-size: 8pt; line-height: 11px; font-weight: bold; }
   .box.on { background: #123692; border-color: #123692; color: #fff; }
-  .reason { border: 1px solid #ced4da; min-height: 60px; padding: 8px 10px; white-space: pre-line; margin-top: 4px; }
-  .note { font-style: italic; font-size: 9pt; color: #495057; margin: 12px 0 18px; }
+
+  .reason, .comments { border: 1px solid #e4e8f1; border-radius: 6px; background: #fafbfe; min-height: 60px; padding: 8px 10px;
+                       white-space: pre-line; margin-top: 4px; }
+  .note { font-style: italic; font-size: 9pt; color: #4a5573; margin: 12px 0 18px; padding: 6px 10px;
+          border-left: 3px solid #dc9c35; background: #fff7ec; }
+
+  /* Signatures */
   .sig td { padding-top: 22px; }
-  .sig .sigline { border-bottom: 1px solid #343a40; font-weight: bold; padding-bottom: 2px; }
-  .sig .caption { font-size: 8pt; font-style: italic; color: #6c757d; padding-top: 2px; }
-  .decision td { padding: 4px; }
-  .comments { border: 1px solid #ced4da; min-height: 60px; padding: 8px 10px; white-space: pre-line; margin-top: 4px; }
-  .meta { font-size: 8pt; color: #6c757d; margin-top: 18px; }
+  .sig .sigline { border-bottom: 1px solid #4a5573; font-weight: bold; padding-bottom: 2px; }
+  .sig .caption { font-size: 8pt; font-style: italic; color: #6b7489; padding-top: 2px; }
+  .decision td { padding: 4px; color: #3b4560; }
+  .meta { font-size: 8pt; color: #8a92a6; margin-top: 18px; padding-top: 8px; border-top: 1px solid #e4e8f1; }
 </style>
 </head>
 <body>

@@ -4,25 +4,61 @@
 <meta charset="UTF-8">
 <title>{{ claim.employee.get_full_name }} — Claim Form {{ claim.month|date:"F Y" }}{% if claim.submitted_at %} — submitted {{ claim.submitted_at|date:"d M Y" }}{% endif %}</title>
 <style>
-  @page { size: A4 landscape; margin: 1.5cm; }
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10pt; color: #343a40; }
-  h1 { text-align: center; font-size: 14pt; margin-bottom: 4px; text-transform: uppercase; color: #123692; }
-  .sub-title { text-align: center; font-size: 9pt; color: #6c757d; margin-bottom: 16px; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-  th { background: #123692; color: #fff; font-size: 9pt; padding: 5px 6px; text-align: center; }
-  td { border: 1px solid #dee2e6; padding: 4px 6px; font-size: 9pt; }
-  td.amount { text-align: right; }
+  @page {
+    size: A4 landscape; margin: 1.4cm 1.5cm 1.6cm;
+    @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 7.5pt; color: #8a92a6; }
+    @bottom-left  { content: "Blue River Technology Solutions — Expense Claim"; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 7.5pt; color: #8a92a6; }
+  }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 9.5pt; color: #1b2540; }
+
+  /* Title band */
+  h1 {
+    margin: 0 0 2px; padding: 10px 14px 8px;
+    font-size: 14pt; font-weight: 700; letter-spacing: 0.3px;
+    text-align: left; text-transform: uppercase; color: #123692;
+    border-left: 5px solid #123692;
+    background: #f1f4fb;
+  }
+  .sub-title {
+    margin: 0 0 14px; padding: 4px 14px 8px;
+    text-align: left; font-size: 8.5pt; color: #6b7489;
+    border-left: 5px solid #dc3545;
+    background: #f1f4fb;
+  }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+  th {
+    background: #f1f4fb; color: #4a5573;
+    font-size: 8pt; font-weight: 700;
+    padding: 6px 6px; text-align: center;
+    border-top: 1.5px solid #123692; border-bottom: 1px solid #c9d4ef;
+  }
+  td { border-bottom: 1px solid #e4e8f1; padding: 4px 6px; font-size: 8.5pt; }
+  tbody tr:nth-child(even) td { background: #fafbfe; }
+  td.amount { text-align: right; white-space: nowrap; }
   td.center { text-align: center; }
-  .totals-row td { font-weight: bold; background: #f8f9fa; }
-  .net-row td { background: #dce6f1; }
-  .paid-row td { background: #d4edda; }
-  .signatures { margin-top: 24px; }
-  .sig-row { display: flex; gap: 40px; margin-bottom: 32px; }
-  .sig-block { flex: 1; border-top: 1px solid #6c757d; padding-top: 4px; font-size: 9pt; color: #343a40; }
-  .meta-table td { border: none; padding: 2px 8px 2px 0; }
-  .status-badge { display: inline-block; padding: 2px 8px; border-radius: 4px;
-                  font-size: 8pt; font-weight: bold; background: #198754; color: #fff; }
-  a { color: #123692; }
+
+  /* Totals */
+  tfoot td { border-bottom: 1px solid #e4e8f1; }
+  .totals-row td { font-weight: 700; background: #fafbfe; }
+  .net-row td { background: #eef3fd; color: #123692; border-top: 1.5px solid #123692; }
+  .paid-row td { background: #e9f8ef; color: #146c43; }
+
+  /* Header details */
+  .meta-table { margin-bottom: 14px !important; }
+  .meta-table td { border: none; padding: 2px 10px 2px 0; font-size: 8.5pt; background: none !important; }
+  .meta-table td strong { color: #6b7489; font-weight: 600; }
+
+  h3 { margin: 12px 0 6px !important; padding-left: 8px; font-size: 9.5pt !important; border-left: 3px solid #123692; color: #1b2540; }
+
+  /* Signatures */
+  .signatures { margin-top: 26px; page-break-inside: avoid; }
+  .sig-row { display: flex; gap: 40px; margin-bottom: 30px; }
+  .sig-block { flex: 1; border-top: 1px solid #4a5573; padding-top: 5px; font-size: 8.5pt; color: #4a5573; }
+
+  .status-badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 7.5pt; font-weight: bold; background: #e9f8ef; color: #146c43; }
+  a { color: #123692; text-decoration: none; }
 </style>
 </head>
 <body>
