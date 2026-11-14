@@ -16,7 +16,7 @@
 
   <div class="nav-right">
     <!-- Notification Bell -->
-    <div class="notifications" id="notificationBell">
+    <div class="notifications" id="notificationBell" title="Notifications">
       <i class="fas fa-bell"></i>
       <span class="badge" id="notificationCount" style="display: none;">0</span>
 
@@ -403,4 +403,4 @@ function updateNotificationCount() {
     });
   }
 </script>
-<script src="{% static 'js/ticketing_dashboard.js' %}"></script>
+{# ticketing_dashboard.js is loaded once by base.html — no second copy here #}

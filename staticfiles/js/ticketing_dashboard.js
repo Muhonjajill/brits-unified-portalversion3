@@ -1,4 +1,11 @@
 window.addEventListener('DOMContentLoaded', () => {
+  // This file is loaded by base.html AND by many page templates. Without this
+  // guard every copy added another click handler, so the profile menu toggled
+  // two or three times per click (open-close-open) and only worked on pages
+  // that happened to load it an odd number of times. Now it runs exactly once.
+  if (window.__britsDashboardInit) return;
+  window.__britsDashboardInit = true;
+
   const userProfile = document.getElementById("userProfile");
   if (userProfile) {
     const profileTrigger = userProfile.querySelector(".profile-trigger");
@@ -19,20 +26,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
   // === Hamburger menu toggle ===
-  const dashboardHamburger = document.getElementById('hamburger');
-  const dashboardSidebar = document.getElementById('sidebar');
-  if (dashboardHamburger && dashboardSidebar) {
-    dashboardHamburger.addEventListener('click', function () {
-      dashboardSidebar.classList.toggle('active');
-    });
-    document.addEventListener('click', function (event) {
-      if (dashboardSidebar.classList.contains('active') &&
-          !dashboardSidebar.contains(event.target) &&
-          !dashboardHamburger.contains(event.target)) {
-        dashboardSidebar.classList.remove('active');
-      }
-    });
-  }
+  // Handled by sidebar.js (toggleSidebar), which also manages the overlay.
+  // A second toggle here cancelled it out on small screens.
 
   // === Search Filter Function (targets dashboard cards) ===
   const searchInput = document.getElementById('navbarSearchInput');
