@@ -9,7 +9,7 @@
 
 {% block content %}
 <div class="category-container">
-  <h2><i class="fas fa-file"></i> Manage File Categories</h2>
+  <h2><span class="mfc-icon"><i class="fas fa-folder-tree"></i></span> Manage File Categories</h2>
 
   {% if messages %}
     <ul class="messages">
@@ -41,7 +41,7 @@
         </select>
       {% endif %}
 
-      <button type="submit" class="btn btn-create">➕ Add Category</button>
+      <button type="submit" class="btn btn-create"><i class="fas fa-plus"></i> Add Category</button>
     </form>
   </div>
 
@@ -59,7 +59,7 @@
         <!-- Category Edit Form -->
       {% for cat in categories %}
       <tr>
-        <td>
+        <td data-label="Category Name">
           <form method="post" class="inline-form">
             {% csrf_token %}
             <input type="hidden" name="action" value="update">
@@ -83,12 +83,12 @@
             <button type="submit" class="btn btn-update"><i class="fas fa-pencil-alt"></i></button>
           </form>
         </td>
-        <td>
+        <td data-label="Icon">
           <div class="category-icon-wrapper">
             <img src="{% static 'icons/category-specific-icons/' %}{{ cat.icon }}.png" alt="{{ cat.name }} icon" class="category-icon large-icon">
           </div>
         </td>
-        <td>
+        <td data-label="Actions">
           <form method="post" class="inline-form">
             {% csrf_token %}
             <input type="hidden" name="action" value="delete">

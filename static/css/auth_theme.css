@@ -1,0 +1,207 @@
+/* ══════════════════════════════════════════════════════════════
+   BRITS — Sign-in, registration and password pages (loads last)
+   Script-driven states kept: .otp-modal (inline display:flex),
+   .notification-modal.show, .loader-overlay (inline display)
+   ══════════════════════════════════════════════════════════════ */
+:root {
+  --au-primary: #123692;
+  --au-deep: #172d69;
+  --au-text: #1b2540;
+  --au-muted: #6b7489;
+  --au-border: #e4e8f1;
+}
+
+body {
+  background: #f3f5fa !important;
+  color: var(--au-text);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
+/* Subtle dot grid behind everything */
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background-image: radial-gradient(circle, rgba(18, 54, 146, 0.07) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+.blob { opacity: 0.18 !important; filter: blur(90px) !important; }
+.blob1 { background: #4f7be8 !important; }
+.blob2 { background: #dc3545 !important; opacity: 0.08 !important; }
+.blob3 { display: none !important; }
+
+/* ── Split card (login + register) ──────────────────────────── */
+.login-wrapper {
+  border: 1px solid var(--au-border);
+  border-radius: 20px !important;
+  box-shadow: 0 1px 2px rgba(16, 30, 74, 0.05), 0 24px 60px rgba(16, 30, 74, 0.14) !important;
+  background: #fff;
+}
+.login-wrapper .left-panel {
+  background: linear-gradient(160deg, var(--au-primary) 0%, var(--au-deep) 100%) !important;
+  color: #fff !important;
+  border-right: 5px solid #dc3545;
+}
+.left-panel::before {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px) !important;
+  background-size: 22px 22px !important;
+}
+.left-panel::after {
+  content: ''; position: absolute; right: -90px; top: -90px; width: 260px; height: 260px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(79, 123, 232, 0.35) 0%, transparent 70%); pointer-events: none;
+}
+.left-panel img {
+  width: 96px !important; height: 96px !important; object-fit: contain;
+  padding: 14px; border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22) !important; filter: none !important;
+}
+.left-panel h1 { font-size: 1.7rem !important; font-weight: 700 !important; letter-spacing: -0.2px !important; color: #fff; }
+.left-panel p { color: #c9d6f5 !important; opacity: 1 !important; }
+
+.right-panel h2 {
+  display: flex !important; align-items: center; gap: 12px;
+  font-size: 1.7rem !important; font-weight: 700 !important; color: var(--au-text) !important;
+}
+.right-panel h2 i {
+  width: 44px; height: 44px; flex-shrink: 0;
+  display: inline-flex !important; align-items: center; justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--au-primary) 0%, var(--au-deep) 100%);
+  color: #fff !important; font-size: 1rem !important;
+  box-shadow: 0 6px 16px rgba(18, 54, 146, 0.28);
+}
+.right-panel > p { color: var(--au-muted) !important; }
+
+/* Fields (login renders form.as_p; register uses plain inputs) */
+.login-form label { display: block; margin: 0 0 6px; font-size: 0.86rem; font-weight: 600; color: #4a5573; }
+.login-form input[type="text"], .login-form input[type="email"], .login-form input[type="password"], .login-form input[type="tel"],
+.reset-card input, .card input:not([type="checkbox"]):not([type="hidden"]) {
+  width: 100%; box-sizing: border-box;
+  padding: 11px 14px !important;
+  border: 1.5px solid var(--au-border) !important;
+  border-radius: 10px !important;
+  background: #fff !important; color: var(--au-text) !important;
+  font-size: 0.97rem !important; font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.login-form input:focus, .reset-card input:focus, .card input:focus {
+  outline: none; border-color: var(--au-primary) !important; box-shadow: 0 0 0 3px rgba(18, 54, 146, 0.12) !important;
+}
+.login-form input::placeholder, .reset-card input::placeholder, .card input::placeholder { color: #9aa1b4 !important; }
+.login-form .helptext, .card .helptext { display: block; margin: 4px 0 8px; font-size: 0.78rem; color: var(--au-muted); line-height: 1.5; }
+.login-form .helptext ul, .card .helptext ul { margin: 4px 0 0; padding-left: 18px; text-align: left; }
+.errorlist { list-style: none; margin: 0 0 10px; padding: 8px 12px; background: #fdf3f4; color: #b02a37; border: 1px solid #f5c2c7; border-radius: 9px; font-size: 0.86rem; text-align: left; }
+
+/* Primary buttons */
+.btn-login, .btn-verify, .btn-reset, .card .btn {
+  background: linear-gradient(135deg, var(--au-primary) 0%, var(--au-deep) 100%) !important;
+  color: #fff !important; border: none !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important; letter-spacing: 0.2px !important;
+  box-shadow: 0 6px 16px rgba(18, 54, 146, 0.25) !important;
+  transform: none !important; cursor: pointer;
+  transition: box-shadow 0.2s ease !important;
+}
+.btn-login:hover, .btn-verify:hover, .btn-reset:hover, .card .btn:hover { box-shadow: 0 8px 22px rgba(18, 54, 146, 0.35) !important; }
+
+.login-links { color: var(--au-muted) !important; }
+.login-links .link, .back-link { color: var(--au-primary) !important; font-weight: 600 !important; text-decoration: none !important; }
+.login-links .link:hover, .back-link:hover { text-decoration: underline !important; }
+
+/* ── OTP prompt ─────────────────────────────────────────────── */
+.otp-modal { background: rgba(10, 18, 45, 0.55) !important; backdrop-filter: blur(5px) !important; }
+.otp-modal-content {
+  border: none !important; border-top: 4px solid var(--au-primary) !important;
+  border-radius: 18px !important; box-shadow: 0 24px 70px rgba(10, 18, 45, 0.35) !important;
+}
+.otp-modal-content h2 { color: var(--au-text) !important; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.otp-modal-content h2 i {
+  width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(18, 54, 146, 0.1); color: var(--au-primary) !important; font-size: 1rem !important;
+}
+.otp-modal-content > p { color: var(--au-muted) !important; }
+.otp-modal-content input[type="text"] {
+  border: 1.5px dashed #c9d4ef !important; border-radius: 12px !important; background: #f6f8fc !important;
+  font-family: Consolas, 'Courier New', monospace !important; font-size: 1.6rem !important; font-weight: 700 !important;
+  letter-spacing: 10px !important; text-align: center; color: var(--au-primary) !important;
+}
+.otp-modal-content input[type="text"]::placeholder { font-family: 'Segoe UI', sans-serif; font-size: 1rem; letter-spacing: 0; font-weight: 400; color: #9aa1b4; }
+.otp-modal-content input[type="text"]:focus { border-style: solid !important; border-color: var(--au-primary) !important; box-shadow: 0 0 0 3px rgba(18, 54, 146, 0.12) !important; }
+.otp-message { color: #b02a37; font-weight: 600; }
+
+/* ── Notifications ──────────────────────────────────────────── */
+.notification-modal { background: rgba(10, 18, 45, 0.55) !important; backdrop-filter: blur(5px) !important; }
+.notification-modal-content {
+  border: none !important; border-top: 4px solid #e74c3c !important;
+  border-radius: 18px !important; box-shadow: 0 24px 70px rgba(10, 18, 45, 0.35) !important;
+}
+.notification-modal.success .notification-modal-content { border-top-color: #198754 !important; }
+.notification-modal .notification-modal-header { border-bottom-color: var(--au-border) !important; }
+.notification-modal .notification-modal-header i {
+  width: 58px; height: 58px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(231, 76, 60, 0.12); color: #e74c3c !important; font-size: 1.6rem !important; animation: none !important;
+}
+.notification-modal.success .notification-modal-header i { background: rgba(25, 135, 84, 0.12); color: #198754 !important; }
+.notification-modal .notification-modal-header h3 { color: var(--au-text) !important; }
+.notification-modal-body p { color: #4a5573 !important; }
+.btn-modal-ok { background: #e74c3c !important; color: #fff !important; border: none !important; border-radius: 10px !important; font-weight: 600 !important; transform: none !important; box-shadow: none !important; }
+.btn-modal-ok:hover { background: #c0392b !important; }
+.notification-modal .close { color: #8a92a6 !important; }
+.notification-modal .close:hover { color: #e74c3c !important; transform: none !important; }
+
+/* Loading spinner */
+.loader-overlay { background: rgba(10, 18, 45, 0.45) !important; }
+.spinner { border-color: rgba(255, 255, 255, 0.35) !important; border-top-color: #fff !important; border-right-color: #dc3545 !important; }
+
+/* ── Single-card pages (password reset flow, OTP page) ──────── */
+.reset-wrapper, .wrapper { position: relative; z-index: 1; }
+.reset-card, .card {
+  position: relative; overflow: hidden;
+  border: 1px solid var(--au-border);
+  border-radius: 18px !important;
+  box-shadow: 0 1px 2px rgba(16, 30, 74, 0.05), 0 24px 60px rgba(16, 30, 74, 0.12) !important;
+  padding: 30px 30px 28px !important;
+}
+.reset-card::before, .card::before {
+  content: ''; position: absolute; inset: 0 0 auto 0; height: 4px;
+  background: linear-gradient(90deg, var(--au-primary), #4f7be8 60%, #dc3545);
+}
+.auth-brand { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 0 22px; }
+.auth-brand img { width: 34px; height: 34px; border-radius: 9px; background: #f1f4fb; padding: 4px; object-fit: contain; }
+.auth-brand span { font-size: 0.82rem; font-weight: 700; color: var(--au-primary); letter-spacing: 0.02em; }
+.auth-icon {
+  width: 56px; height: 56px; margin: 0 auto 14px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--au-primary) 0%, var(--au-deep) 100%);
+  color: #fff; font-size: 1.3rem;
+  box-shadow: 0 8px 20px rgba(18, 54, 146, 0.28);
+}
+.auth-icon.is-success { background: linear-gradient(135deg, #198754 0%, #146c43 100%); box-shadow: 0 8px 20px rgba(25, 135, 84, 0.28); }
+.reset-card h2, .card h2 { text-align: center; color: var(--au-text) !important; font-size: 1.45rem !important; font-weight: 700; margin-bottom: 8px !important; }
+.reset-card p, .card p { color: var(--au-muted) !important; text-align: center; line-height: 1.6; }
+.reset-card label, .card label { display: block; text-align: left; font-size: 0.86rem; font-weight: 600; color: #4a5573; margin: 0 0 6px; }
+.reset-card form p, .card form p { text-align: left; margin-bottom: 12px !important; }
+.btn-reset, .card .btn { display: block !important; width: 100%; padding: 12px !important; text-align: center; text-decoration: none !important; }
+.back-link { display: inline-flex !important; align-items: center; justify-content: center; gap: 6px; width: 100%; margin-top: 16px !important; }
+.card .errors { margin-bottom: 14px; }
+.card .errors .errorlist { margin: 0; }
+.card .errors > .errorlist > li { list-style: none; }
+.card .errors > .errorlist > li > .errorlist { margin-top: 4px; }
+
+@media (max-width: 768px) {
+  .login-wrapper .left-panel { border-right: none; border-bottom: 5px solid #dc3545; }
+  .left-panel img { width: 76px !important; height: 76px !important; }
+}
+@media (max-width: 420px) {
+  .reset-card, .card { padding: 24px 18px 22px !important; }
+}
+
+/* Set-new-password page: form.as_p already shows each error beside its field
+   (and any form-wide error at the top), so the raw error dump is hidden */
+.card > .errors { display: none; }
+/* Django's password help list ends up outside its <p>; keep it tidy and left-aligned */
+.card form > ul, .reset-card form > ul {
+  margin: -4px 0 12px; padding: 8px 12px 8px 28px;
+  background: #f6f8fc; border-radius: 9px;
+  text-align: left; font-size: 0.8rem; color: var(--au-muted); line-height: 1.6;
+}
+.card form > ul.errorlist { background: #fdf3f4; color: #b02a37; padding: 8px 12px; list-style: none; }
