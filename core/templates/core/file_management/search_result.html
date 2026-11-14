@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/search_results.css' %}">
+<link rel="stylesheet" href="{% static 'css/files_theme.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -96,7 +97,7 @@
   {% endif %}
 
   {% if not files and not categories and not users %}
-    <p class="no-results">😞 No results found for <strong>{{ query }}</strong>. Try another search.</p>
+    <p class="no-results"><i class="far fa-face-frown"></i> No results found for <strong>{{ query }}</strong>. Try another search.</p>
   {% endif %}
 </div>
 {% endblock %}

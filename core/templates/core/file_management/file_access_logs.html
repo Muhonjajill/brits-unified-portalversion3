@@ -4,6 +4,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'css/file_access_logs.css' %}">
+<link rel="stylesheet" href="{% static 'css/files_theme.css' %}">
 {% endblock %}
 
 {% block title %}File Access Logs{% endblock %}
@@ -11,7 +12,7 @@
 {% block content %}
 <div class="logs-container">
     <div class="logs-header">
-        <h2>File Access Logs</h2>
+        <h2><span class="ft-icon"><i class="fas fa-clock-rotate-left"></i></span> File Access Logs</h2>
         <p>Below are the logs of file accesses.</p>
     </div>
 

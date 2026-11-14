@@ -3,12 +3,13 @@
 
 {% block extra_css %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/editDetail.css' %}">
+<link rel="stylesheet" href="{% static 'css/files_theme.css' %}">
 {% endblock %}
 
 {% block title %}User Detail{% endblock %}
 {% block content %}
-<div class="container">
-  <h2>User Detail: {{ user.username }}</h2>
+<div class="container user-card">
+  <h2><span class="ft-icon"><i class="fas fa-user"></i></span> User Detail: {{ user.username }}</h2>
   <p><strong>Email:</strong> {{ user.email }}</p>
   <p><strong>Status:</strong> {{ user.is_active|yesno:"Active,Inactive" }}</p>
   <p><strong>Role:</strong> {{ user.is_superuser|yesno:"Admin,Operator" }}</p>

@@ -1,4 +1,10 @@
 document.addEventListener("DOMContentLoaded", function () {
+  // This file used to be loaded three times (base, navbar include, sidebar include).
+  // Each copy added its own click handlers, so menus only worked by luck of an
+  // odd count. Now it sets everything up exactly once.
+  if (window.__filesNavbarInit) return;
+  window.__filesNavbarInit = true;
+
   // ===============================
   // Profile dropdown toggle
   // ===============================

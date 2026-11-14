@@ -3,6 +3,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/upload_file.css' %}">
+<link rel="stylesheet" href="{% static 'css/files_theme.css' %}">
 {% endblock %}
 
 {% block title %}Upload File{% endblock %} 
@@ -10,7 +11,7 @@
 {% block content %}
 {% if perms.core.add_file %}
 <div class="upload-container">
-    <h2>📁 Upload a New File</h2>
+    <h2><span class="ft-icon"><i class="fas fa-cloud-arrow-up"></i></span> Upload a New File</h2>
 
     <form id="upload-form" method="post" enctype="multipart/form-data">
         {% csrf_token %}
@@ -80,7 +81,7 @@
 
 {% else %}
 <div class="alert alert-warning">
-    🚫 You do not have permission to upload files.
+    <i class="fas fa-ban"></i> You do not have permission to upload files.
 </div>
 {% endif %}
 {% endblock %}

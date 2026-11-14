@@ -1,55 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
-<body style="margin:0; padding:0; background:#f4f6fa; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color:#343a40;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fa; padding:24px 0;">
-    <tr><td align="center">
-      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #dee2e6;">
-        <tr>
-          <td style="background:#123692; color:#ffffff; padding:18px 24px; font-size:18px; font-weight:600;">
-            Penalty on your claim
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:24px; font-size:14px; line-height:1.6;">
-            <p style="margin:0 0 12px;">Hi {{ recipient_name }},</p>
-            <p style="margin:0 0 16px;">
-              {{ penalized_by_name }} has placed a penalty on your
-              <strong>{{ claim.month|date:"F Y" }}</strong> claim
-              {% if claim.submitted_at %}(submitted {{ claim.submitted_at|date:"d M Y" }}){% endif %}.
-            </p>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Penalty on your claim</title>
+</head>
+<body style="margin:0; padding:0; background:#f3f5fa; font-family:'Segoe UI', Tahoma, Arial, sans-serif; color:#1b2540;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f5fa; padding:24px 0;">
+    <tr>
+      <td align="center" style="padding:0 12px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background:#ffffff; border:1px solid #e4e8f1; border-radius:12px; overflow:hidden;">
 
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                   style="background:#fff8ec; border-left:4px solid #fd7e14; border-radius:6px; margin:0 0 16px;">
-              <tr>
-                <td style="padding:14px 16px;">
-                  <div style="font-size:12px; color:#8a4b08; font-weight:600;">Penalty amount</div>
-                  <div style="font-size:22px; font-weight:700; color:#b02a37; margin-bottom:10px;">KES {{ penalty.amount|floatformat:2 }}</div>
-                  <div style="font-size:12px; color:#8a4b08; font-weight:600;">Reason</div>
-                  <div style="white-space:pre-line;">{{ penalty.reason }}</div>
-                </td>
-              </tr>
-            </table>
+          <!-- Header -->
+          <tr>
+            <td style="background:#123692; padding:22px 28px 20px; border-bottom:4px solid #dc9c35;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td valign="top" style="color:#ffffff;">
+                    <div style="font-size:12px; font-weight:600; color:#c9d6f5; letter-spacing:0.02em;">BRITS · Blue River Technology Solutions</div>
+                    <div style="font-size:21px; font-weight:700; line-height:1.3; margin-top:4px; color:#ffffff;">Penalty on your claim</div>
+                    <div style="font-size:13px; color:#dbe4fb; margin-top:4px;">{{ claim.month|date:"F Y" }} claim</div>
+                  </td>
+                  
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-            <p style="margin:0 0 16px;">
-              This amount will be deducted from your <strong>next claim</strong>. It will appear there as
-              a carry-forward advance, reducing the amount payable to you. Your {{ claim.month|date:"F Y" }}
-              claim continues through review as normal.
-            </p>
+          <!-- Body -->
+          <tr>
+            <td style="padding:26px 28px 10px; font-size:15px; line-height:1.6; color:#3b4560;">
+              <p style="margin:0 0 14px; font-size:16px; color:#1b2540; font-weight:600;">Hi {{ recipient_name }},</p>
+              <p style="margin:0 0 14px; ">{{ penalized_by_name }} has placed a penalty on your <strong>{{ claim.month|date:"F Y" }}</strong> claim {% if claim.submitted_at %}(submitted {{ claim.submitted_at|date:"d M Y" }}){% endif %}.</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;"><tr><td style="background:#fff7ec; border-left:4px solid #dc9c35; border-radius:8px; padding:14px 18px;"><div style="font-size:12px; font-weight:700; color:#8a5a12;">Penalty amount</div><div style="font-size:24px; font-weight:700; color:#c0392b; margin:2px 0 10px;">KES {{ penalty.amount|floatformat:2 }}</div><div style="font-size:12px; font-weight:700; color:#8a5a12;">Reason</div><div style="font-size:14px; color:#3b4560; white-space:pre-line;">{{ penalty.reason }}</div></td></tr></table>
+              <p style="margin:0 0 14px; ">This amount will be deducted from your <strong>next claim</strong>. It will appear there as a carry-forward advance, reducing the amount payable to you. Your {{ claim.month|date:"F Y" }} claim continues through review as normal.</p>
+              {% if claim_url %}
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 20px;"><tr><td style="background:#123692; border-radius:9px;"><a href="{{ claim_url }}" style="display:inline-block; padding:12px 26px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:9px;">View claim</a></td></tr></table>
+              {% endif %}
 
-            {% if claim_url %}
-            <p style="margin:0 0 8px;">
-              <a href="{{ claim_url }}" style="display:inline-block; background:#123692; color:#ffffff; text-decoration:none; padding:10px 20px; border-radius:6px; font-weight:600;">View claim</a>
-            </p>
-            {% endif %}
-          </td>
-        </tr>
-        <tr>
-          <td style="padding:14px 24px; background:#f8f9fa; color:#6c757d; font-size:12px;">
-            If you have questions about this penalty, please contact your manager.
-          </td>
-        </tr>
-      </table>
-    </td></tr>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:16px 28px 22px; background:#fafbfe; border-top:1px solid #edf0f6; font-size:12px; line-height:1.6; color:#8a92a6; text-align:center;">
+              If you have questions about this penalty, please contact your manager.<br>
+              &copy; {% now "Y" %} Blue River Technology Solutions &nbsp;·&nbsp; <a href="mailto:support@blueriverafrica.net" style="color:#123692; text-decoration:none;">support@blueriverafrica.net</a>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
   </table>
 </body>
 </html>

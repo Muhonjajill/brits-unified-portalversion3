@@ -1,69 +1,66 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Your Role Has Been Updated</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your Role Has Been Updated</title>
 </head>
-<body style="font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 20px; margin: 0;">
-    <div style="background-color: #ffffff; width: 100%; max-width: 600px; margin: 0 auto; padding: 40px 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+<body style="margin:0; padding:0; background:#f3f5fa; font-family:'Segoe UI', Tahoma, Arial, sans-serif; color:#1b2540;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f5fa; padding:24px 0;">
+    <tr>
+      <td align="center" style="padding:0 12px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background:#ffffff; border:1px solid #e4e8f1; border-radius:12px; overflow:hidden;">
 
-        <!-- Brand Header -->
-        <div style="background-color: #123692; color: white; padding: 30px; border-radius: 10px 10px 0 0; margin: -40px -30px 30px -30px; text-align: center;">
-            <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 5px 0;">Role Update Notification</h1>
-            <p style="font-size: 14px; opacity: 0.9; margin: 0; color: white;">Your account has been updated</p>
-        </div>
+          <!-- Header -->
+          <tr>
+            <td style="background:#123692; padding:22px 28px 20px; border-bottom:4px solid #198754;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td valign="top" style="color:#ffffff;">
+                    <div style="font-size:12px; font-weight:600; color:#c9d6f5; letter-spacing:0.02em;">BRITS · Blue River Technology Solutions</div>
+                    <div style="font-size:21px; font-weight:700; line-height:1.3; margin-top:4px; color:#ffffff;">Role Update Notification</div>
+                    <div style="font-size:13px; color:#dbe4fb; margin-top:4px;">Your account has been updated</div>
+                  </td>
+                  
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-        <!-- Greeting -->
-        <h2 style="font-size: 22px; color: #123692; margin-bottom: 15px; font-weight: bold;">Hello {{ user.first_name }} {{ user.last_name }},</h2>
-
-        <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 20px;">We are pleased to inform you that your role has been updated to <strong style="color: #123692;">{{ new_role }}</strong>.</p>
-
-        <!-- Updated Details Box -->
-        <div style="background-color: #f8f9fa; border-left: 4px solid #123692; padding: 20px; border-radius: 6px; margin: 25px 0;">
-            <h3 style="color: #123692; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">Your Updated Details</h3>
-            <ul style="list-style: none; padding: 0; margin: 0;">
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">
-                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 140px;">Username:</strong> {{ user.username }}
-                </li>
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">
-                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 140px;">Email:</strong> {{ user.email }}
-                </li>
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef; {% if not customer_name and not terminal_name %}border-bottom: none; margin-bottom: 0;{% endif %}">
-                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 140px;">Role:</strong> {{ new_role }}
-                </li>
+          <!-- Body -->
+          <tr>
+            <td style="padding:26px 28px 10px; font-size:15px; line-height:1.6; color:#3b4560;">
+              <p style="margin:0 0 14px; font-size:16px; color:#1b2540; font-weight:600;">Hello {{ user.first_name }} {{ user.last_name }},</p>
+              <p style="margin:0 0 14px; ">We are pleased to inform you that your role has been updated to <strong style="color:#123692;">{{ new_role }}</strong>.</p>
+              <div style="margin:22px 0 10px; font-size:14px; font-weight:700; color:#1b2540;">Your updated details</div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e4e8f1; border-radius:10px; border-collapse:separate; overflow:hidden; font-size:14px; margin:0 0 18px;">
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Username</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ user.username }}</td></tr>
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Email</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ user.email }}</td></tr>
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Role</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ new_role }}</td></tr>
                 {% if customer_name %}
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef; {% if not terminal_name %}border-bottom: none; margin-bottom: 0;{% endif %}">
-                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 140px;">Customer:</strong> {{ customer_name }}
-                </li>
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Customer</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ customer_name }}</td></tr>
                 {% endif %}
                 {% if terminal_name %}
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 0; padding: 8px 0; border-bottom: none;">
-                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 140px;">Terminal:</strong> {{ terminal_name }}
-                </li>
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Terminal</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ terminal_name }}</td></tr>
                 {% endif %}
-            </ul>
-        </div>
+              </table>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;"><tr><td style="background:#eef3fd; border-left:4px solid #123692; border-radius:8px; padding:12px 16px; font-size:14px; line-height:1.6; color:#1f3a7a;"><strong>Please note:</strong> If you have any questions about your updated role or need assistance, please don't hesitate to contact the system administrator.</td></tr></table>
+              <p style="margin:0 0 14px; margin-top:8px;">Best regards,<br><span style="color:#123692; font-weight:700;">The Blue River Technology Solutions Team</span></p>
 
-        <!-- Info Notice -->
-        <div style="background-color: #e8f4fd; border-left: 4px solid #123692; color: #1a3a6b; padding: 20px; border-radius: 6px; margin: 25px 0;">
-            <p style="color: #1a3a6b; margin: 0; font-size: 16px; line-height: 1.6;">
-                <strong style="color: #123692;">Please Note:</strong> If you have any questions about your updated role or need assistance, please don't hesitate to contact the system administrator.
-            </p>
-        </div>
+            </td>
+          </tr>
 
-        <!-- Sign-off -->
-        <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 15px;">
-            Best regards,<br>
-            <span style="color: #123692; font-weight: 600;">The Blue River Technology Solutions Team</span>
-        </p>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:16px 28px 22px; background:#fafbfe; border-top:1px solid #edf0f6; font-size:12px; line-height:1.6; color:#8a92a6; text-align:center;">
+              This is an automated message from the BRITS portal.<br>
+              &copy; {% now "Y" %} Blue River Technology Solutions &nbsp;·&nbsp; <a href="mailto:support@blueriverafrica.net" style="color:#123692; text-decoration:none;">support@blueriverafrica.net</a>
+            </td>
+          </tr>
 
-        <!-- Footer -->
-        <div style="text-align: center; font-size: 14px; color: #6c757d; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e9ecef;">
-            <p style="font-size: 14px; color: #6c757d; margin: 0 0 10px 0;">&copy; 2026 Blue River Technology Solutions. All rights reserved.</p>
-            <p style="font-size: 14px; color: #6c757d; margin: 5px 0 0 0;">
-                <a href="mailto:support@blueriverafrica.net" style="color: #123692; text-decoration: none; font-weight: normal;">Contact Support</a>
-            </p>
-        </div>
-    </div>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>

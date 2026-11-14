@@ -8,19 +8,21 @@
     <img src="{% static 'icons/logo.png' %}" class="sidebar-logo" alt="Blue River Logo">
   </a>
 
+  {% with n=request.resolver_match.url_name|default:'' %}
   <ul>
-    <li><a href="{% url 'dashboard' %}" class="nav-link"><i class="fas fa-th-large icon"></i><span>Dashboard</span></a></li>
-    <li><a href="{% url 'file_list' %}" class="nav-link"><i class="fas fa-folder icon"></i><span>Files</span></a></li>
-    <li><a href="{% url 'file_list' %}?sort=recent" class="nav-link"><i class="fas fa-history icon"></i><span>Recent</span></a></li>
-    <li><a href="{% url 'user_list' %}" class="nav-link"><i class="fas fa-users icon"></i><span>Users</span></a></li>
-    <li><a href="{% url 'claim_list' %}" class="nav-link"><i class="fas fa-file-invoice-dollar icon"></i><span>Claims</span></a></li>
-    <li><a href="{% url 'leave_list' %}" class="nav-link"><i class="fas fa-umbrella-beach icon"></i><span>Leaves</span></a></li>
+    <li><a href="{% url 'dashboard' %}" class="nav-link{% if n == 'dashboard' %} active{% endif %}"><i class="fas fa-th-large icon"></i><span>Dashboard</span></a></li>
+    <li><a href="{% url 'file_list' %}" class="nav-link{% if 'file_list' in n and request.GET.sort != 'recent' or n == 'upload_file' or 'preview' in n %} active{% endif %}"><i class="fas fa-folder icon"></i><span>Files</span></a></li>
+    <li><a href="{% url 'file_list' %}?sort=recent" class="nav-link{% if 'file_list' in n and request.GET.sort == 'recent' %} active{% endif %}"><i class="fas fa-history icon"></i><span>Recent</span></a></li>
+    <li><a href="{% url 'user_list' %}" class="nav-link{% if n == 'user_list' or n == 'user_detail' or n == 'edit_user' %} active{% endif %}"><i class="fas fa-users icon"></i><span>Users</span></a></li>
+    <li><a href="{% url 'claim_list' %}" class="nav-link{% if 'claim' in n %} active{% endif %}"><i class="fas fa-file-invoice-dollar icon"></i><span>Claims</span></a></li>
+    <li><a href="{% url 'leave_list' %}" class="nav-link{% if 'leave' in n %} active{% endif %}"><i class="fas fa-umbrella-beach icon"></i><span>Leaves</span></a></li>
 
    {% if can_view_logs %}
-        <li><a href="{% url 'file_access_logs' %}" class="nav-link"><i class="fas fa-clipboard-list icon"></i><span>File Access Logs</span></a></li>
+        <li><a href="{% url 'file_access_logs' %}" class="nav-link{% if n == 'file_access_logs' %} active{% endif %}"><i class="fas fa-clipboard-list icon"></i><span>File Access Logs</span></a></li>
     {% endif %}
 
   </ul>
+  {% endwith %}
 </div>
 
-<script src="{% static 'js/files_navbar.js' %}"></script>
+{# files_navbar.js is loaded once by files_base.html #}

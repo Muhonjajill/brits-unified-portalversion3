@@ -5,6 +5,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/file_list.css' %}">
+<link rel="stylesheet" href="{% static 'css/files_theme.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -13,7 +14,7 @@
 
   <!-- Category Buttons -->
   <div class="category-nav">
-    <a href="{% url 'upload_file' %}" class="upload-button">➕ Upload New File</a>
+    <a href="{% url 'upload_file' %}" class="upload-button"><i class="fas fa-plus"></i> Upload New File</a>
     <a href="{% url 'file_list' %}" class="{% if not active_category %}active{% endif %}">All</a>
     {% for category in categories %}
       <a href="{% url 'file_list_by_category' category.name %}" class="{% if category.name == active_category %}active{% endif %}">{{ category.name }}</a>

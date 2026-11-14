@@ -3,12 +3,13 @@
 
 {% block extra_css %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/editDetail.css' %}">
+<link rel="stylesheet" href="{% static 'css/files_theme.css' %}">
 {% endblock %}
 
 {% block title %}Edit User{% endblock %}
 {% block content %}
-<div class="container">
-  <h2>Edit User: {{ user.username }}</h2>
+<div class="container user-card">
+  <h2><span class="ft-icon"><i class="fas fa-user-pen"></i></span> Edit User: {{ user.username }}</h2>
   <form method="POST">
     {% csrf_token %}
     <label>Username:</label><br>

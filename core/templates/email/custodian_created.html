@@ -1,148 +1,80 @@
 {% load static %}
-
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Welcome to BRITS Ticketing System - Custodian Account</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to BRITS Ticketing System - Custodian Account</title>
 </head>
+<body style="margin:0; padding:0; background:#f3f5fa; font-family:'Segoe UI', Tahoma, Arial, sans-serif; color:#1b2540;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f5fa; padding:24px 0;">
+    <tr>
+      <td align="center" style="padding:0 12px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background:#ffffff; border:1px solid #e4e8f1; border-radius:12px; overflow:hidden;">
 
-<body style="font-family: Arial, sans-serif; background-color: #f4f6f9; padding: 20px; margin: 0;">
-    <div style="background-color: #ffffff; width: 100%; max-width: 600px; margin: 0 auto; padding: 40px 30px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-        
-        <div style="background-color: #3498db; color: white; padding: 30px; border-radius: 10px 10px 0 0; margin: -40px -30px 30px -30px; text-align: center;">
-            <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 5px 0;">🔑 Welcome to BRITS Ticketing System</h1>
-            <p style="font-size: 14px; opacity: 0.9; margin: 0; color: white;">Your Custodian account is ready</p>
-        </div>
-        
-        <h2 style="font-size: 22px; color: #123692; margin-bottom: 15px; font-weight: bold;">Hello {{ user.first_name }} {{ user.last_name }},</h2>
-        
-        <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 15px;">You have been assigned as a <strong>Custodian</strong> for a specific terminal/branch in the BRITS Ticketing System.</p>
-        
-        <!-- Assignment Details -->
-        <div style="background-color: #ebf5fb; border-left: 4px solid #3498db; padding: 20px; border-radius: 6px; margin: 25px 0;">
-            <h3 style="color: #3498db; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">📍 Your Terminal Assignment</h3>
-            <ul style="list-style: none; padding: 0; margin: 0;">
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #d6eaf8;">
-                    <strong style="color: #3498db; font-weight: 600; display: inline-block; min-width: 140px;">Role:</strong> Custodian
-                </li>
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #d6eaf8;">
-                    <strong style="color: #3498db; font-weight: 600; display: inline-block; min-width: 140px;">Customer:</strong> {{ customer.name }}
-                </li>
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #d6eaf8;">
-                    <strong style="color: #3498db; font-weight: 600; display: inline-block; min-width: 140px;">Terminal/Branch:</strong> {{ terminal.branch_name }}
-                </li>
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #d6eaf8;">
-                    <strong style="color: #3498db; font-weight: 600; display: inline-block; min-width: 140px;">Terminal ID:</strong> {{ terminal.cdm_name }}
-                </li>
+          <!-- Header -->
+          <tr>
+            <td style="background:#123692; padding:22px 28px 20px; border-bottom:4px solid #3498db;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td valign="top" style="color:#ffffff;">
+                    <div style="font-size:12px; font-weight:600; color:#c9d6f5; letter-spacing:0.02em;">BRITS · Blue River Technology Solutions</div>
+                    <div style="font-size:21px; font-weight:700; line-height:1.3; margin-top:4px; color:#ffffff;">Welcome to BRITS Ticketing System</div>
+                    <div style="font-size:13px; color:#dbe4fb; margin-top:4px;">Your Custodian account is ready</div>
+                  </td>
+                  
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:26px 28px 10px; font-size:15px; line-height:1.6; color:#3b4560;">
+              <p style="margin:0 0 14px; font-size:16px; color:#1b2540; font-weight:600;">Hello {{ user.first_name }} {{ user.last_name }},</p>
+              <p style="margin:0 0 14px; ">You have been assigned as a <strong>Custodian</strong> for a specific terminal/branch in the BRITS Ticketing System.</p>
+              <div style="margin:22px 0 10px; font-size:14px; font-weight:700; color:#1b2540;">Your terminal assignment</div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e4e8f1; border-radius:10px; border-collapse:separate; overflow:hidden; font-size:14px; margin:0 0 18px;">
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Role</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">Custodian</td></tr>
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Customer</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ customer.name }}</td></tr>
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Terminal/Branch</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ terminal.branch_name }}</td></tr>
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Terminal ID</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ terminal.cdm_name }}</td></tr>
                 {% if terminal.serial_number %}
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #d6eaf8;">
-                    <strong style="color: #3498db; font-weight: 600; display: inline-block; min-width: 140px;">Serial Number:</strong> {{ terminal.serial_number }}
-                </li>
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Serial number</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ terminal.serial_number }}</td></tr>
                 {% endif %}
                 {% if terminal.model %}
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 0; padding: 8px 0; border-bottom: none;">
-                    <strong style="color: #3498db; font-weight: 600; display: inline-block; min-width: 140px;">Model:</strong> {{ terminal.model }}
-                </li>
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Model</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ terminal.model }}</td></tr>
                 {% endif %}
-            </ul>
-        </div>
+              </table>
+              <div style="margin:22px 0 10px; font-size:14px; font-weight:700; color:#1b2540;">Your login credentials</div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e4e8f1; border-radius:10px; border-collapse:separate; overflow:hidden; font-size:14px; margin:0 0 18px;">
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Name</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ user.first_name }} {{ user.last_name }}</td></tr>
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Username</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ user.username }}</td></tr>
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Email</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;">{{ user.email }}</td></tr>
+                <tr><td valign="top" style="padding:10px 14px; width:38%; background:#fafbfe; color:#6b7489; border-bottom:1px solid #edf0f6;">Password</td><td valign="top" style="padding:10px 14px; color:#1b2540; font-weight:600; border-bottom:1px solid #edf0f6;"><span style="font-family:Consolas,monospace; background:#f1f4fb; padding:2px 8px; border-radius:6px;">{{ password }}</span></td></tr>
+              </table>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;"><tr><td style="background:#eef3fd; border-left:4px solid #123692; border-radius:8px; padding:14px 18px; font-size:14px; line-height:1.6; color:#1b2540;"><div style="font-weight:700; color:#1f3a7a; margin:0 0 6px;">Your responsibilities as Custodian</div><ul style="margin:0; padding-left:20px; color:#3b4560;"><li style="margin:0 0 4px;">Monitor and maintain your assigned terminal at <strong>{{ terminal.branch_name }}</strong></li><li style="margin:0 0 4px;">Report issues and create support tickets for your terminal</li><li style="margin:0 0 4px;">Coordinate with technical support for issue resolutions</li><li style="margin:0 0 4px;">Ensure proper documentation and reporting for your branch</li><li style="margin:0 0 4px;">Manage files and records related to your terminal</li><li style="margin:0 0 4px;">Maintain communication with your customer's overseer</li></ul></td></tr></table>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;"><tr><td style="background:#f6f8fc; border-left:4px solid #8a92a6; border-radius:8px; padding:14px 18px; font-size:14px; line-height:1.6; color:#1b2540;"><div style="font-weight:700; color:#3b4560; margin:0 0 6px;">What you can do</div><ul style="margin:0; padding-left:20px; color:#3b4560;"><li style="margin:0 0 4px;">Create support tickets for <strong>{{ terminal.branch_name }}</strong></li><li style="margin:0 0 4px;">View and track tickets specific to your terminal</li><li style="margin:0 0 4px;">Access terminal-specific documentation and files</li><li style="margin:0 0 4px;">Upload and manage files for your branch</li><li style="margin:0 0 4px;">Monitor ticket status and resolution progress</li><li style="margin:0 0 4px;">Generate reports for your terminal's operations</li><li style="margin:0 0 4px;">Communicate with support staff and your overseer</li></ul></td></tr></table>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;"><tr><td style="background:#f6f8fc; border-left:4px solid #8a92a6; border-radius:8px; padding:14px 18px; font-size:14px; line-height:1.6; color:#1b2540;"><div style="font-weight:700; color:#3b4560; margin:0 0 6px;">When you encounter issues at your terminal</div><ol style="margin:0; padding-left:20px; color:#3b4560;"><li style="margin:0 0 4px;">Create a ticket through the BRITS platform</li><li style="margin:0 0 4px;">The ticket will be automatically routed to the appropriate support team</li><li style="margin:0 0 4px;">You can track progress and add updates in real-time</li><li style="margin:0 0 4px;">Coordinate with the overseer for {{ customer.name }} if needed</li><li style="margin:0 0 4px;">Receive notifications when tickets are updated or resolved</li></ol></td></tr></table>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;"><tr><td style="background:#fff7ec; border-left:4px solid #dc9c35; border-radius:8px; padding:12px 16px; font-size:14px; line-height:1.6; color:#7a4f0e;"><strong>Important security notice:</strong> For your account security, please reset your password immediately after your first login. We strongly recommend choosing a strong, unique password.</td></tr></table>
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 20px;"><tr><td style="background:#123692; border-radius:9px;"><a href="{{ reset_url }}" style="display:inline-block; padding:12px 22px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; border-radius:9px;">Reset your password now</a></td><td style="width:10px;"></td><td style="border:1.5px solid #c9d4ef; border-radius:9px;"><a href="{{ site_url }}" style="display:inline-block; padding:11px 20px; font-size:15px; font-weight:600; color:#123692; text-decoration:none; border-radius:9px;">Go to BRITS</a></td></tr></table>
+              <p style="margin:0 0 14px; ">If you have any questions or need assistance getting started with your custodian responsibilities, please contact your system administrator, your customer's overseer, or our support team.</p>
+              <p style="margin:0 0 14px; margin-top:8px;">Best regards,<br><span style="color:#123692; font-weight:700;">The Blue River Technology Solutions Team</span></p>
 
-        <div style="background-color: #f8f9fa; border-left: 4px solid #123692; padding: 20px; border-radius: 6px; margin: 25px 0;">
-            <h3 style="color: #123692; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">🔐 Your Login Credentials</h3>
-            <ul style="list-style: none; padding: 0; margin: 0;">
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">
-                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 120px;">Name:</strong> {{ user.first_name }} {{ user.last_name }}
-                </li>
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">
-                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 120px;">Username:</strong> {{ user.username }}
-                </li>
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 12px; padding: 8px 0; border-bottom: 1px solid #e9ecef;">
-                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 120px;">Email:</strong> {{ user.email }}
-                </li>
-                <li style="font-size: 16px; color: #343a40; margin-bottom: 0; padding: 8px 0; border-bottom: none;">
-                    <strong style="color: #123692; font-weight: 600; display: inline-block; min-width: 120px;">Password:</strong> {{ password }}
-                </li>
-            </ul>
-        </div>
+            </td>
+          </tr>
 
-        <!-- Responsibilities Section -->
-        <div style="background-color: #e7f3ff; border-left: 4px solid #0066cc; padding: 20px; border-radius: 6px; margin: 25px 0;">
-            <h3 style="color: #123692; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">👤 Your Responsibilities as Custodian</h3>
-            <ul style="margin: 10px 0; padding-left: 20px; color: #343a40; font-size: 15px; line-height: 1.8;">
-                <li>Monitor and maintain your assigned terminal at <strong>{{ terminal.branch_name }}</strong></li>
-                <li>Report issues and create support tickets for your terminal</li>
-                <li>Coordinate with technical support for issue resolutions</li>
-                <li>Ensure proper documentation and reporting for your branch</li>
-                <li>Manage files and records related to your terminal</li>
-                <li>Maintain communication with your customer's overseer</li>
-            </ul>
-        </div>
+          <!-- Footer -->
+          <tr>
+            <td style="padding:16px 28px 22px; background:#fafbfe; border-top:1px solid #edf0f6; font-size:12px; line-height:1.6; color:#8a92a6; text-align:center;">
+              This is an automated message from the BRITS portal.<br>
+              &copy; {% now "Y" %} Blue River Technology Solutions &nbsp;·&nbsp; <a href="mailto:support@blueriverafrica.net" style="color:#123692; text-decoration:none;">support@blueriverafrica.net</a>
+            </td>
+          </tr>
 
-        <!-- What You Can Do Section -->
-        <div style="background-color: #fff9e6; border-left: 4px solid #f39c12; padding: 20px; border-radius: 6px; margin: 25px 0;">
-            <h3 style="color: #e67e22; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">🎯 What You Can Do</h3>
-            <ul style="margin: 10px 0; padding-left: 20px; color: #343a40; font-size: 15px; line-height: 1.8;">
-                <li>Create support tickets for <strong>{{ terminal.branch_name }}</strong></li>
-                <li>View and track tickets specific to your terminal</li>
-                <li>Access terminal-specific documentation and files</li>
-                <li>Upload and manage files for your branch</li>
-                <li>Monitor ticket status and resolution progress</li>
-                <li>Generate reports for your terminal's operations</li>
-                <li>Communicate with support staff and your overseer</li>
-            </ul>
-        </div>
-
-        <!-- Support Hierarchy -->
-        <div style="background-color: #f4ecf7; border-left: 4px solid #8e44ad; padding: 20px; border-radius: 6px; margin: 25px 0;">
-            <h3 style="color: #8e44ad; font-size: 18px; margin: 0 0 15px 0; font-weight: 600;">📞 Support Process</h3>
-            <p style="font-size: 15px; color: #343a40; margin-bottom: 10px;">When you encounter issues at your terminal:</p>
-            <ol style="margin: 10px 0; padding-left: 20px; color: #343a40; font-size: 15px; line-height: 1.8;">
-                <li>Create a ticket through the BRITS platform</li>
-                <li>The ticket will be automatically routed to the appropriate support team</li>
-                <li>You can track progress and add updates in real-time</li>
-                <li>Coordinate with the overseer for {{ customer.name }} if needed</li>
-                <li>Receive notifications when tickets are updated or resolved</li>
-            </ol>
-        </div>
-
-        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; color: #856404; padding: 20px; border-radius: 6px; margin: 25px 0;">
-            <p style="color: #856404; margin: 0; font-size: 16px; line-height: 1.6;">
-                <strong style="color: #664d03;">⚠️ Important Security Notice:</strong> For your account security, please reset your password immediately after your first login. We strongly recommend choosing a strong, unique password.
-            </p>
-        </div>
-
-        <!-- Password Reset Button -->
-        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 25px 0;">
-            <tr>
-                <td align="center">
-                    <a href="{{ reset_url }}" style="display: inline-block; background-color: #3498db; color: #ffffff !important; padding: 14px 35px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 16px; font-family: Arial, sans-serif;">Reset Your Password Now</a>
-                </td>
-            </tr>
         </table>
-
-        <!-- Platform Access Section -->
-        <div style="background-color: #e9ecef; padding: 20px; border-radius: 6px; text-align: center; margin: 25px 0;">
-            <p style="margin: 0 0 15px 0; color: #343a40; font-weight: 600; font-size: 16px;">Access the Platform:</p>
-            <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                    <td align="center">
-                        <a href="{{ site_url }}" style="display: inline-block; background-color: #123692; color: #ffffff !important; padding: 14px 35px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 16px; font-family: Arial, sans-serif;">Go to BRITS Ticketing System</a>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 15px;">If you have any questions or need assistance getting started with your custodian responsibilities, please contact your system administrator, your customer's overseer, or our support team.</p>
-        
-        <p style="font-size: 16px; color: #555; line-height: 1.6; margin-bottom: 15px;">
-            Best regards,<br>
-            <span style="color: #123692; font-weight: 600;">The Blue River Technology Solutions Team</span>
-        </p>
-
-        <div style="text-align: center; font-size: 14px; color: #6c757d; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e9ecef;">
-            <p style="font-size: 14px; color: #6c757d; margin: 0 0 10px 0;">&copy; 2026 Blue River Technology Solutions. All rights reserved.</p>
-            <p style="font-size: 14px; color: #6c757d; margin: 5px 0 0 0;">
-                <a href="{{ site_url }}" style="color: #123692; text-decoration: none; font-weight: normal;">Visit Website</a> | 
-                <a href="mailto:support@blueriverafrica.net" style="color: #123692; text-decoration: none; font-weight: normal;">Contact Support</a>
-            </p>
-        </div>
-    </div>
+      </td>
+    </tr>
+  </table>
 </body>
+</html>
