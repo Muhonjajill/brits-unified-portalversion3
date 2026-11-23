@@ -141,3 +141,27 @@ body {
   .profile-actions a.back { margin-right: 0; order: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .fade-in { animation: none; } }
+/* ══ Layout update: profile fills the screen (desktop & laptop) ══ */
+@media (min-width: 901px) {
+  body { margin: 0 !important; }
+  .profile-container {
+    width: 100% !important;
+    max-width: 1680px !important;
+    min-height: 100vh;
+    margin: 0 auto !important;
+    padding: 32px 48px !important;
+    box-sizing: border-box;
+    display: flex !important;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .profile-container > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+  .profile-header { padding: 40px 44px !important; }
+  .profile-header .profile-avatar { width: 136px !important; height: 136px !important; }
+  .profile-info h1 { font-size: 2.3rem !important; }
+  /* the three cards grow to fill the space between header and buttons */
+  .profile-details { flex: 1 1 auto; align-items: stretch !important; gap: 24px !important; }
+  .details-card { padding: 26px 30px !important; font-size: 1.05rem; }
+  .details-card h3 { font-size: 1.15rem !important; }
+  .details-card p { padding-top: 15px !important; padding-bottom: 15px !important; }
+}

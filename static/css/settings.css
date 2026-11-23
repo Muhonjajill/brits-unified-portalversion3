@@ -237,3 +237,18 @@ button.btn-primary:focus-visible { outline: 3px solid rgba(18, 54, 146, 0.4); ou
   .settings-sidebar, .bg-shape, button.btn-primary { display: none; }
   .settings-header.sticky { position: static; box-shadow: none; }
 }
+/* ══ Layout update: sidebar pinned full-height, no empty strip at the bottom ══ */
+@media (min-width: 901px) {
+  .settings-sidebar {
+    position: fixed !important;
+    top: 0 !important; left: 0; bottom: 0;
+    width: 260px !important;
+    height: 100vh !important;
+    overflow-y: auto;
+  }
+  .settings-main {
+    margin-left: 260px;
+    min-height: 100vh;
+    padding-bottom: 28px !important;
+  }
+}
