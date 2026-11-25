@@ -1,4 +1,4 @@
-{% load static %}
+{% load static role_tags %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -23,7 +23,7 @@
             <div class="sub-header animate__animated animate__fadeIn animate__delay-1s">
             </div>
         </header>
-        {% if user.is_superuser %}
+        {% if user.is_superuser or user|has_group:"Director,Manager" %}
             <a href="{% url 'admin_dashboard' %}" class="admin-btn animate__animated animate__zoomInDown"><i class="fas fa-shield-halved"></i> Go to Admin Dashboard</a>
         {% endif %}
         <main class="cards-container">

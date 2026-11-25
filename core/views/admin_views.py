@@ -9,6 +9,7 @@ from .auth_views import (
 )
 
 @login_required(login_url='login')
+@user_passes_test(is_director_or_manager, login_url='pre_dashboards')
 def admin_dashboard(request):
     query = request.GET.get('q', '').strip()
     users_qs = User.objects.select_related('profile')
